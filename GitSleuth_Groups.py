@@ -90,8 +90,6 @@ def create_search_queries(domain):
             f"pre-shared key NOT example NOT placeholder {domain}"
         ],
 
-        # Additional searches based on insights from GitHub's Blackbird search engine
-
         # Searching for cloud service configuration files
         "Cloud Service Configurations": [
             f"filename:azure-pipelines.yml {domain}",
