@@ -29,8 +29,8 @@ Create a config.json file in the project root with the following content:
 json
 Copy code
 {
-  "GITHUB_TOKENS": ["your_github_token_here"],
-  "LOG_LEVEL": "INFO"
+  "GITHUB_TOKENS": ["your_github_token1_here","your_github_token2_here"],
+  "LOG_LEVEL": "ERROR"
 }
 Replace "your_github_token_here" with your actual GitHub token.
 
