@@ -1,3 +1,4 @@
+#GitSleuth_GUI.py 
 import sys
 import csv
 import logging
@@ -7,9 +8,9 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
                              QFileDialog, QTextEdit, QTabWidget)
 from PyQt5.QtCore import Qt
 
-import gitsleuth_api
-from gitsleuth_groups import create_search_queries
-from gitsleuth import load_config, get_headers, extract_snippets
+import GitSleuth_API
+from GitSleuth_Groups import create_search_queries
+from GitSleuth import load_config, get_headers, extract_snippets
 
 class QTextEditHandler(logging.Handler):
     def __init__(self, text_widget):

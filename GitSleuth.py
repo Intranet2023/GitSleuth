@@ -1,12 +1,12 @@
-#gitsleuth.py
+#GitSleuth.py
 import os
 import pandas as pd
 import json
 import logging
 import time
 import re
-from gitsleuth_groups import create_search_queries
-import gitsleuth_api
+from GitSleuth_Groups import create_search_queries
+import GitSleuth_API
 import platform
 import sys
 from datetime import datetime

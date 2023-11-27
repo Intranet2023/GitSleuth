@@ -1,4 +1,4 @@
-#gitsleuth_groups.py
+#GitSleuth_Groups.py
 def create_search_queries(domain):
     """
     Creates a dictionary of search queries for different categories,
