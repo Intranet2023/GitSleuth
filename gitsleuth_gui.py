@@ -71,6 +71,10 @@ class GitSleuthGUI(QMainWindow):
         self.results_table.setHorizontalHeaderLabels(["Repository", "File Path", "Snippets"])
         search_results_layout.addWidget(self.results_table)
 
+        # Status bar setup
+        self.status_bar = QStatusBar(self)
+        self.setStatusBar(self.status_bar)
+
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setAlignment(Qt.AlignCenter)
         search_results_layout.addWidget(self.progress_bar)
