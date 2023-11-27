@@ -5,9 +5,9 @@ import logging
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEdit,
                              QPushButton, QVBoxLayout, QHBoxLayout, QComboBox,
                              QTableWidget, QTableWidgetItem, QStatusBar, QProgressBar,
-                             QFileDialog, QTextEdit, QTabWidget)
+                             QFileDialog, QTextEdit, QTabWidget, QAction, QDialog)
 from PyQt5.QtCore import Qt
-
+from Token_Manager import load_tokens, add_token, delete_token
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
 from GitSleuth import load_config, get_headers, extract_snippets
@@ -92,6 +92,14 @@ class GitSleuthGUI(QMainWindow):
         self.load_groups_file()
         groups_editor_layout.addWidget(self.groups_editor)
 
+                # Adding menu for token management
+        menu_bar = self.menuBar()
+        settings_menu = menu_bar.addMenu('Settings')
+        manage_tokens_action = QAction('Manage Tokens', self)
+        manage_tokens_action.triggered.connect(self.open_token_management)
+        settings_menu.addAction(manage_tokens_action)
+
+        # Adding "Load Groups" and "Save Groups" buttons to the layout
         save_button = QPushButton("Save Groups", self)
         save_button.clicked.connect(self.save_groups_file)
         groups_editor_layout.addWidget(save_button)
@@ -114,6 +122,10 @@ class GitSleuthGUI(QMainWindow):
         except Exception as e:
             logging.error(f"Failed to save Groups file: {e}")
             self.status_bar.showMessage("Error saving Groups file.")
+
+    def open_token_management(self):
+        self.token_management_dialog = TokenManagementDialog(self)
+        self.token_management_dialog.show()
 
     def on_search(self):
         domain = self.domain_input.text().strip()
@@ -197,7 +209,105 @@ class GitSleuthGUI(QMainWindow):
                 logging.error(f"Error exporting to CSV: {e}")
                 self.status_bar.showMessage("Error exporting results.")
 
+class TokenManagementDialog(QDialog):
+    """
+    Dialog for managing API tokens.
+    """
+    def __init__(self, parent=None):
+        """
+        Initializes the Token Management dialog.
+        """
+        super(TokenManagementDialog, self).__init__(parent)
+        self.setWindowTitle('Token Management')
+        self.setGeometry(100, 100, 400, 300)
+        self.layout = QVBoxLayout(self)
+
+        self.setupUI()
+
+    def setupUI(self):
+        """
+        Sets up the UI components for the token management dialog.
+        """
+        # Token Table
+        self.token_table = QTableWidget(0, 2)
+        self.token_table.setHorizontalHeaderLabels(['Token Name', 'Token Value (masked)'])
+        self.layout.addWidget(self.token_table)
+
+        # Add, Delete Buttons
+        btn_layout = QHBoxLayout()
+        self.add_btn = QPushButton('Add Token')
+        self.add_btn.clicked.connect(self.add_token_dialog)
+        btn_layout.addWidget(self.add_btn)
+
+        self.delete_btn = QPushButton('Delete Token')
+        self.delete_btn.clicked.connect(self.delete_token)
+        btn_layout.addWidget(self.delete_btn)
+
+        self.layout.addLayout(btn_layout)
+
+        # Populate table with existing tokens
+        self.load_tokens()
+
+    def load_tokens(self):
+        """
+        Loads and displays the tokens in the table.
+        """
+        tokens = load_tokens()
+        self.token_table.clearContents()
+        self.token_table.setRowCount(len(tokens))
+        for row, (name, _) in enumerate(tokens.items()):
+            self.token_table.setItem(row, 0, QTableWidgetItem(name))
+            self.token_table.setItem(row, 1, QTableWidgetItem("********"))  # Masked token
+
+    def add_token_dialog(self):
+        """
+        Opens a dialog to add a new token.
+        """
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Add Token")
+        layout = QVBoxLayout(dialog)
+
+        name_label = QLabel("Token Name:")
+        self.name_input = QLineEdit(dialog)
+        layout.addWidget(name_label)
+        layout.addWidget(self.name_input)
+
+        token_label = QLabel("Token Value:")
+        self.token_input = QLineEdit(dialog)
+        layout.addWidget(token_label)
+        layout.addWidget(self.token_input)
+
+        add_button = QPushButton("Add", dialog)
+        add_button.clicked.connect(lambda: self.add_token(dialog))
+        layout.addWidget(add_button)
+
+        dialog.setLayout(layout)
+        dialog.exec_()
+
+    def add_token(self, dialog):
+        """
+        Adds a new token to the storage.
+        """
+        token_name = self.name_input.text()
+        token_value = self.token_input.text()
+        if token_name and token_value:
+            add_token(token_name, token_value)
+            self.load_tokens()
+            dialog.close()
+
+    def delete_token(self):
+        """
+        Deletes a selected token.
+        """
+        selected_row = self.token_table.currentRow()
+        if selected_row != -1:
+            token_name = self.token_table.item(selected_row, 0).text()
+            delete_token(token_name)
+            self.load_tokens()
 def main():
+    """
+    Main function to run the GitSleuth application.
+    """
     app = QApplication(sys.argv)
     ex = GitSleuthGUI()
     ex.show()

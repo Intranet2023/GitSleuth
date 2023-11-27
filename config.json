@@ -1,5 +1,5 @@
 {
-    "LOG_LEVEL": "ERROR",
+    "LOG_LEVEL": "DEBUG",
     "IGNORED_FILENAMES": [
         "readme.md",
         "license",
