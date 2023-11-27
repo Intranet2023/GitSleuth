@@ -100,7 +100,7 @@ class GitSleuthGUI(QMainWindow):
 
     def load_groups_file(self):
         try:
-            with open('gitsleuth_groups.py', 'r') as file:
+            with open('GitSleuth_Groups.py', 'r') as file:
                 self.groups_editor.setText(file.read())
         except Exception as e:
             logging.error(f"Failed to load Groups file: {e}")
@@ -147,7 +147,7 @@ class GitSleuthGUI(QMainWindow):
                 self.execute_query(query, headers, ignored_filenames)
 
     def execute_query(self, query, headers, ignored_filenames):
-        search_results = gitsleuth_api.search_github_code(query, headers)
+        search_results = GitSleuth_API.search_github_code(query, headers)
         if search_results and 'items' in search_results:
             for item in search_results['items']:
                 if item['path'] not in ignored_filenames:
@@ -158,7 +158,7 @@ class GitSleuthGUI(QMainWindow):
     def process_search_item(self, item, query, headers):
         repo_name = item['repository']['full_name']
         file_path = item.get('path', '')
-        file_contents = gitsleuth_api.get_file_contents(repo_name, file_path, headers)
+        file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
         if file_contents:
             snippets = extract_snippets(file_contents, query)
             self.update_results_table(repo_name, file_path, snippets)

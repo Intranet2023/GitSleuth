@@ -120,7 +120,7 @@ def process_search_results(search_results, all_data, query, headers, group_name,
             repo_name = item['repository']['full_name']
             file_path = item.get('path', '')
             try:
-                file_contents = gitsleuth_api.get_file_contents(repo_name, file_path, headers)
+                file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
                 if file_contents:
                     snippets = extract_snippets(file_contents, query)
                     if snippets:
@@ -352,7 +352,7 @@ def perform_grouped_searches(domain):
         for query in queries:
             print(f"Executing search for: {query}")
             headers = get_headers(config)
-            search_results = gitsleuth_api.search_github_code(query, headers)
+            search_results = GitSleuth_API.search_github_code(query, headers)
             if search_results and 'items' in search_results:
                 process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames)
             else:
@@ -365,7 +365,7 @@ def check_and_handle_rate_limit(headers):
     Parameters:
     headers (dict): Headers including the current GitHub token for API requests.
     """
-    remaining_limit = gitsleuth_api.check_rate_limit(headers)
+    remaining_limit = GitSleuth_API.check_rate_limit(headers)
     if remaining_limit <= 5:
         print("Rate limit is low. Waiting to reset...")
         time.sleep(60)  # Waits for 1 minute
@@ -381,13 +381,13 @@ def perform_custom_search(domain):
     full_query = f"{custom_query} {domain}"  # Appends the domain to the search query
     config = load_config()
     headers = get_headers(config)
-    search_results = gitsleuth_api.search_github_code(full_query, headers)
+    search_results = GitSleuth_API.search_github_code(full_query, headers)
     all_data = []
     if search_results and 'items' in search_results:
         for item in search_results['items']:
             repo_name = item['repository']['full_name']
             file_path = item['path']
-            file_contents = gitsleuth_api.get_file_contents(repo_name, file_path, headers)
+            file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
             if file_contents:
                 snippets = extract_snippets(file_contents, full_query)
                 if not snippets:
