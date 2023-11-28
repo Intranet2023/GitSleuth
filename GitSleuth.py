@@ -14,6 +14,7 @@ import requests
 from prettytable import PrettyTable
 from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
+from Token_Manager import load_tokens
 
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
@@ -22,24 +23,20 @@ current_token_index = 0
 
 def load_config():
     """
-    Loads the configuration from the config file.
-
-    Tries to open and read the configuration file. If the file is not found,
-    logs the error and returns an empty dictionary.
-
-    Returns:
-    dict: Configuration data including the GitHub tokens or an empty dict if the file is not found.
+    Loads the configuration from 'config.json' and the GitHub tokens from 'tokens.json'.
     """
     try:
-        with open(CONFIG_FILE, 'r') as file:
+        with open('config.json', 'r') as file:
             config = json.load(file)
-            return config
-    except FileNotFoundError as e:
-        logging.error(f"Configuration file not found: {e}")
-        return {}
-    except json.JSONDecodeError as e:
-        logging.error(f"Error decoding JSON from configuration file: {e}")
-        return {}
+    except FileNotFoundError:
+        logging.error("Configuration file not found.")
+        config = {}
+
+    # Load and decrypt tokens from Token Manager
+    decrypted_tokens = load_tokens()
+    config['GITHUB_TOKENS'] = list(decrypted_tokens.values()) if decrypted_tokens else []
+    logging.debug(f"Config loaded. Tokens available: {len(config['GITHUB_TOKENS'])}")
+    return config
 
 def process_search_item(item, query, headers, all_data):
     """
@@ -360,18 +357,17 @@ def get_headers(config):
     Retrieves the headers for GitHub API requests with the current token.
 
     Parameters:
-    config (dict): Configuration data including the GitHub tokens.
+    - config (dict): Configuration data including the GitHub tokens.
 
     Returns:
-    dict: Headers with the current GitHub token.
+    - dict: Headers with the current GitHub token, or an empty dict if no valid token is found.
     """
-    global current_token_index
     if 'GITHUB_TOKENS' in config and config['GITHUB_TOKENS']:
-        headers = {'Authorization': f'token {config["GITHUB_TOKENS"][current_token_index]}'}
-        current_token_index = (current_token_index + 1) % len(config['GITHUB_TOKENS'])
-        return headers
+        token = config['GITHUB_TOKENS'][0]  # Using the first token in the list
+        logging.debug(f"Using GitHub token: {token[:4]}****")
+        return {'Authorization': f'token {token}'}
     else:
-        logging.error("No GitHub tokens are set.")
+        logging.error("No GitHub tokens are set. Check the configuration.")
         return {}
 
 
@@ -429,13 +425,18 @@ def switch_token(config):
     Switches between the stored GitHub tokens in a round-robin fashion.
 
     Parameters:
-    config (dict): Configuration data including the GitHub tokens.
+    - config (dict): Configuration data including the GitHub tokens.
 
     Returns:
-    dict: Updated configuration with the switched token.
+    - bool: True if the token was switched successfully, False otherwise.
     """
-    config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))  # Rotate the token list
-    return config
+    if 'GITHUB_TOKENS' in config and len(config['GITHUB_TOKENS']) > 1:
+        config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))  # Rotate the token list
+        logging.info(f"Switched to the next GitHub token: {config['GITHUB_TOKENS'][0][:4]}****")
+        return True
+    else:
+        logging.warning("Unable to switch GitHub token. Check if multiple tokens are configured.")
+        return False
 
 def perform_grouped_searches(domain):
     """

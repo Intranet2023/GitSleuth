@@ -2,8 +2,6 @@
 import requests
 import base64
 import logging
-from Token_Manager import load_tokens
-
 
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
@@ -46,19 +44,18 @@ def fetch_paginated_data(url, headers, max_items=100):
             break
     return items[:max_items]
 
-def get_headers():
+def get_headers(config):
     """
     Generates headers for GitHub API requests using the current token.
+
+    Parameters:
+    - config (dict): Configuration data including the GitHub tokens.
+
+    Returns:
+    - dict: Headers with the current GitHub token.
     """
-    decrypted_tokens = load_tokens()  # Load and decrypt tokens
-    if decrypted_tokens:
-        token = list(decrypted_tokens.values())[0]  # Use the first token
-        logging.debug(f"Using GitHub token: {token[:10]}****")
-        return {'Authorization': f'token {token}'}
-    else:
-        logging.error("No GitHub tokens are available.")
-        return {}
-    
+    return {'Authorization': f'token {config["GITHUB_TOKENS"][0]}'}
+
 def get_repo_info(repo_name, headers):
     """
     Fetches basic information of a specific GitHub repository.
@@ -192,4 +189,3 @@ def check_rate_limit(headers):
         return remaining
     else:
         return 0
-
