@@ -229,9 +229,22 @@ class GitSleuthGUI(QMainWindow):
             groups = [selected_group]
 
         for group in groups:
+            if not self.search_active:
+                break
             queries = search_groups.get(group, [])
             for query in queries:
+                if not self.search_active:
+                    break
                 self.process_query(query, max_retries, config)
+
+        # After search loop
+        self.check_enable_export()
+
+    def check_enable_export(self):
+        if self.results_table.rowCount() > 0:
+            self.export_button.setEnabled(True)
+        else:
+            self.export_button.setEnabled(False)
 
     def process_query(self, query, max_retries, config):
         """
@@ -291,6 +304,13 @@ class GitSleuthGUI(QMainWindow):
         else:
             logging.info(f"No file contents found for {file_path}")
 
+    def check_enable_export(self):
+        if self.results_table.rowCount() > 0:
+            self.export_button.setEnabled(True)
+        else:
+            self.export_button.setEnabled(False)
+
+
     def update_results_table(self, repo_name, file_path, snippets):
         """
         Updates the results table in the GUI with new search results.
@@ -311,6 +331,8 @@ class GitSleuthGUI(QMainWindow):
             self.export_button.setEnabled(True)
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
+        self.check_enable_export()
+
 
     def export_results_to_csv(self):
         """
@@ -352,6 +374,7 @@ class GitSleuthGUI(QMainWindow):
         self.search_button.setEnabled(True)
         self.progress_bar.setValue(0)
         self.status_bar.showMessage("Search stopped.")
+        self.check_enable_export()
 
 class TokenManagementDialog(QDialog):
     """
