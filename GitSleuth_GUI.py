@@ -1,4 +1,3 @@
-#GitSleuth_GUI.py 
 import sys
 import csv
 import logging
@@ -10,29 +9,51 @@ from PyQt5.QtCore import Qt
 from Token_Manager import load_tokens, add_token, delete_token
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
-from GitSleuth import load_config, get_headers, extract_snippets
+from GitSleuth import load_config, get_headers, extract_snippets, switch_token, perform_api_request_with_token_rotation
+from GitSleuth_API import RateLimitException
 
 class QTextEditHandler(logging.Handler):
+    """
+    Custom logging handler to redirect logs to a QTextEdit widget.
+    """
     def __init__(self, text_widget):
         super().__init__()
         self.text_widget = text_widget
 
     def emit(self, record):
+        """
+        Emit a record.
+
+        Args:
+            record (logging.LogRecord): The LogRecord to be emitted.
+        """
         log_message = self.format(record)
         self.text_widget.append(log_message)
 
 class GitSleuthGUI(QMainWindow):
+    """
+    Main class for the GitSleuth GUI application.
+    """
     def __init__(self):
+        """
+        Initialize the GitSleuth GUI application.
+        """
         super(GitSleuthGUI, self).__init__()
+        self.search_active = False
         self.initUI()
 
     def initUI(self):
+        """
+        Initialize the User Interface.
+        """
         self.setWindowTitle("GitSleuth")
 
+        # Main widget and layout
         main_widget = QWidget(self)
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
 
+        # Tab widget setup
         tab_widget = QTabWidget(self)
         search_results_tab = QWidget()
         log_tab = QWidget()
@@ -44,42 +65,21 @@ class GitSleuthGUI(QMainWindow):
 
         main_layout.addWidget(tab_widget)
 
+        # Setup for the search results tab
         search_results_layout = QVBoxLayout(search_results_tab)
-
         input_layout = QHBoxLayout()
-        self.domain_input = QLineEdit(self)
-        input_layout.addWidget(QLabel("Domain:"))
-        input_layout.addWidget(self.domain_input)
-
-        self.search_group_dropdown = QComboBox(self)
-        input_layout.addWidget(self.search_group_dropdown)
-        self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
-                                             "Database and Server Configurations", "Security and Code Vulnerabilities",
-                                             "Historical Data and Leakage", "Custom and Regex-Based Searches"])
-
-        self.search_button = QPushButton("Search", self)
-        self.search_button.clicked.connect(self.on_search)
-        input_layout.addWidget(self.search_button)
-
-        self.stop_button = QPushButton("Stop", self)
-        self.stop_button.clicked.connect(self.stop_search)
-        self.stop_button.setEnabled(False)
-        input_layout.addWidget(self.stop_button)
-
+        self.setupSearchInputArea(input_layout)
         search_results_layout.addLayout(input_layout)
+        self.setupResultsTable(search_results_layout)
 
-        self.results_table = QTableWidget(0, 3)
-        self.results_table.setHorizontalHeaderLabels(["Repository", "File Path", "Snippets"])
-        search_results_layout.addWidget(self.results_table)
-
-        # Status bar setup
+        # Status bar and progress bar setup
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
-
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setAlignment(Qt.AlignCenter)
         search_results_layout.addWidget(self.progress_bar)
 
+        # Log tab setup
         log_tab_layout = QVBoxLayout(log_tab)
         self.log_output = QTextEdit(self)
         self.log_output.setReadOnly(True)
@@ -87,26 +87,84 @@ class GitSleuthGUI(QMainWindow):
         logging.root.addHandler(log_handler)
         log_tab_layout.addWidget(self.log_output)
 
+        # Groups editor tab setup
         groups_editor_layout = QVBoxLayout(groups_editor_tab)
         self.groups_editor = QTextEdit(self)
         self.load_groups_file()
         groups_editor_layout.addWidget(self.groups_editor)
+        self.setupGroupEditor(groups_editor_layout)
 
-                # Adding menu for token management
+        # Geometry setup
+        self.setGeometry(300, 300, 1000, 600)
+
+    def setupSearchInputArea(self, layout):
+        """
+        Sets up the search input area in the GUI.
+
+        Args:
+            layout (QHBoxLayout): The layout to add the search input area to.
+        """
+        self.domain_input = QLineEdit(self)
+        layout.addWidget(QLabel("Domain:"))
+        layout.addWidget(self.domain_input)
+
+        self.search_group_dropdown = QComboBox(self)
+        layout.addWidget(self.search_group_dropdown)
+        self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
+                                             "Database and Server Configurations", "Security and Code Vulnerabilities",
+                                             "Historical Data and Leakage", "Custom and Regex-Based Searches"])
+
+        self.search_button = QPushButton("Search", self)
+        self.search_button.clicked.connect(self.on_search)
+        layout.addWidget(self.search_button)
+
+        self.stop_button = QPushButton("Stop", self)
+        self.stop_button.clicked.connect(self.stop_search)
+        self.stop_button.setEnabled(False)
+        layout.addWidget(self.stop_button)
+
+    def setupResultsTable(self, layout):
+        """
+        Sets up the results table in the GUI.
+
+        Args:
+            layout (QVBoxLayout): The layout to add the results table to.
+        """
+        self.results_table = QTableWidget(0, 3)
+        self.results_table.setHorizontalHeaderLabels(["Repository", "File Path", "Snippets"])
+        layout.addWidget(self.results_table)
+        self.results_table.setColumnWidth(0, 200)
+        self.results_table.setColumnWidth(1, 300)
+        self.results_table.setColumnWidth(2, 500)
+
+        # Export button
+        self.export_button = QPushButton("Export to CSV", self)
+        self.export_button.clicked.connect(self.export_results_to_csv)
+        self.export_button.setEnabled(False)  # Initially disabled
+        layout.addWidget(self.export_button)
+
+    def setupGroupEditor(self, layout):
+        """
+        Sets up the groups editor tab in the GUI.
+
+        Args:
+            layout (QVBoxLayout): The layout to add the groups editor to.
+        """
         menu_bar = self.menuBar()
         settings_menu = menu_bar.addMenu('Settings')
         manage_tokens_action = QAction('Manage Tokens', self)
         manage_tokens_action.triggered.connect(self.open_token_management)
         settings_menu.addAction(manage_tokens_action)
 
-        # Adding "Load Groups" and "Save Groups" buttons to the layout
         save_button = QPushButton("Save Groups", self)
         save_button.clicked.connect(self.save_groups_file)
-        groups_editor_layout.addWidget(save_button)
-
-        self.setGeometry(300, 300, 800, 600)
+        layout.addWidget(save_button)
+    # Function definitions within GitSleuthGUI class
 
     def load_groups_file(self):
+        """
+        Loads the search groups from the file into the groups editor.
+        """
         try:
             with open('GitSleuth_Groups.py', 'r') as file:
                 self.groups_editor.setText(file.read())
@@ -114,6 +172,9 @@ class GitSleuthGUI(QMainWindow):
             logging.error(f"Failed to load Groups file: {e}")
 
     def save_groups_file(self):
+        """
+        Saves the modified search groups from the groups editor into the file.
+        """
         try:
             with open('GitSleuth_Groups.py', 'w') as file:
                 file.write(self.groups_editor.toPlainText())
@@ -124,31 +185,45 @@ class GitSleuthGUI(QMainWindow):
             self.status_bar.showMessage("Error saving Groups file.")
 
     def open_token_management(self):
+        """
+        Opens the token management dialog.
+        """
         self.token_management_dialog = TokenManagementDialog(self)
         self.token_management_dialog.show()
 
     def on_search(self):
+        """
+        Handles the event when the search button is clicked.
+        """
         domain = self.domain_input.text().strip()
         if not domain:
             self.statusBar().showMessage("Domain is required for searching.")
             return
-    
+
         selected_group = self.search_group_dropdown.currentText()
-        self.search_all = selected_group == "Search All"
+        self.search_active = True
         self.statusBar().showMessage(f"Searching in {selected_group} for domain: {domain}")
         self.stop_button.setEnabled(True)
         self.search_button.setEnabled(False)
         self.progress_bar.setValue(0)
-    
         self.perform_search(domain, selected_group)
-
+        # Disable the export button when a new search starts
+        self.export_button.setEnabled(False)
 
     def perform_search(self, domain, selected_group):
+        """
+        Performs the search based on the selected domain and group.
+
+        Args:
+            domain (str): The domain to search for.
+            selected_group (str): The selected search group.
+        """
         config = load_config()
         search_groups = create_search_queries(domain)
-        headers = get_headers(config)
         ignored_filenames = config.get('IGNORED_FILENAMES', [])
-        if self.search_all:
+        max_retries = 3
+
+        if selected_group == "Search All":
             groups = search_groups.keys()
         else:
             groups = [selected_group]
@@ -156,58 +231,127 @@ class GitSleuthGUI(QMainWindow):
         for group in groups:
             queries = search_groups.get(group, [])
             for query in queries:
-                self.execute_query(query, headers, ignored_filenames)
+                self.process_query(query, max_retries, config)
 
-    def execute_query(self, query, headers, ignored_filenames):
-        search_results = GitSleuth_API.search_github_code(query, headers)
+    def process_query(self, query, max_retries, config):
+        """
+        Processes each query, handling retries and rate limit exceptions.
+
+        Args:
+            query (str): The query to be processed.
+            max_retries (int): Maximum number of retries for the query.
+            config (dict): Configuration settings.
+        """
+        retry_count = 0
+        while retry_count < max_retries and self.search_active:
+            try:
+                headers = get_headers(config)
+                search_results = GitSleuth_API.search_github_code(query, headers)
+                self.handle_search_results(search_results, query, headers)
+                break
+            except RateLimitException as e:
+                logging.warning(str(e))
+                if retry_count < max_retries - 1:
+                    switch_token(config)
+                retry_count += 1
+            if retry_count >= max_retries:
+                logging.error("Max retries reached. Moving to next query.")
+
+    def handle_search_results(self, search_results, query, headers):
+        """
+        Handles the search results for a query.
+
+        Args:
+            search_results (dict): The search results.
+            query (str): The query that was used.
+            headers (dict): Headers used for the API request.
+        """
         if search_results and 'items' in search_results:
             for item in search_results['items']:
-                if item['path'] not in ignored_filenames:
+                if self.search_active:
                     self.process_search_item(item, query, headers)
         else:
             logging.info(f"No results found for query: {query}")
 
     def process_search_item(self, item, query, headers):
+        """
+        Processes an individual search item and updates the GUI table.
+
+        Args:
+            item (dict): The search result item.
+            query (str): The search query used.
+            headers (dict): Headers for GitHub API requests.
+        """
         repo_name = item['repository']['full_name']
         file_path = item.get('path', '')
         file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
         if file_contents:
             snippets = extract_snippets(file_contents, query)
             self.update_results_table(repo_name, file_path, snippets)
+        else:
+            logging.info(f"No file contents found for {file_path}")
 
     def update_results_table(self, repo_name, file_path, snippets):
-        row_position = self.results_table.rowCount()
-        self.results_table.insertRow(row_position)
-        self.results_table.setItem(row_position, 0, QTableWidgetItem(repo_name))
-        self.results_table.setItem(row_position, 1, QTableWidgetItem(file_path))
-        snippet_text = '\n'.join(snippets)
-        self.results_table.setItem(row_position, 2, QTableWidgetItem(snippet_text))
+        """
+        Updates the results table in the GUI with new search results.
 
-    def stop_search(self):
-        self.search_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
-        self.status_bar.showMessage("Search stopped.")
-
-    def close_application(self):
-        self.close()
+        Args:
+            repo_name (str): Name of the repository.
+            file_path (str): Path of the file in the repository.
+            snippets (list): Extracted snippets from the file contents.
+        """
+        for snippet in snippets:
+            row_position = self.results_table.rowCount()
+            self.results_table.insertRow(row_position)
+            self.results_table.setItem(row_position, 0, QTableWidgetItem(repo_name))
+            self.results_table.setItem(row_position, 1, QTableWidgetItem(file_path))
+            self.results_table.setItem(row_position, 2, QTableWidgetItem(snippet))
+        # Enable the export button if there are results
+        if not self.export_button.isEnabled() and self.results_table.rowCount() > 0:
+            self.export_button.setEnabled(True)
+            self.status_bar.showMessage("Results found.")
+            logging.info("Results found.")
 
     def export_results_to_csv(self):
+        """
+        Exports the search results displayed in the table to a CSV file.
+        """
         filename, _ = QFileDialog.getSaveFileName(self, "Save File", "", "CSV Files (*.csv)")
         if filename:
-            try:
-                with open(filename, 'w', newline='') as csvfile:
-                    writer = csv.writer(csvfile)
-                    writer.writerow(["Repository", "File Path", "Snippets"])
-                    for row in range(self.results_table.rowCount()):
-                        writer.writerow([
-                            self.results_table.item(row, 0).text(),
-                            self.results_table.item(row, 1).text(),
-                            self.results_table.item(row, 2).text().replace('\n', ' ')
-                        ])
-                self.status_bar.showMessage("Results exported successfully to " + filename)
-            except Exception as e:
-                logging.error(f"Error exporting to CSV: {e}")
-                self.status_bar.showMessage("Error exporting results.")
+            self.write_results_to_csv(filename)
+
+    def write_results_to_csv(self, filename):
+        """
+        Writes the search results to a CSV file.
+
+        Args:
+            filename (str): Name of the CSV file to write to.
+        """
+        try:
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(["Repository", "File Path", "Snippets"])
+                for row in range(self.results_table.rowCount()):
+                    writer.writerow([
+                        self.results_table.item(row, 0).text(),
+                        self.results_table.item(row, 1).text(),
+                        self.results_table.item(row, 2).text().replace('\n', ' ')
+                    ])
+            self.status_bar.showMessage("Results exported successfully to " + filename)
+        except Exception as e:
+            logging.error(f"Error exporting to CSV: {e}")
+            self.status_bar.showMessage("Error exporting results.")
+
+    def stop_search(self):
+        """
+        Stops the ongoing search.
+        """
+        self.search_active = False
+        logging.info("Search stopped by user.")
+        self.stop_button.setEnabled(False)
+        self.search_button.setEnabled(True)
+        self.progress_bar.setValue(0)
+        self.status_bar.showMessage("Search stopped.")
 
 class TokenManagementDialog(QDialog):
     """
@@ -304,6 +448,7 @@ class TokenManagementDialog(QDialog):
             token_name = self.token_table.item(selected_row, 0).text()
             delete_token(token_name)
             self.load_tokens()
+
 def main():
     """
     Main function to run the GitSleuth application.
@@ -315,3 +460,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

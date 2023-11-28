@@ -5,19 +5,18 @@ import logging
 
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
+class RateLimitException(Exception):
+    pass
 
 def handle_api_response(response):
     """
     Handles the API response, checking for errors and logging appropriately.
-
-    Parameters:
-    - response (requests.Response): The response object from requests library.
-
-    Returns:
-    - dict or None: Parsed JSON response if the request was successful, None otherwise.
+    ... [existing documentation] ...
     """
     if response.status_code == 200:
         return response.json()
+    elif response.status_code == 403 and 'rate limit' in response.text.lower():
+        raise RateLimitException("GitHub API rate limit reached")
     else:
         logging.error(f"API request failed with status code {response.status_code}: {response.json()}")
         return None
@@ -44,6 +43,19 @@ def fetch_paginated_data(url, headers, max_items=100):
         else:
             break
     return items[:max_items]
+
+def get_headers(config):
+    """
+    Generates headers for GitHub API requests using the current token.
+
+    Parameters:
+    - config (dict): Configuration data including the GitHub tokens.
+
+    Returns:
+    - dict: Headers with the current GitHub token.
+    """
+    return {'Authorization': f'token {config["GITHUB_TOKENS"][0]}'}
+
 def get_repo_info(repo_name, headers):
     """
     Fetches basic information of a specific GitHub repository.

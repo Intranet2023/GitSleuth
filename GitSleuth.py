@@ -13,9 +13,12 @@ from datetime import datetime
 import requests
 from prettytable import PrettyTable
 from colorama import Fore, Style
+from GitSleuth_API import RateLimitException
 
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
+
+current_token_index = 0
 
 def load_config():
     """
@@ -37,6 +40,91 @@ def load_config():
     except json.JSONDecodeError as e:
         logging.error(f"Error decoding JSON from configuration file: {e}")
         return {}
+
+def process_search_item(item, query, headers, all_data):
+    """
+    Processes a single item from GitHub search results.
+
+    Parameters:
+    - item (dict): The item from search results.
+    - query (str): The query used for the search.
+    - headers (dict): The headers used for API requests.
+    - all_data (list): A list to store the processed data.
+
+    This function extracts relevant information from the item, such as repository name,
+    file path, and file contents. It then extracts snippets from the contents based
+    on the search query and adds this data to 'all_data'.
+    """
+    repo_name = item['repository']['full_name']
+    file_path = item.get('path', '')
+    
+    # Fetching file contents
+    file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
+    
+    if file_contents:
+        # Extracting snippets based on the query
+        snippets = extract_snippets(file_contents, query)
+        logging.info(f"Processed {len(snippets)} snippets from {repo_name}/{file_path}")
+
+        # Adding data to all_data list
+        item_data = {
+            'repository': repo_name,
+            'file_path': file_path,
+            'snippets': snippets
+        }
+        all_data.append(item_data)
+    else:
+        logging.info(f"No content found for file: {repo_name}/{file_path}")
+
+
+
+def perform_search(domain, selected_group, config, max_retries=3):
+    """
+    Perform the search operation, with support for token rotation in case of rate limit.
+
+    Parameters:
+    - domain (str): The domain for the search.
+    - selected_group (str): The selected search group.
+    - config (dict): The configuration dictionary with GitHub tokens.
+    - max_retries (int): Maximum number of retries for the search in case of rate limit.
+
+    Returns:
+    - None
+    """
+    search_groups = create_search_queries(domain)
+    ignored_filenames = config.get('IGNORED_FILENAMES', [])
+    retry_count = 0
+
+    if selected_group == "Search All":
+        groups = search_groups.keys()
+    else:
+        groups = [selected_group]
+
+    for group in groups:
+        queries = search_groups.get(group, [])
+        for query in queries:
+            while retry_count < max_retries:
+                try:
+                    headers = get_headers(config)
+                    search_results = GitSleuth_API.search_github_code(query, headers)
+                    if search_results and 'items' in search_results:
+                        # Process the search results
+                        for item in search_results['items']:
+                            if item['path'] not in ignored_filenames:
+                                process_search_item(item, query, headers)
+                    else:
+                        logging.info(f"No results found for query: {query}")
+                    break  # Break the while loop if successful
+                except RateLimitException as e:
+                    logging.warning(str(e))
+                    switch_token(config)  # Rotate the token
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        logging.error("Max retries reached. Moving to next query.")
+                        break  # Exit the retry loop and proceed with next query
+
+# Remember to include the switch_token and get_headers functions in the same file
+
 
 def get_domain_input():
     """
@@ -73,6 +161,43 @@ def highlight_search_term(snippet, search_term, color=Fore.RED):
     - str: The snippet with the search term highlighted.
     """
     return snippet.replace(search_term, color + search_term + Style.RESET_ALL)
+# GitSleuth.py
+
+def perform_api_request_with_token_rotation(query, config, max_retries=3):
+    """
+    Performs a GitHub API request with token rotation in case of rate limiting.
+
+    Parameters:
+    - query (str): The search query for the GitHub API.
+    - config (dict): The configuration dictionary with GitHub tokens.
+    - max_retries (int): Maximum number of retries for the request in case of rate limit.
+
+    Returns:
+    - dict or None: The API response, or None if unsuccessful after retries.
+    """
+    retry_count = 0
+    while retry_count < max_retries:
+        headers = get_headers(config)
+        try:
+            search_results = GitSleuth_API.search_github_code(query, headers)
+            if 'items' in search_results:
+                return search_results
+            else:
+                logging.info(f"No results found for query: {query}")
+                return None
+        except RateLimitException as e:
+            logging.warning(str(e))
+            if retry_count < max_retries - 1:
+                switch_token(config)  # Rotate the token only if more retries are left
+            retry_count += 1
+
+    logging.error("Max retries reached. Unable to complete the API request.")
+    return None
+
+def switch_token(config):
+    config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))
+    save_config(config)
+
 
 def process_and_display_data(data, search_term):
     """
@@ -240,7 +365,15 @@ def get_headers(config):
     Returns:
     dict: Headers with the current GitHub token.
     """
-    return {'Authorization': f'token {config["GITHUB_TOKENS"][0]}'}
+    global current_token_index
+    if 'GITHUB_TOKENS' in config and config['GITHUB_TOKENS']:
+        headers = {'Authorization': f'token {config["GITHUB_TOKENS"][current_token_index]}'}
+        current_token_index = (current_token_index + 1) % len(config['GITHUB_TOKENS'])
+        return headers
+    else:
+        logging.error("No GitHub tokens are set.")
+        return {}
+
 
 def extract_snippets(content, query):
     """
