@@ -74,11 +74,5 @@ GitSleuth is released under the MIT License.
 
 ## Support
 
-For support, open an issue on the GitHub repository or contact the project maintainers.
+For support, open an issue on the GitHub repository or contact david.mclaughlin@dsmcl.com .
 
-## Support
-
-For support, open an issue on the GitHub repository or contact the project maintainers.
-
-
-Please let me know if you have any other questions.
