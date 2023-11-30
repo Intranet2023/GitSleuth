@@ -3,6 +3,7 @@ import requests
 import base64
 import logging
 from Token_Manager import load_tokens
+import time
 
 
 # Constants for GitHub API
@@ -10,41 +11,58 @@ GITHUB_API_URL = 'https://api.github.com/'
 class RateLimitException(Exception):
     pass
 
+# Function to check the rate limit
+def check_rate_limit(headers):
+    response = requests.get("https://api.github.com/rate_limit", headers=headers)
+    if response.status_code == 200:
+        rate_limit = response.json()['rate']['remaining']
+        return rate_limit
+    else:
+        raise Exception("Failed to check rate limit")
+
+
 def handle_api_response(response):
     """
-    Handles the API response, checking for errors and logging appropriately.
-    ... [existing documentation] ...
+    Handles the API response, checking for errors, logging, and returning the response JSON.
+    Logs the full response for debugging purposes.
+
+    Parameters:
+    - response (requests.Response): The response object from the API request.
+
+    Returns:
+    - dict or None: Parsed JSON data from the response, or None if an error occurred.
     """
+
+    # Log the full response for debugging
+    try:
+        response_json = response.json()
+        logging.debug(f"API Response: {response_json}")  # Log the full JSON response
+    except ValueError:
+        logging.error(f"Invalid JSON in response: {response.text}")
+        return None
+
     if response.status_code == 200:
-        return response.json()
+        return response_json
     elif response.status_code == 403 and 'rate limit' in response.text.lower():
         raise RateLimitException("GitHub API rate limit reached")
     else:
-        logging.error(f"API request failed with status code {response.status_code}: {response.json()}")
+        logging.error(f"API request failed with status code {response.status_code}: {response.text}")
         return None
 
+
 def fetch_paginated_data(url, headers, max_items=100):
-    """
-    Fetches data from a paginated API endpoint.
-
-    Parameters:
-    - url (str): The API endpoint URL.
-    - headers (dict): Headers for the GitHub API request.
-    - max_items (int): Maximum number of items to fetch.
-
-    Returns:
-    - list: Aggregated data from all pages.
-    """
     items = []
     while url and len(items) < max_items:
         response = requests.get(url, headers=headers)
-        page_data = handle_api_response(response)
-        if page_data:
+        if response.status_code == 200:
+            page_data = response.json()
             items.extend(page_data)
             url = response.links.get('next', {}).get('url', None)
         else:
+            logging.error(f"Failed to fetch paginated data: {response.text}")
             break
     return items[:max_items]
+
 
 def get_headers():
     """

@@ -1,0 +1,8 @@
+{
+    "LOG_LEVEL": "INFO",
+    "IGNORED_FILENAMES": [
+        "example.txt",
+        "test.md",
+        "sample.config"
+    ]
+}

@@ -1,11 +1,13 @@
 #GitSleuth.py
 import os
+import time
 import pandas as pd
 import json
 import logging
 import time
 import re
 from GitSleuth_Groups import create_search_queries
+from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit
 import GitSleuth_API
 import platform
 import sys
@@ -73,24 +75,72 @@ def process_search_item(item, query, headers, all_data):
     else:
         logging.info(f"No content found for file: {repo_name}/{file_path}")
 
-
-
-def perform_search(domain, selected_group, config, max_retries=3):
+def process_query(query, max_retries, config, search_timeout, start_time):
     """
-    Perform the search operation, with support for token rotation in case of rate limit.
+    Processes each query, handling retries, rate limit exceptions, and timeouts.
+    Returns True if new results were found, False otherwise.
+
+    Parameters:
+    - query (str): The search query to be processed.
+    - max_retries (int): Maximum number of retries for the query.
+    - config (dict): Configuration settings including GitHub tokens.
+    - search_timeout (int): Maximum time (in seconds) to spend on a search query.
+    - start_time (float): The start time of the search process.
+
+    Returns:
+    - bool: True if new results were found for the query, False otherwise.
+
+    This function performs a GitHub code search for the given query and handles
+    any exceptions related to rate limits. It retries the query if rate limits
+    are hit and rotates the GitHub token if available.
+    """
+    retry_count = 0
+    new_result_found = False
+    while retry_count < max_retries and time.time() - start_time < search_timeout:
+        try:
+            headers = get_headers(config)
+            search_results = GitSleuth_API.search_github_code(query, headers)
+            if search_results and 'items' in search_results:
+                new_result_found = True  # New results were found
+                # Handle search results here
+                # (You can process and log the results as needed)
+            break
+        except RateLimitException as e:
+            logging.warning(str(e))
+            if not switch_token(config):
+                logging.error("All tokens exhausted and rate limit still reached.")
+                return False
+            retry_count += 1
+        except Exception as e:
+            logging.error(f"Unexpected error occurred: {e}")
+            break
+
+    if time.time() - start_time >= search_timeout:
+        logging.warning("Search timeout reached, stopping search.")
+
+    return new_result_found
+
+
+def perform_search(domain, selected_group, config, max_retries=3, search_timeout=300):
+    """
+    Performs the search operation, stopping if no results are found within a one-minute interval.
 
     Parameters:
     - domain (str): The domain for the search.
     - selected_group (str): The selected search group.
     - config (dict): The configuration dictionary with GitHub tokens.
     - max_retries (int): Maximum number of retries for the search in case of rate limit.
+    - search_timeout (int): Maximum time (in seconds) for the entire search operation.
 
     Returns:
-    - None
+    - None: This function does not return anything. It performs the search and logs the results.
     """
+
+    start_time = time.time()  # Start time of the search
+    last_result_time = start_time  # Time when the last result was found
+
     search_groups = create_search_queries(domain)
     ignored_filenames = config.get('IGNORED_FILENAMES', [])
-    retry_count = 0
 
     if selected_group == "Search All":
         groups = search_groups.keys()
@@ -98,29 +148,31 @@ def perform_search(domain, selected_group, config, max_retries=3):
         groups = [selected_group]
 
     for group in groups:
+        if time.time() - start_time >= search_timeout:
+            logging.warning("Search timeout reached, stopping search.")
+            break
+
         queries = search_groups.get(group, [])
         for query in queries:
-            while retry_count < max_retries:
-                try:
-                    headers = get_headers(config)
-                    search_results = GitSleuth_API.search_github_code(query, headers)
-                    if search_results and 'items' in search_results:
-                        # Process the search results
-                        for item in search_results['items']:
-                            if item['path'] not in ignored_filenames:
-                                process_search_item(item, query, headers)
-                    else:
-                        logging.info(f"No results found for query: {query}")
-                    break  # Break the while loop if successful
-                except RateLimitException as e:
-                    logging.warning(str(e))
-                    switch_token(config)  # Rotate the token
-                    retry_count += 1
-                    if retry_count >= max_retries:
-                        logging.error("Max retries reached. Moving to next query.")
-                        break  # Exit the retry loop and proceed with next query
+            if time.time() - start_time >= search_timeout:
+                logging.warning("Search timeout reached, stopping search.")
+                return
 
-# Remember to include the switch_token and get_headers functions in the same file
+            # Check if one minute has passed since the last result was found
+            if time.time() - last_result_time >=10:
+                logging.warning("No results found in the last minute, stopping search.")
+                #stop search goes here
+                return
+                        # Check rate limit before making a call
+            rate_limit = check_rate_limit(get_headers(config))
+            if rate_limit < 5:  # Pause if rate limit is low
+                time.sleep(60)  # Wait for 60 seconds
+            new_result = process_query(query, max_retries, config, search_timeout, start_time)
+            if new_result:
+                last_result_time = time.time()  # Update the time of the last result
+
+
+    logging.info("Search completed.")
 
 
 def get_domain_input():
@@ -190,11 +242,6 @@ def perform_api_request_with_token_rotation(query, config, max_retries=3):
 
     logging.error("Max retries reached. Unable to complete the API request.")
     return None
-
-def switch_token(config):
-    config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))
-    save_config(config)
-
 
 def process_and_display_data(data, search_term):
     """
@@ -423,20 +470,16 @@ def save_data_to_excel(data_list, domain):
 def switch_token(config):
     """
     Switches between the stored GitHub tokens in a round-robin fashion.
-
-    Parameters:
-    - config (dict): Configuration data including the GitHub tokens.
-
-    Returns:
-    - bool: True if the token was switched successfully, False otherwise.
+    Returns True if a new token is switched to, False otherwise.
     """
     if 'GITHUB_TOKENS' in config and len(config['GITHUB_TOKENS']) > 1:
-        config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))  # Rotate the token list
-        logging.info(f"Switched to the next GitHub token: {config['GITHUB_TOKENS'][0][:4]}****")
+        config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))
+        logging.info(f"Switched to next GitHub token: {config['GITHUB_TOKENS'][0][:4]}****")
         return True
     else:
-        logging.warning("Unable to switch GitHub token. Check if multiple tokens are configured.")
+        logging.warning("No additional GitHub tokens available for switching.")
         return False
+
 
 def perform_grouped_searches(domain):
     """
