@@ -129,15 +129,12 @@ class GitSleuthGUI(QMainWindow):
         Args:
             layout (QHBoxLayout): The layout to add the search input area to.
         """
-#        self.domain_input = QLineEdit(self)
-#        layout.addWidget(QLabel("Domain:"))
-#        layout.addWidget(self.domain_input)
         # Add a QComboBox for domain selection
         self.domain_dropdown = QComboBox(self)
         layout.addWidget(QLabel("Domain:"))
         layout.addWidget(self.domain_dropdown)
         # Populate the dropdown with sample domains
-        self.domain_dropdown.addItems(["example.com", "test.com", "yourdomain.com"])    
+        self.domain_dropdown.addItems(["ge.com", "gaspower.com", "gevernova.com"])    
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
