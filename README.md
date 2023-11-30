@@ -1,6 +1,3 @@
-Sure, I can help you format the content for a README.md file in GitHub. Here's the formatted content:
-
-```markdown
 # GitSleuth
 
 ## Overview
@@ -28,40 +25,30 @@ GitSleuth is a comprehensive tool designed for searching GitHub repositories to 
 
 1. Clone the GitSleuth repository:
 ```bash
-git clone [https://github.com/your-repository/GitSleuth.git](https://github.com/your-repository/GitSleuth.git)
-```
-
-2. Navigate to the GitSleuth directory:
-```bash
+git clone [https://github.com/your-repository/GitSleuth.git](https://github.com/your-repository/GitSleuth.git): [https://github.com/your-repository/GitSleuth.git](https://github.com/your-repository/GitSleuth.git)
+Use code with caution. Learn more
+Navigate to the GitSleuth directory:
+Bash
 cd GitSleuth
-```
-
-3. Install the required Python dependencies:
-```
+Use code with caution. Learn more
+Install the required Python dependencies:
 pip install -r requirements.txt
-```
-
-## Usage
-
-### Graphical User Interface (GUI)
-
-1. Launch the GUI:
-```bash
+Usage
+Graphical User Interface (GUI)
+Launch the GUI:
+Bash
 python GitSleuth_GUI.py
-```
-
-2. In the GUI:
-    * Enter the search domain.
-    * Select the category of queries.
-    * Initiate the search and view results.
-    * Export results and manage API tokens.
-
-### Command-Line Interface (CLI)
-
-1. Start the CLI mode:
-```bash
+Use code with caution. Learn more
+In the GUI:
+Enter the search domain.
+Select the category of queries.
+Initiate the search and view results.
+Export results and manage API tokens.
+Command-Line Interface (CLI)
+Start the CLI mode:
+Bash
 python GitSleuth.py
-```
+
 
 2. CLI Options:
     * Set, delete, and view GitHub tokens.
@@ -69,30 +56,9 @@ python GitSleuth.py
     * Perform custom searches.
     * Manage application settings.
 
-### Examples
+## Pre-compiled Binary for Windows
 
-#### Performing a grouped search:
-```
-mathematica
-```
-Enter your choice: 4
-
-Enter your organization's domain for search: example.com
-
-Available Search Groups:
-1. Authentication and Credentials
-2. API Keys and Tokens
-...
-
-Enter your choice (number) or 'all': 1
-
-#### Adding a GitHub token:
-```
-mathematica
-
-Enter your choice: 1
-
-Enter a GitHub token: <your-token>
+A pre-compiled binary for Windows can be found in the `dist` folder of the repository. To run the binary, simply double-click on the `GitSleuth_GUI.exe` file.
 
 ## Configuration
 
@@ -105,6 +71,10 @@ Contributions to GitSleuth are welcome. Please follow standard procedures for co
 ## License
 
 GitSleuth is released under the MIT License.
+
+## Support
+
+For support, open an issue on the GitHub repository or contact the project maintainers.
 
 ## Support
 
