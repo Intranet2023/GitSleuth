@@ -137,7 +137,7 @@ class GitSleuthGUI(QMainWindow):
         layout.addWidget(QLabel("Domain:"))
         layout.addWidget(self.domain_dropdown)
         # Populate the dropdown with sample domains
-        self.domain_dropdown.addItems(["ge.com", "gaspower.com", "vernova.com"])    
+        self.domain_dropdown.addItems(["example.com", "test.com", "yourdomain.com"])    
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
