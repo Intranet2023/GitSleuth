@@ -1,6 +1,8 @@
 #GitSleuth_GUI.py
 import sys
+import json
 import csv
+import time
 import logging
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEdit,
                              QPushButton, QVBoxLayout, QHBoxLayout, QComboBox,
@@ -15,6 +17,35 @@ from GitSleuth_API import RateLimitException
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QTableWidgetItem
+
+CONFIG_FILE = 'config.json'
+
+current_token_index = 0
+
+def load_config():
+    """
+    Loads the configuration from 'config.json' and the GitHub tokens from 'tokens.json'.
+    """
+    try:
+        with open('config.json', 'r') as file:
+            config = json.load(file)
+    except FileNotFoundError:
+        logging.error("Configuration file not found.")
+        config = {}
+
+    # Load and decrypt tokens from Token Manager
+    decrypted_tokens = load_tokens()
+    config['GITHUB_TOKENS'] = list(decrypted_tokens.values()) if decrypted_tokens else []
+    logging.debug(f"Config loaded. Tokens available: {len(config['GITHUB_TOKENS'])}")
+    return config
+
+config = load_config()
+log_level = config.get("LOG_LEVEL", "DEBUG").upper()
+
+# Configure logging with the level from config.json
+logging.basicConfig(level=getattr(logging, log_level, logging.INFO),
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 class ClickableTableWidgetItem(QTableWidgetItem):
     def __init__(self, text, url):
@@ -309,7 +340,7 @@ class GitSleuthGUI(QMainWindow):
     def perform_search(self, domain, selected_group):
         config = load_config()
         search_groups = create_search_queries(domain)
-        max_retries = 3  # Assuming max_retries is defined
+        max_retries = 3
 
         if selected_group == "Search All":
             groups = search_groups.keys()
@@ -319,8 +350,8 @@ class GitSleuthGUI(QMainWindow):
         for group in groups:
             queries = search_groups.get(group, [])
             for query in queries:
-                # Pass the raw search query to process_query
                 self.process_query(query, max_retries, config, query)
+
 
     def check_enable_export(self):
         if self.results_table.rowCount() > 0:
@@ -337,11 +368,19 @@ class GitSleuthGUI(QMainWindow):
                 self.handle_search_results(search_results, query, headers, search_term)
                 break
             except RateLimitException as e:
-                logging.warning(str(e))
+                logging.warning(f"Rate limit reached for token. {str(e)}")
+                time.sleep(60)  # Delay for 60 seconds before retrying
                 if retry_count < max_retries - 1:
-                    switch_token(config)
+                    if switch_token(config):
+                        logging.info("Switched to a new token.")
+                    else:
+                        logging.error("All tokens exhausted. Unable to proceed with the search.")
+                        break
                 retry_count += 1
-            # Additional error handling as necessary
+            except Exception as e:
+                logging.error(f"Unexpected error: {e}")
+                break
+
 
     def handle_search_results(self, search_results, query, headers, search_term):
         if search_results and 'items' in search_results:

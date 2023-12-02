@@ -123,56 +123,53 @@ def process_query(query, max_retries, config, search_timeout, start_time):
 
 def perform_search(domain, selected_group, config, max_retries=3, search_timeout=300):
     """
-    Performs the search operation, stopping if no results are found within a one-minute interval.
+    Performs the search operation, managing rate limits and token switching.
 
     Parameters:
     - domain (str): The domain for the search.
     - selected_group (str): The selected search group.
-    - config (dict): The configuration dictionary with GitHub tokens.
-    - max_retries (int): Maximum number of retries for the search in case of rate limit.
-    - search_timeout (int): Maximum time (in seconds) for the entire search operation.
-
-    Returns:
-    - None: This function does not return anything. It performs the search and logs the results.
+    - config (dict): Configuration with GitHub tokens.
+    - max_retries (int): Max retries for search queries.
+    - search_timeout (int): Search operation timeout.
     """
 
     start_time = time.time()  # Start time of the search
-    last_result_time = start_time  # Time when the last result was found
+    last_result_time = start_time  # Last result found time
 
     search_groups = create_search_queries(domain)
-    ignored_filenames = config.get('IGNORED_FILENAMES', [])
 
-    if selected_group == "Search All":
-        groups = search_groups.keys()
-    else:
-        groups = [selected_group]
-
-    for group in groups:
-        if time.time() - start_time >= search_timeout:
-            logging.warning("Search timeout reached, stopping search.")
-            break
-
-        queries = search_groups.get(group, [])
-        for query in queries:
+    for group in (search_groups if selected_group == "Search All" else [selected_group]):
+        for query in search_groups.get(group, []):
             if time.time() - start_time >= search_timeout:
-                logging.warning("Search timeout reached, stopping search.")
+                logging.warning("Search timeout reached.")
                 return
 
-            # Check if one minute has passed since the last result was found
-            if time.time() - last_result_time >=10:
-                logging.warning("No results found in the last minute, stopping search.")
-                #stop search goes here
-                return
-                        # Check rate limit before making a call
-            rate_limit = check_rate_limit(get_headers(config))
-            if rate_limit < 5:  # Pause if rate limit is low
-                time.sleep(60)  # Wait for 60 seconds
-            new_result = process_query(query, max_retries, config, search_timeout, start_time)
-            if new_result:
-                last_result_time = time.time()  # Update the time of the last result
+            retry_count = 0
+            while retry_count < max_retries:
+                try:
+                    search_results = process_query(query, max_retries, config, search_timeout, start_time)
+                    if search_results:
+                        last_result_time = time.time()  # Update last result time
+                        # Process the search results as required
+                    break
+                except RateLimitException:
+                    logging.warning("Rate limit reached, attempting to switch token.")
+                    if switch_token(config):
+                        retry_count += 1
+                    else:
+                        logging.error("All tokens exhausted.")
+                        return
+                except Exception as e:
+                    logging.error(f"Unexpected error: {e}")
+                    break
+
+            if time.time() - last_result_time >= 60:
+                logging.warning("No results found in the last 60 seconds.")
+                break
+
+    logging.info("Search completed for the selected group.")
 
 
-    logging.info("Search completed.")
 
 
 def get_domain_input():
@@ -474,12 +471,12 @@ def switch_token(config):
     """
     if 'GITHUB_TOKENS' in config and len(config['GITHUB_TOKENS']) > 1:
         config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))
-        logging.info(f"Switched to next GitHub token: {config['GITHUB_TOKENS'][0][:4]}****")
+        new_token = config['GITHUB_TOKENS'][0]
+        logging.info(f"Switched to next GitHub token: {new_token[:4]}****")
         return True
     else:
         logging.warning("No additional GitHub tokens available for switching.")
         return False
-
 
 def perform_grouped_searches(domain):
     """
