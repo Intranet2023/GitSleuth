@@ -420,7 +420,7 @@ class GitSleuthGUI(QMainWindow):
             self.results_table.setCellWidget(row_position, 1, repo_link_label)
 
             # File path column with clickable link
-            file_url = f"{repo_url}/blob/master/{file_path}"
+            file_url = f"{repo_url}/blob/main/{file_path}"
             file_link_label = self.create_clickable_link(file_path, file_url)
             self.results_table.setCellWidget(row_position, 2, file_link_label)
 
