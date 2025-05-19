@@ -4,7 +4,6 @@ import time
 import pandas as pd
 import json
 import logging
-import time
 import re
 from GitSleuth_Groups import create_search_queries
 from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit
@@ -21,12 +20,8 @@ from Token_Manager import load_tokens
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
 
-current_token_index = 0
-
 def load_config():
-    """
-    Loads the configuration from 'config.json' and the GitHub tokens from 'tokens.json'.
-    """
+    """Load configuration from ``config.json`` and available GitHub tokens."""
     try:
         with open('config.json', 'r') as file:
             config = json.load(file)
@@ -574,7 +569,7 @@ def perform_custom_search(domain):
                     'search_term': full_query
                 }
                 all_data.append(file_data)
-                process_and_display_data(file_data)
+                process_and_display_data(file_data, full_query)
             else:
                 print(f"No file contents found for {file_path}")
     else:
