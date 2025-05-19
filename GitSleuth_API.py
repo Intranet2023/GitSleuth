@@ -3,22 +3,11 @@ import requests
 import base64
 import logging
 from Token_Manager import load_tokens
-import time
-
 
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
 class RateLimitException(Exception):
     pass
-
-# Function to check the rate limit
-def check_rate_limit(headers):
-    response = requests.get("https://api.github.com/rate_limit", headers=headers)
-    if response.status_code == 200:
-        rate_limit = response.json()['rate']['remaining']
-        return rate_limit
-    else:
-        raise Exception("Failed to check rate limit")
 
 
 def handle_api_response(response):
