@@ -2,77 +2,58 @@
 
 ## Overview
 
-GitSleuth is a comprehensive tool designed for searching GitHub repositories to identify sensitive data, credentials, or specific code patterns. It features a Graphical User Interface (GUI) for ease of use and a Command-Line Interface (CLI) for advanced users.
+GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI.
 
 ## Features
-
-* Detailed GitHub Repository Search: Utilizes predefined or customizable queries for searching repositories.
-* Efficient Rate Limit Management: Implements token swapping to handle GitHub API rate limits.
-* User-Friendly GUI: Provides an intuitive interface for conducting and reviewing searches.
-* Versatile CLI: Offers direct command-line access for automation and advanced use.
-* Result Export: Enables exporting search results to Excel for further analysis.
-* Secure API Token Management: Ensures the secure handling and storage of GitHub API tokens.
+* Predefined and custom search queries
+* Token rotation to handle API rate limits
+* Export results to Excel or CSV
+* Secure token storage
+* Additional search templates in [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
 
 ## Installation
 
 ### Prerequisites
-
 * Python 3.x
-* pip (Python package manager)
-* Git (for cloning the repository)
+* pip
+* Git
 
 ### Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repository/GitSleuth.git
+   cd GitSleuth
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. Clone the GitSleuth repository:
+## Usage
+
+### GUI
 ```bash
-git clone [https://github.com/your-repository/GitSleuth.git](https://github.com/your-repository/GitSleuth.git): [https://github.com/your-repository/GitSleuth.git](https://github.com/your-repository/GitSleuth.git)
-Use code with caution. Learn more
-Navigate to the GitSleuth directory:
-Bash
-cd GitSleuth
-Use code with caution. Learn more
-Install the required Python dependencies:
-pip install -r requirements.txt
-Usage
-Graphical User Interface (GUI)
-Launch the GUI:
-Bash
 python GitSleuth_GUI.py
-Use code with caution. Learn more
-In the GUI:
-Enter the search domain.
-Select the category of queries.
-Initiate the search and view results.
-Export results and manage API tokens.
-Command-Line Interface (CLI)
-Start the CLI mode:
-Bash
+```
+
+### CLI
+```bash
 python GitSleuth.py
+```
 
-
-2. CLI Options:
-    * Set, delete, and view GitHub tokens.
-    * Choose and execute search groups.
-    * Perform custom searches.
-    * Manage application settings.
+CLI options allow setting, deleting and viewing tokens, running search groups, performing custom searches and adjusting settings.
 
 ## Pre-compiled Binary for Windows
-
-A pre-compiled binary for Windows can be found in the `dist` folder of the repository. To run the binary, simply double-click on the `GitSleuth_GUI.exe` file.
+The `dist` folder contains `GitSleuth_GUI.exe` for Windows users.
 
 ## Configuration
-
-Configure `config.json` for settings like log level and ignored filenames. API tokens are managed securely via `Token_Manager.py` and are not stored in `config.json`.
+Edit `config.json` for log level and ignored filenames. API tokens are managed via `Token_Manager.py`.
 
 ## Contributing
-
-Contributions to GitSleuth are welcome. Please follow standard procedures for contributing to open-source projects.
+Contributions are welcome. Please follow standard open-source practices.
 
 ## License
-
-GitSleuth is released under the MIT License.
+Released under the MIT License. See [LICENSE](LICENSE).
 
 ## Support
-
-For support, open an issue on the GitHub repository or contact david.mclaughlin@dsmcl.com .
-
+For support, open an issue on GitHub or contact david.mclaughlin@dsmcl.com.
