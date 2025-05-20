@@ -165,7 +165,7 @@ class GitSleuthGUI(QMainWindow):
         layout.addWidget(QLabel("Domain:"))
         layout.addWidget(self.domain_dropdown)
         # Populate the dropdown with sample domains
-        self.domain_dropdown.addItems(["temp.com", "example.com", "temp.com"])    
+        self.domain_dropdown.addItems(["temp.com", "example.com"])
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
@@ -421,7 +421,7 @@ class GitSleuthGUI(QMainWindow):
             self.results_table.setCellWidget(row_position, 1, repo_link_label)
 
             # File path column with clickable link
-            file_url = f"{repo_url}/blob/master/{file_path}"
+            file_url = f"{repo_url}/blob/main/{file_path}"
             file_link_label = self.create_clickable_link(file_path, file_url)
             self.results_table.setCellWidget(row_position, 2, file_link_label)
 
@@ -472,6 +472,7 @@ class TokenManagementDialog(QDialog):
 
         self.oauth_btn = QPushButton('OAuth Login')
         self.oauth_btn.clicked.connect(self.start_oauth)
+
         btn_layout.addWidget(self.oauth_btn)
 
         self.layout.addLayout(btn_layout)
@@ -538,6 +539,7 @@ class TokenManagementDialog(QDialog):
 
     def start_oauth(self):
         """Initiate OAuth login and refresh the token table."""
+
         oauth_login()
         self.load_tokens()
 

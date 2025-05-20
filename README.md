@@ -28,19 +28,13 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
    pip install -r requirements.txt
    ```
 
-### OAuth Setup
-Default OAuth credentials are included, but you can override them:
-```bash
-export GITHUB_OAUTH_CLIENT_ID=your_client_id
-export GITHUB_OAUTH_CLIENT_SECRET=your_client_secret
-```
-
 ## Usage
 
 ### GUI
 ```bash
 python GitSleuth_GUI.py
 ```
+
 Use "Manage Tokens" > "OAuth Login" to authenticate via GitHub.
 
 ### CLI
@@ -56,6 +50,7 @@ The `dist` folder contains `GitSleuth_GUI.exe` for Windows users.
 
 ## Configuration
 Edit `config.json` for log level and ignored filenames. API tokens are managed via `Token_Manager.py`.
+
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.

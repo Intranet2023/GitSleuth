@@ -386,6 +386,10 @@ def view_github_token():
     else:
         print("No GitHub tokens are currently set.")
 
+def authenticate_via_oauth():
+    """Obtain a GitHub access token using OAuth device flow."""
+    oauth_login()
+
 def clear_screen():
     """
     Clears the terminal screen for a cleaner user experience.
@@ -405,7 +409,11 @@ def get_headers(config):
     if 'GITHUB_TOKENS' in config and config['GITHUB_TOKENS']:
         token = config['GITHUB_TOKENS'][0]  # Using the first token in the list
         logging.debug(f"Using GitHub token: {token[:4]}****")
-        return {'Authorization': f'token {token}'}
+        return {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
     else:
         logging.error("No GitHub tokens are set. Check the configuration.")
         return {}
@@ -593,7 +601,7 @@ def main():
             print("\n1. OAuth Login\n2. Set GitHub Token\n3. Delete GitHub Token\n4. View GitHub Token\n5. Perform Group Searches\n6. Perform Custom Search\n7. Exit")
             choice = input("Enter your choice: ")
             if choice == '1':
-                oauth_login()
+                authenticate_via_oauth()
             elif choice == '2':
                 set_github_token()
             elif choice == '3':
