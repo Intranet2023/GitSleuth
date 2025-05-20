@@ -6,6 +6,11 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 
 ## Features
 * Predefined and custom search queries
+* Token rotation to handle API rate limits
+* Export results to Excel or CSV
+* Secure token storage
+* Additional search templates in [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
+
 * OAuth device flow authentication
 * Export results to Excel or CSV
 
@@ -39,13 +44,24 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 python GitSleuth_GUI.py
 ```
 
-Use "Manage Tokens" > "OAuth Login" to authenticate via GitHub.
-
-
 ### CLI
 ```bash
 python GitSleuth.py
 ```
+
+CLI options allow setting, deleting and viewing tokens, running search groups, performing custom searches and adjusting settings.
+
+## Pre-compiled Binary for Windows
+The `dist` folder contains `GitSleuth_GUI.exe` for Windows users.
+
+## Configuration
+Edit `config.json` for log level and ignored filenames. API tokens are managed via `Token_Manager.py`.
+
+## Contributing
+Contributions are welcome. Please follow standard open-source practices.
+
+## License
+Released under the MIT License. See [LICENSE](LICENSE).
 
 
 CLI options allow OAuth login, running search groups, performing custom searches and adjusting settings.

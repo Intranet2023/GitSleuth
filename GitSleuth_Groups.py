@@ -20,11 +20,14 @@ def create_search_queries(domain):
             f"extension:ppk private {domain} {placeholders}",
             f"filename:id_rsa OR filename:id_dsa {domain} {placeholders}",
             f"filename:wp-config.php {domain} {placeholders}",
+            f"filename:settings.py \"SECRET_KEY\" {domain} {placeholders}",
             f"filename:.htpasswd {domain} {placeholders}",
             f"filename:.env DB_USERNAME NOT homestead {domain} {placeholders}",
             f"filename:credentials aws_access_key_id {domain} {placeholders}",
             f"filename:.s3cfg {domain} {placeholders}",
-            f"filename:.git-credentials {domain} {placeholders}"
+            f"filename:.git-credentials {domain} {placeholders}",
+            f"\"AWS_SECRET_ACCESS_KEY\" {domain} {placeholders}",
+            f"AKIA {domain} {placeholders}",
         ],
         "API Keys and Tokens": [
             f"extension:json api.forecast.io {domain} {placeholders}",
@@ -33,11 +36,16 @@ def create_search_queries(domain):
             f"xoxp OR xoxb {domain} {placeholders}",
             f"filename:github-recovery-codes.txt {domain} {placeholders}",
             f"filename:gitlab-recovery-codes.txt {domain} {placeholders}",
-            f"filename:discord_backup_codes.txt {domain} {placeholders}"
+            f"filename:discord_backup_codes.txt {domain} {placeholders}",
+            f"\"hooks.slack.com/services\" {domain} {placeholders}",
+            f"sk_live_ {domain} {placeholders}",
+            f"AIza {domain} {placeholders}",
+            f"client_secret extension:json {domain} {placeholders}",
         ],
         "Database and Server Configurations": [
             f"extension:sql mysql dump {domain} {placeholders}",
             f"extension:sql mysql dump password {domain} {placeholders}",
+            f"password extension:sql {domain} {placeholders}",
             f"filename:config.json NOT encrypted NOT secure {domain} {placeholders}",
             f"API_BASE_URL {domain} {placeholders}",
             f"filename:azure-pipelines.yml {domain} {placeholders}",
