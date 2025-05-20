@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
                              QFileDialog, QTextEdit, QTabWidget, QAction, QDialog)
 from PyQt5.QtCore import Qt
 from Token_Manager import load_tokens, add_token, delete_token
+from OAuth_Manager import oauth_login
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
 from GitSleuth import get_headers, extract_snippets, switch_token, perform_api_request_with_token_rotation
@@ -469,6 +470,10 @@ class TokenManagementDialog(QDialog):
         self.delete_btn.clicked.connect(self.delete_token)
         btn_layout.addWidget(self.delete_btn)
 
+        self.oauth_btn = QPushButton('OAuth Login')
+        self.oauth_btn.clicked.connect(self.oauth_login)
+        btn_layout.addWidget(self.oauth_btn)
+
         self.layout.addLayout(btn_layout)
 
         # Populate table with existing tokens
@@ -530,6 +535,11 @@ class TokenManagementDialog(QDialog):
             token_name = self.token_table.item(selected_row, 0).text()
             delete_token(token_name)
             self.load_tokens()
+
+    def oauth_login(self):
+        """Perform OAuth login and refresh the token table."""
+        oauth_login()
+        self.load_tokens()
 
 def main():
     """
