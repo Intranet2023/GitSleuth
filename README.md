@@ -19,10 +19,6 @@ al search templates in [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
 
 * Token rotation to handle API rate limits
 * Export results to Excel or CSV
-* Secure token storage
-
-
-
 
 
 ## Installation
@@ -55,8 +51,6 @@ python GitSleuth_GUI.py
 python GitSleuth.py
 ```
 
-
-
 ## Pre-compiled Binary for Windows
 The `dist` folder contains `GitSleuth_GUI.exe` for Windows users.
 
@@ -68,8 +62,6 @@ Contributions are welcome. Please follow standard open-source practices.
 
 ## License
 Released under the MIT License. See [LICENSE](LICENSE).
-
-
 
 
 CLI options allow OAuth login, running search groups, performing custom searches and adjusting settings.
