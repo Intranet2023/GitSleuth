@@ -2,7 +2,10 @@
 import requests
 import base64
 import logging
+import os
+from OAuth_Manager import oauth_login
 from Token_Manager import load_tokens
+
 
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
@@ -53,7 +56,22 @@ def fetch_paginated_data(url, headers, max_items=100):
     return items[:max_items]
 
 
+_OAUTH_TOKEN = None
+
 def get_headers():
+
+    """Return headers for GitHub API requests using an OAuth token."""
+    global _OAUTH_TOKEN
+    if not _OAUTH_TOKEN:
+        _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
+        if not _OAUTH_TOKEN:
+            _OAUTH_TOKEN = oauth_login()
+            if not _OAUTH_TOKEN:
+                return {}
+            os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
+    logging.debug("Using OAuth token")
+    return {"Authorization": f"Bearer {_OAUTH_TOKEN}"}
+
     """
     Generates headers for GitHub API requests using the current token.
     """
@@ -69,6 +87,7 @@ def get_headers():
     else:
         logging.error("No GitHub tokens are available.")
         return {}
+
     
 def get_repo_info(repo_name, headers):
     """
