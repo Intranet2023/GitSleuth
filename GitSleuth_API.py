@@ -3,22 +3,11 @@ import requests
 import base64
 import logging
 from Token_Manager import load_tokens
-import time
-
 
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
 class RateLimitException(Exception):
     pass
-
-# Function to check the rate limit
-def check_rate_limit(headers):
-    response = requests.get("https://api.github.com/rate_limit", headers=headers)
-    if response.status_code == 200:
-        rate_limit = response.json()['rate']['remaining']
-        return rate_limit
-    else:
-        raise Exception("Failed to check rate limit")
 
 
 def handle_api_response(response):
@@ -72,7 +61,11 @@ def get_headers():
     if decrypted_tokens:
         token = list(decrypted_tokens.values())[0]  # Use the first token
         logging.debug(f"Using GitHub token: {token[:10]}****")
-        return {'Authorization': f'token {token}'}
+        return {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
     else:
         logging.error("No GitHub tokens are available.")
         return {}
@@ -187,7 +180,7 @@ def search_github_code(query, headers):
     Returns:
     - list: A list of code search results.
     """
-    search_url = f"{GITHUB_API_URL}search/code?q={query}"
+    search_url = f"{GITHUB_API_URL}search/code?q={query}&per_page=100"
     response = requests.get(search_url, headers=headers)
     return handle_api_response(response)
 

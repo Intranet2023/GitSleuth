@@ -12,7 +12,7 @@ from PyQt5.QtCore import Qt
 from Token_Manager import load_tokens, add_token, delete_token
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
-from GitSleuth import load_config, get_headers, extract_snippets, switch_token, perform_api_request_with_token_rotation
+from GitSleuth import get_headers, extract_snippets, switch_token, perform_api_request_with_token_rotation
 from GitSleuth_API import RateLimitException
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
@@ -20,7 +20,6 @@ from PyQt5.QtWidgets import QTableWidgetItem
 
 CONFIG_FILE = 'config.json'
 
-current_token_index = 0
 
 def load_config():
     """
@@ -165,7 +164,7 @@ class GitSleuthGUI(QMainWindow):
         layout.addWidget(QLabel("Domain:"))
         layout.addWidget(self.domain_dropdown)
         # Populate the dropdown with sample domains
-        self.domain_dropdown.addItems(["temp.com", "example.com", "temp.com"])    
+        self.domain_dropdown.addItems(["temp.com", "example.com"])
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
@@ -272,13 +271,16 @@ class GitSleuthGUI(QMainWindow):
         try:
             with open(filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(["Repository", "File Path", "Snippets"])
+                writer.writerow(["Search Term", "Repository", "File Path", "Snippet"])
                 for row in range(self.results_table.rowCount()):
-                    writer.writerow([
-                        self.results_table.item(row, 0).text(),
-                        self.results_table.item(row, 1).text(),
-                        self.results_table.item(row, 2).text().replace('\n', ' ')
-                    ])
+                    search_term = self.results_table.item(row, 0).text()
+                    repo_widget = self.results_table.cellWidget(row, 1)
+                    repo_text = repo_widget.text() if repo_widget else ""
+                    file_widget = self.results_table.cellWidget(row, 2)
+                    file_text = file_widget.text() if file_widget else ""
+                    snippet_item = self.results_table.item(row, 3)
+                    snippet_text = snippet_item.text().replace('\n', ' ') if snippet_item else ""
+                    writer.writerow([search_term, repo_text, file_text, snippet_text])
             self.status_bar.showMessage("Results exported successfully to " + filename)
         except Exception as e:
             logging.error(f"Error exporting to CSV: {e}")
@@ -418,7 +420,7 @@ class GitSleuthGUI(QMainWindow):
             self.results_table.setCellWidget(row_position, 1, repo_link_label)
 
             # File path column with clickable link
-            file_url = f"{repo_url}/blob/master/{file_path}"
+            file_url = f"{repo_url}/blob/main/{file_path}"
             file_link_label = self.create_clickable_link(file_path, file_url)
             self.results_table.setCellWidget(row_position, 2, file_link_label)
 
@@ -429,7 +431,7 @@ class GitSleuthGUI(QMainWindow):
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
             self.clear_results_button.setEnabled(True)  # Enable the clear results button
-            self.stop_button.setEnabled
+            self.stop_button.setEnabled(False)
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
 
