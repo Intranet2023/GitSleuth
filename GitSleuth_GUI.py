@@ -1,5 +1,6 @@
 #GitSleuth_GUI.py
 import sys
+import os
 import json
 import csv
 import time
@@ -9,23 +10,21 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
                              QTableWidget, QTableWidgetItem, QStatusBar, QProgressBar,
                              QFileDialog, QTextEdit, QTabWidget, QAction, QDialog)
 from PyQt5.QtCore import Qt
-from Token_Manager import load_tokens, add_token, delete_token
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
-from GitSleuth import load_config, get_headers, extract_snippets, switch_token, perform_api_request_with_token_rotation
-from GitSleuth_API import RateLimitException
+from GitSleuth import extract_snippets
+from GitSleuth_API import RateLimitException, get_headers
+from OAuth_Manager import oauth_login
+from OAuth_Manager import oauth_login
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QTableWidgetItem
 
 CONFIG_FILE = 'config.json'
 
-current_token_index = 0
 
 def load_config():
-    """
-    Loads the configuration from 'config.json' and the GitHub tokens from 'tokens.json'.
-    """
+    """Load configuration from 'config.json'."""
     try:
         with open('config.json', 'r') as file:
             config = json.load(file)
@@ -33,10 +32,7 @@ def load_config():
         logging.error("Configuration file not found.")
         config = {}
 
-    # Load and decrypt tokens from Token Manager
-    decrypted_tokens = load_tokens()
-    config['GITHUB_TOKENS'] = list(decrypted_tokens.values()) if decrypted_tokens else []
-    logging.debug(f"Config loaded. Tokens available: {len(config['GITHUB_TOKENS'])}")
+    logging.debug("Config loaded")
     return config
 
 config = load_config()
@@ -216,11 +212,12 @@ class GitSleuthGUI(QMainWindow):
         Args:
             layout (QVBoxLayout): The layout to add the groups editor to.
         """
+
         menu_bar = self.menuBar()
         settings_menu = menu_bar.addMenu('Settings')
-        manage_tokens_action = QAction('Manage Tokens', self)
-        manage_tokens_action.triggered.connect(self.open_token_management)
-        settings_menu.addAction(manage_tokens_action)
+        oauth_action = QAction('OAuth Login', self)
+        oauth_action.triggered.connect(self.start_oauth)
+        settings_menu.addAction(oauth_action)
 
         save_button = QPushButton("Save Searches", self)
         save_button.clicked.connect(self.save_groups_file)
@@ -232,6 +229,15 @@ class GitSleuthGUI(QMainWindow):
         Clears the log text in the log tab.
         """
         self.log_output.clear()
+
+    def start_oauth(self):
+        """Trigger OAuth device flow."""
+        token = oauth_login()
+        if token:
+            os.environ["GITHUB_OAUTH_TOKEN"] = token
+            self.status_bar.showMessage("OAuth login successful")
+        else:
+            self.status_bar.showMessage("OAuth login failed")
     
     def clear_results(self):
         """
@@ -272,13 +278,16 @@ class GitSleuthGUI(QMainWindow):
         try:
             with open(filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(["Repository", "File Path", "Snippets"])
+                writer.writerow(["Search Term", "Repository", "File Path", "Snippet"])
                 for row in range(self.results_table.rowCount()):
-                    writer.writerow([
-                        self.results_table.item(row, 0).text(),
-                        self.results_table.item(row, 1).text(),
-                        self.results_table.item(row, 2).text().replace('\n', ' ')
-                    ])
+                    search_term = self.results_table.item(row, 0).text()
+                    repo_widget = self.results_table.cellWidget(row, 1)
+                    repo_text = repo_widget.text() if repo_widget else ""
+                    file_widget = self.results_table.cellWidget(row, 2)
+                    file_text = file_widget.text() if file_widget else ""
+                    snippet_item = self.results_table.item(row, 3)
+                    snippet_text = snippet_item.text().replace('\n', ' ') if snippet_item else ""
+                    writer.writerow([search_term, repo_text, file_text, snippet_text])
             self.status_bar.showMessage("Results exported successfully to " + filename)
         except Exception as e:
             logging.error(f"Error exporting to CSV: {e}")
@@ -307,12 +316,6 @@ class GitSleuthGUI(QMainWindow):
             logging.error(f"Failed to save Groups file: {e}")
             self.status_bar.showMessage("Error saving Groups file.")
 
-    def open_token_management(self):
-        """
-        Opens the token management dialog.
-        """
-        self.token_management_dialog = TokenManagementDialog(self)
-        self.token_management_dialog.show()
 
     def on_search(self):
         """
@@ -363,19 +366,13 @@ class GitSleuthGUI(QMainWindow):
         retry_count = 0
         while retry_count < max_retries:
             try:
-                headers = get_headers(config)
+                headers = get_headers()
                 search_results = GitSleuth_API.search_github_code(query, headers)
                 self.handle_search_results(search_results, query, headers, search_term)
                 break
             except RateLimitException as e:
-                logging.warning(f"Rate limit reached for token. {str(e)}")
-                time.sleep(60)  # Delay for 60 seconds before retrying
-                if retry_count < max_retries - 1:
-                    if switch_token(config):
-                        logging.info("Switched to a new token.")
-                    else:
-                        logging.error("All tokens exhausted. Unable to proceed with the search.")
-                        break
+                logging.warning(f"Rate limit reached: {str(e)}")
+                time.sleep(60)  # Delay before retrying
                 retry_count += 1
             except Exception as e:
                 logging.error(f"Unexpected error: {e}")
@@ -429,105 +426,10 @@ class GitSleuthGUI(QMainWindow):
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
             self.clear_results_button.setEnabled(True)  # Enable the clear results button
-            self.stop_button.setEnabled
+            self.stop_button.setEnabled(False)
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
 
-class TokenManagementDialog(QDialog):
-    """
-    Dialog for managing API tokens.
-    """
-    def __init__(self, parent=None):
-        """
-        Initializes the Token Management dialog.
-        """
-        super(TokenManagementDialog, self).__init__(parent)
-        self.setWindowTitle('Token Management')
-        self.setGeometry(100, 100, 400, 300)
-        self.layout = QVBoxLayout(self)
-
-        self.setupUI()
-
-    def setupUI(self):
-        """
-        Sets up the UI components for the token management dialog.
-        """
-        # Token Table
-        self.token_table = QTableWidget(0, 2)
-        self.token_table.setHorizontalHeaderLabels(['Token Name', 'Token Value (masked)'])
-        self.layout.addWidget(self.token_table)
-
-        # Add, Delete Buttons
-        btn_layout = QHBoxLayout()
-        self.add_btn = QPushButton('Add Token')
-        self.add_btn.clicked.connect(self.add_token_dialog)
-        btn_layout.addWidget(self.add_btn)
-
-        self.delete_btn = QPushButton('Delete Token')
-        self.delete_btn.clicked.connect(self.delete_token)
-        btn_layout.addWidget(self.delete_btn)
-
-        self.layout.addLayout(btn_layout)
-
-        # Populate table with existing tokens
-        self.load_tokens()
-
-    def load_tokens(self):
-        """
-        Loads and displays the tokens in the table.
-        """
-        tokens = load_tokens()
-        self.token_table.clearContents()
-        self.token_table.setRowCount(len(tokens))
-        for row, (name, _) in enumerate(tokens.items()):
-            self.token_table.setItem(row, 0, QTableWidgetItem(name))
-            self.token_table.setItem(row, 1, QTableWidgetItem("********"))  # Masked token
-
-    def add_token_dialog(self):
-        """
-        Opens a dialog to add a new token.
-        """
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Add Token")
-        layout = QVBoxLayout(dialog)
-
-        name_label = QLabel("Token Name:")
-        self.name_input = QLineEdit(dialog)
-        layout.addWidget(name_label)
-        layout.addWidget(self.name_input)
-
-        token_label = QLabel("Token Value:")
-        self.token_input = QLineEdit(dialog)
-        layout.addWidget(token_label)
-        layout.addWidget(self.token_input)
-
-        add_button = QPushButton("Add", dialog)
-        add_button.clicked.connect(lambda: self.add_token(dialog))
-        layout.addWidget(add_button)
-
-        dialog.setLayout(layout)
-        dialog.exec_()
-
-    def add_token(self, dialog):
-        """
-        Adds a new token to the storage.
-        """
-        token_name = self.name_input.text()
-        token_value = self.token_input.text()
-        if token_name and token_value:
-            add_token(token_name, token_value)
-            self.load_tokens()
-            dialog.close()
-
-    def delete_token(self):
-        """
-        Deletes a selected token.
-        """
-        selected_row = self.token_table.currentRow()
-        if selected_row != -1:
-            token_name = self.token_table.item(selected_row, 0).text()
-            delete_token(token_name)
-            self.load_tokens()
 
 def main():
     """

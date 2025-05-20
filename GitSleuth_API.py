@@ -2,23 +2,13 @@
 import requests
 import base64
 import logging
-from Token_Manager import load_tokens
-import time
-
+import os
+from OAuth_Manager import oauth_login
 
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
 class RateLimitException(Exception):
     pass
-
-# Function to check the rate limit
-def check_rate_limit(headers):
-    response = requests.get("https://api.github.com/rate_limit", headers=headers)
-    if response.status_code == 200:
-        rate_limit = response.json()['rate']['remaining']
-        return rate_limit
-    else:
-        raise Exception("Failed to check rate limit")
 
 
 def handle_api_response(response):
@@ -64,18 +54,20 @@ def fetch_paginated_data(url, headers, max_items=100):
     return items[:max_items]
 
 
+_OAUTH_TOKEN = None
+
 def get_headers():
-    """
-    Generates headers for GitHub API requests using the current token.
-    """
-    decrypted_tokens = load_tokens()  # Load and decrypt tokens
-    if decrypted_tokens:
-        token = list(decrypted_tokens.values())[0]  # Use the first token
-        logging.debug(f"Using GitHub token: {token[:10]}****")
-        return {'Authorization': f'token {token}'}
-    else:
-        logging.error("No GitHub tokens are available.")
-        return {}
+    """Return headers for GitHub API requests using an OAuth token."""
+    global _OAUTH_TOKEN
+    if not _OAUTH_TOKEN:
+        _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
+        if not _OAUTH_TOKEN:
+            _OAUTH_TOKEN = oauth_login()
+            if not _OAUTH_TOKEN:
+                return {}
+            os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
+    logging.debug("Using OAuth token")
+    return {"Authorization": f"Bearer {_OAUTH_TOKEN}"}
     
 def get_repo_info(repo_name, headers):
     """
