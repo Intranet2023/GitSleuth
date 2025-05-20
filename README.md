@@ -35,19 +35,6 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 python GitSleuth_GUI.py
 ```
 
-### CLI
-```bash
-python GitSleuth.py
-```
-
-CLI options allow setting, deleting and viewing tokens, running search groups, performing custom searches and adjusting settings.
-
-## Pre-compiled Binary for Windows
-The `dist` folder contains `GitSleuth_GUI.exe` for Windows users.
-
-## Configuration
-Edit `config.json` for log level and ignored filenames. API tokens are managed via `Token_Manager.py`.
-
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
