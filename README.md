@@ -48,8 +48,6 @@ The `dist` folder contains `GitSleuth_GUI.exe` for Windows users.
 ## Configuration
 Edit `config.json` for log level and ignored filenames. API tokens are managed via `Token_Manager.py`.
 
-## OAuth Authentication
-GitSleuth can obtain an access token using GitHub's device flow. Set the `GITHUB_OAUTH_CLIENT_ID` environment variable to the Client ID of your GitHub OAuth app and choose **OAuth Login** from the CLI or click **OAuth Login** in the GUI's token manager. Follow the displayed instructions and the retrieved token will be saved in `tokens.json`.
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
