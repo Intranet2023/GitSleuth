@@ -2,7 +2,10 @@
 import requests
 import base64
 import logging
+import os
+from OAuth_Manager import oauth_login
 from Token_Manager import load_tokens
+
 
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
@@ -53,7 +56,22 @@ def fetch_paginated_data(url, headers, max_items=100):
     return items[:max_items]
 
 
+_OAUTH_TOKEN = None
+
 def get_headers():
+
+    """Return headers for GitHub API requests using an OAuth token."""
+    global _OAUTH_TOKEN
+    if not _OAUTH_TOKEN:
+        _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
+        if not _OAUTH_TOKEN:
+            _OAUTH_TOKEN = oauth_login()
+            if not _OAUTH_TOKEN:
+                return {}
+            os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
+    logging.debug("Using OAuth token")
+    return {"Authorization": f"Bearer {_OAUTH_TOKEN}"}
+
     """
     Generates headers for GitHub API requests using the current token.
     """
@@ -61,10 +79,15 @@ def get_headers():
     if decrypted_tokens:
         token = list(decrypted_tokens.values())[0]  # Use the first token
         logging.debug(f"Using GitHub token: {token[:10]}****")
-        return {'Authorization': f'token {token}'}
+        return {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
     else:
         logging.error("No GitHub tokens are available.")
         return {}
+
     
 def get_repo_info(repo_name, headers):
     """
@@ -176,7 +199,7 @@ def search_github_code(query, headers):
     Returns:
     - list: A list of code search results.
     """
-    search_url = f"{GITHUB_API_URL}search/code?q={query}"
+    search_url = f"{GITHUB_API_URL}search/code?q={query}&per_page=100"
     response = requests.get(search_url, headers=headers)
     return handle_api_response(response)
 
