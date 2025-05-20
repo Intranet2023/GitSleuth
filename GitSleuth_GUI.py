@@ -471,7 +471,8 @@ class TokenManagementDialog(QDialog):
         btn_layout.addWidget(self.delete_btn)
 
         self.oauth_btn = QPushButton('OAuth Login')
-        self.oauth_btn.clicked.connect(self.oauth_login)
+        self.oauth_btn.clicked.connect(self.start_oauth)
+
         btn_layout.addWidget(self.oauth_btn)
 
         self.layout.addLayout(btn_layout)
@@ -536,8 +537,9 @@ class TokenManagementDialog(QDialog):
             delete_token(token_name)
             self.load_tokens()
 
-    def oauth_login(self):
-        """Perform OAuth login and refresh the token table."""
+    def start_oauth(self):
+        """Initiate OAuth login and refresh the token table."""
+
         oauth_login()
         self.load_tokens()
 
