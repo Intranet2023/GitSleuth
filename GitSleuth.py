@@ -16,6 +16,9 @@ import requests
 from prettytable import PrettyTable
 from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
+from Token_Manager import load_tokens
+
+
 
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
@@ -326,11 +329,38 @@ def save_config(config):
         logging.error(f"Error saving configuration to file: {e}")
 
 
+def authenticate_via_oauth():
+    """Obtain a GitHub access token using OAuth device flow."""
+    oauth_login()
+
 def clear_screen():
     """
     Clears the terminal screen for a cleaner user experience.
     """
     os.system('cls' if platform.system() == 'Windows' else 'clear')
+
+
+def get_headers(config):
+    """
+    Retrieves the headers for GitHub API requests with the current token.
+
+    Parameters:
+    - config (dict): Configuration data including the GitHub tokens.
+
+    Returns:
+    - dict: Headers with the current GitHub token, or an empty dict if no valid token is found.
+    """
+    if 'GITHUB_TOKENS' in config and config['GITHUB_TOKENS']:
+        token = config['GITHUB_TOKENS'][0]  # Using the first token in the list
+        logging.debug(f"Using GitHub token: {token[:4]}****")
+        return {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
+    else:
+        logging.error("No GitHub tokens are set. Check the configuration.")
+        return {}
 
 
 
@@ -497,6 +527,7 @@ def main():
 
     try:
         while True:
+
             print("\n1. OAuth Login\n2. Perform Group Searches\n3. Perform Custom Search\n4. Exit")
             choice = input("Enter your choice: ")
             if choice == '1':
@@ -510,6 +541,25 @@ def main():
                 break
             else:
                 print("Invalid choice. Please enter a number from 1 to 4.")
+            print("\n1. OAuth Login\n2. Set GitHub Token\n3. Delete GitHub Token\n4. View GitHub Token\n5. Perform Group Searches\n6. Perform Custom Search\n7. Exit")
+            choice = input("Enter your choice: ")
+            if choice == '1':
+                authenticate_via_oauth()
+            elif choice == '2':
+                set_github_token()
+            elif choice == '3':
+                delete_github_token()
+            elif choice == '4':
+                view_github_token()
+            elif choice == '5':
+                perform_grouped_searches(domain)
+            elif choice == '6':
+                perform_custom_search(domain)
+            elif choice == '7':
+                print("Exiting the program.")
+                break
+            else:
+                print("Invalid choice. Please enter a number from 1 to 7.")
     except KeyboardInterrupt:
         print("\nInterrupted by user. Saving the data collected so far...")
         formatted_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
