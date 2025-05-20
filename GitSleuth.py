@@ -4,7 +4,6 @@ import time
 import pandas as pd
 import json
 import logging
-import time
 import re
 from GitSleuth_Groups import create_search_queries
 from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit
@@ -21,12 +20,8 @@ from Token_Manager import load_tokens
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
 
-current_token_index = 0
-
 def load_config():
-    """
-    Loads the configuration from 'config.json' and the GitHub tokens from 'tokens.json'.
-    """
+    """Load configuration from ``config.json`` and available GitHub tokens."""
     try:
         with open('config.json', 'r') as file:
             config = json.load(file)
@@ -108,8 +103,9 @@ def process_query(query, max_retries, config, search_timeout, start_time):
         except RateLimitException as e:
             logging.warning(str(e))
             if not switch_token(config):
-                logging.error("All tokens exhausted and rate limit still reached.")
-                return False
+                wait_time = getattr(e, 'wait_time', 60)
+                logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
+                time.sleep(wait_time)
             retry_count += 1
         except Exception as e:
             logging.error(f"Unexpected error occurred: {e}")
@@ -152,13 +148,14 @@ def perform_search(domain, selected_group, config, max_retries=3, search_timeout
                         last_result_time = time.time()  # Update last result time
                         # Process the search results as required
                     break
-                except RateLimitException:
+                except RateLimitException as e:
                     logging.warning("Rate limit reached, attempting to switch token.")
                     if switch_token(config):
                         retry_count += 1
                     else:
-                        logging.error("All tokens exhausted.")
-                        return
+                        wait_time = getattr(e, 'wait_time', 60)
+                        logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
+                        time.sleep(wait_time)
                 except Exception as e:
                     logging.error(f"Unexpected error: {e}")
                     break
@@ -233,9 +230,13 @@ def perform_api_request_with_token_rotation(query, config, max_retries=3):
                 return None
         except RateLimitException as e:
             logging.warning(str(e))
-            if retry_count < max_retries - 1:
-                switch_token(config)  # Rotate the token only if more retries are left
-            retry_count += 1
+            if retry_count < max_retries - 1 and switch_token(config):
+                retry_count += 1
+            else:
+                wait_time = getattr(e, 'wait_time', 60)
+                logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
+                time.sleep(wait_time)
+                retry_count += 1
 
     logging.error("Max retries reached. Unable to complete the API request.")
     return None
@@ -574,7 +575,7 @@ def perform_custom_search(domain):
                     'search_term': full_query
                 }
                 all_data.append(file_data)
-                process_and_display_data(file_data)
+                process_and_display_data(file_data, full_query)
             else:
                 print(f"No file contents found for {file_path}")
     else:
