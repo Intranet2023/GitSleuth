@@ -16,6 +16,7 @@ from prettytable import PrettyTable
 from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens
+from OAuth_Manager import oauth_login
 
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
@@ -385,6 +386,10 @@ def view_github_token():
     else:
         print("No GitHub tokens are currently set.")
 
+def authenticate_via_oauth():
+    """Obtain a GitHub access token using OAuth device flow."""
+    oauth_login()
+
 def clear_screen():
     """
     Clears the terminal screen for a cleaner user experience.
@@ -593,23 +598,25 @@ def main():
 
     try:
         while True:
-            print("\n1. Set GitHub Token\n2. Delete GitHub Token\n3. View GitHub Token\n4. Perform Group Searches\n5. Perform Custom Search\n6. Exit")
+            print("\n1. OAuth Login\n2. Set GitHub Token\n3. Delete GitHub Token\n4. View GitHub Token\n5. Perform Group Searches\n6. Perform Custom Search\n7. Exit")
             choice = input("Enter your choice: ")
             if choice == '1':
-                set_github_token()
+                authenticate_via_oauth()
             elif choice == '2':
-                delete_github_token()
+                set_github_token()
             elif choice == '3':
-                view_github_token()
+                delete_github_token()
             elif choice == '4':
-                perform_grouped_searches(domain)  # Ensure all_data is passed and updated
+                view_github_token()
             elif choice == '5':
-                perform_custom_search(domain)  # Ensure all_data is passed and updated
+                perform_grouped_searches(domain)
             elif choice == '6':
+                perform_custom_search(domain)
+            elif choice == '7':
                 print("Exiting the program.")
                 break
             else:
-                print("Invalid choice. Please enter a number from 1 to 6.")
+                print("Invalid choice. Please enter a number from 1 to 7.")
     except KeyboardInterrupt:
         print("\nInterrupted by user. Saving the data collected so far...")
         formatted_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
