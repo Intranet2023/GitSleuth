@@ -29,6 +29,17 @@ def create_search_queries(domain):
             f"\"AWS_SECRET_ACCESS_KEY\" {domain} {placeholders}",
             f"AKIA {domain} {placeholders}",
         ],
+        "Cloud Provider Secrets": [
+            f"AWS_SECRET_ACCESS_KEY {domain} {placeholders}",
+            f"AWS_ACCESS_KEY_ID {domain} {placeholders}",
+            f"AZURE_CLIENT_SECRET {domain} {placeholders}",
+            f"filename:credentials.json \"private_key_id\" {domain} {placeholders}"
+        ],
+        "Third-Party API Keys": [
+            f"sk_live_ {domain} {placeholders}",
+            f"xoxb- OR xoxp- {domain} {placeholders}",
+            f"SG. {domain} {placeholders}"
+        ],
         "API Keys and Tokens": [
             f"extension:json api.forecast.io {domain} {placeholders}",
             f"HEROKU_API_KEY language:shell {domain} {placeholders}",
@@ -50,6 +61,11 @@ def create_search_queries(domain):
             f"API_BASE_URL {domain} {placeholders}",
             f"filename:azure-pipelines.yml {domain} {placeholders}",
             f"filename:.aws/config {domain} {placeholders}"
+        ],
+        "Private Keys": [
+            f"\"-----BEGIN RSA PRIVATE KEY-----\" {placeholders}",
+            f"extension:pfx {placeholders}",
+            f"extension:jks {placeholders}"
         ],
         "Security and Code Vulnerabilities": [
             f"password 'admin' {domain} {placeholders}",
