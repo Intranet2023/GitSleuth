@@ -6,7 +6,8 @@ import json
 import logging
 import re
 from GitSleuth_Groups import create_search_queries
-from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit
+from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit, get_headers
+from OAuth_Manager import oauth_login
 import GitSleuth_API
 import platform
 import sys
@@ -16,7 +17,8 @@ from prettytable import PrettyTable
 from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens
-from OAuth_Manager import oauth_login
+
+
 
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
@@ -30,11 +32,17 @@ def load_config():
         logging.error("Configuration file not found.")
         config = {}
 
-    # Load and decrypt tokens from Token Manager
-    decrypted_tokens = load_tokens()
-    config['GITHUB_TOKENS'] = list(decrypted_tokens.values()) if decrypted_tokens else []
-    logging.debug(f"Config loaded. Tokens available: {len(config['GITHUB_TOKENS'])}")
+    logging.debug("Config loaded")
     return config
+
+def oauth_login_flow():
+    """Obtain an OAuth token and store it for API requests."""
+    token = oauth_login()
+    if token:
+        os.environ["GITHUB_OAUTH_TOKEN"] = token
+        print("OAuth login successful.")
+    else:
+        print("OAuth login failed.")
 
 def process_search_item(item, query, headers, all_data):
     """
@@ -94,7 +102,7 @@ def process_query(query, max_retries, config, search_timeout, start_time):
     new_result_found = False
     while retry_count < max_retries and time.time() - start_time < search_timeout:
         try:
-            headers = get_headers(config)
+            headers = GitSleuth_API.get_headers()
             search_results = GitSleuth_API.search_github_code(query, headers)
             if search_results and 'items' in search_results:
                 new_result_found = True  # New results were found
@@ -103,9 +111,6 @@ def process_query(query, max_retries, config, search_timeout, start_time):
             break
         except RateLimitException as e:
             logging.warning(str(e))
-            if not switch_token(config):
-                logging.error("All tokens exhausted and rate limit still reached.")
-                return False
             retry_count += 1
         except Exception as e:
             logging.error(f"Unexpected error occurred: {e}")
@@ -149,12 +154,8 @@ def perform_search(domain, selected_group, config, max_retries=3, search_timeout
                         # Process the search results as required
                     break
                 except RateLimitException:
-                    logging.warning("Rate limit reached, attempting to switch token.")
-                    if switch_token(config):
-                        retry_count += 1
-                    else:
-                        logging.error("All tokens exhausted.")
-                        return
+                    logging.warning("Rate limit reached.")
+                    retry_count += 1
                 except Exception as e:
                     logging.error(f"Unexpected error: {e}")
                     break
@@ -219,7 +220,7 @@ def perform_api_request_with_token_rotation(query, config, max_retries=3):
     """
     retry_count = 0
     while retry_count < max_retries:
-        headers = get_headers(config)
+        headers = GitSleuth_API.get_headers()
         try:
             search_results = GitSleuth_API.search_github_code(query, headers)
             if 'items' in search_results:
@@ -229,8 +230,6 @@ def perform_api_request_with_token_rotation(query, config, max_retries=3):
                 return None
         except RateLimitException as e:
             logging.warning(str(e))
-            if retry_count < max_retries - 1:
-                switch_token(config)  # Rotate the token only if more retries are left
             retry_count += 1
 
     logging.error("Max retries reached. Unable to complete the API request.")
@@ -329,62 +328,6 @@ def save_config(config):
     except IOError as e:
         logging.error(f"Error saving configuration to file: {e}")
 
-def set_github_token():
-    """
-    Sets the GitHub tokens in the configuration file.
-
-    Prompts the user to enter GitHub tokens one by one. The entered tokens are saved 
-    to the configuration file. This allows the user to update the GitHub tokens used 
-    for API requests.
-    """
-    tokens = []
-    while True:
-        token = input("Enter a GitHub token (or just press enter to finish): ")
-        if not token:
-            break
-        tokens.append(token)
-    
-    if tokens:
-        config = load_config()
-        config['GITHUB_TOKENS'] = tokens
-        save_config(config)
-        logging.info("GitHub tokens set successfully.")
-    else:
-        logging.info("No tokens entered.")
-
-def delete_github_token():
-    """
-    Deletes the stored GitHub API tokens from the configuration file after confirmation.
-
-    Removes the GitHub tokens from the configuration file if they are present and
-    the user confirms the deletion. This function is useful for clearing outdated 
-    or invalid tokens.
-    """
-    config = load_config()
-    if 'GITHUB_TOKENS' in config:
-        # Display a confirmation message
-        confirm = input("Are you sure you want to delete all GitHub tokens? (yes/no): ").strip().lower()
-        if confirm == 'yes':
-            del config['GITHUB_TOKENS']
-            save_config(config)
-            logging.info("GitHub tokens deleted.")
-        else:
-            logging.info("Token deletion cancelled.")
-    else:
-        logging.info("No GitHub tokens were set.")
-
-def view_github_token():
-    """
-    Displays the currently stored GitHub API tokens.
-
-    Prints the currently stored GitHub tokens to the console. This function 
-    is useful for verifying which tokens are currently in use.
-    """
-    config = load_config()
-    if 'GITHUB_TOKENS' in config:
-        print("Current GitHub tokens:", config['GITHUB_TOKENS'])
-    else:
-        print("No GitHub tokens are currently set.")
 
 def authenticate_via_oauth():
     """Obtain a GitHub access token using OAuth device flow."""
@@ -395,6 +338,7 @@ def clear_screen():
     Clears the terminal screen for a cleaner user experience.
     """
     os.system('cls' if platform.system() == 'Windows' else 'clear')
+
 
 def get_headers(config):
     """
@@ -417,6 +361,7 @@ def get_headers(config):
     else:
         logging.error("No GitHub tokens are set. Check the configuration.")
         return {}
+
 
 
 def extract_snippets(content, query):
@@ -468,19 +413,6 @@ def save_data_to_excel(data_list, domain):
     df.to_excel(filename, index=False)
     print(f"Data saved to {filename}")
 
-def switch_token(config):
-    """
-    Switches between the stored GitHub tokens in a round-robin fashion.
-    Returns True if a new token is switched to, False otherwise.
-    """
-    if 'GITHUB_TOKENS' in config and len(config['GITHUB_TOKENS']) > 1:
-        config['GITHUB_TOKENS'].append(config['GITHUB_TOKENS'].pop(0))
-        new_token = config['GITHUB_TOKENS'][0]
-        logging.info(f"Switched to next GitHub token: {new_token[:4]}****")
-        return True
-    else:
-        logging.warning("No additional GitHub tokens available for switching.")
-        return False
 
 def perform_grouped_searches(domain):
     """
@@ -496,9 +428,6 @@ def perform_grouped_searches(domain):
     ignored_filenames = config.get('IGNORED_FILENAMES', [])
     all_data = []  # Initialize an empty list to store all the search results
 
-    if 'GITHUB_TOKENS' not in config or not config['GITHUB_TOKENS']:
-        logging.error("GitHub tokens are not properly set. Please set them first.")
-        return
 
     # Display available search groups with numbers
     print("Available Search Groups:")
@@ -529,7 +458,7 @@ def perform_grouped_searches(domain):
         queries = updated_search_groups[group_name]
         for query in queries:
             print(f"Executing search for: {query}")
-            headers = get_headers(config)
+            headers = GitSleuth_API.get_headers()
             search_results = GitSleuth_API.search_github_code(query, headers)
             if search_results and 'items' in search_results:
                 process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames)
@@ -558,7 +487,7 @@ def perform_custom_search(domain):
     custom_query = input("Enter your custom search query: ")
     full_query = f"{custom_query} {domain}"  # Appends the domain to the search query
     config = load_config()
-    headers = get_headers(config)
+    headers = GitSleuth_API.get_headers()
     search_results = GitSleuth_API.search_github_code(full_query, headers)
     all_data = []
     if search_results and 'items' in search_results:
@@ -598,6 +527,20 @@ def main():
 
     try:
         while True:
+
+            print("\n1. OAuth Login\n2. Perform Group Searches\n3. Perform Custom Search\n4. Exit")
+            choice = input("Enter your choice: ")
+            if choice == '1':
+                oauth_login_flow()
+            elif choice == '2':
+                perform_grouped_searches(domain)
+            elif choice == '3':
+                perform_custom_search(domain)
+            elif choice == '4':
+                print("Exiting the program.")
+                break
+            else:
+                print("Invalid choice. Please enter a number from 1 to 4.")
             print("\n1. OAuth Login\n2. Set GitHub Token\n3. Delete GitHub Token\n4. View GitHub Token\n5. Perform Group Searches\n6. Perform Custom Search\n7. Exit")
             choice = input("Enter your choice: ")
             if choice == '1':
