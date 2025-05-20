@@ -10,7 +10,10 @@ from Token_Manager import load_tokens
 # Constants for GitHub API
 GITHUB_API_URL = 'https://api.github.com/'
 class RateLimitException(Exception):
-    pass
+    def __init__(self, message, wait_time=None):
+        super().__init__(message)
+        self.wait_time = wait_time
+
 
 
 def handle_api_response(response):
@@ -36,7 +39,9 @@ def handle_api_response(response):
     if response.status_code == 200:
         return response_json
     elif response.status_code == 403 and 'rate limit' in response.text.lower():
-        raise RateLimitException("GitHub API rate limit reached")
+        reset = response.headers.get('X-RateLimit-Reset')
+        wait_time = max(int(reset) - int(time.time()), 0) if reset else None
+        raise RateLimitException("GitHub API rate limit reached", wait_time)
     else:
         logging.error(f"API request failed with status code {response.status_code}: {response.text}")
         return None

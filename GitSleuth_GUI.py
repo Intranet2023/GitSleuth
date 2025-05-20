@@ -377,8 +377,18 @@ class GitSleuthGUI(QMainWindow):
                 self.handle_search_results(search_results, query, headers, search_term)
                 break
             except RateLimitException as e:
+
+                logging.warning(f"Rate limit reached for token. {str(e)}")
+                if retry_count < max_retries - 1 and switch_token(config):
+                    logging.info("Switched to a new token.")
+                else:
+                    wait_time = getattr(e, 'wait_time', 60)
+                    logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
+                    time.sleep(wait_time)
+
                 logging.warning(f"Rate limit reached: {str(e)}")
                 time.sleep(60)  # Delay before retrying
+
                 retry_count += 1
             except Exception as e:
                 logging.error(f"Unexpected error: {e}")

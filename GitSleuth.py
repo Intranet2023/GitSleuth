@@ -112,6 +112,11 @@ def process_query(query, max_retries, config, search_timeout, start_time):
             break
         except RateLimitException as e:
             logging.warning(str(e))
+            if not switch_token(config):
+                wait_time = getattr(e, 'wait_time', 60)
+                logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
+                time.sleep(wait_time)
+
             retry_count += 1
         except Exception as e:
             logging.error(f"Unexpected error occurred: {e}")
@@ -154,9 +159,20 @@ def perform_search(domain, selected_group, config, max_retries=3, search_timeout
                         last_result_time = time.time()  # Update last result time
                         # Process the search results as required
                     break
+
+                except RateLimitException as e:
+                    logging.warning("Rate limit reached, attempting to switch token.")
+                    if switch_token(config):
+                        retry_count += 1
+                    else:
+                        wait_time = getattr(e, 'wait_time', 60)
+                        logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
+                        time.sleep(wait_time)
+
                 except RateLimitException:
                     logging.warning("Rate limit reached.")
                     retry_count += 1
+
                 except Exception as e:
                     logging.error(f"Unexpected error: {e}")
                     break
@@ -231,7 +247,16 @@ def perform_api_request_with_token_rotation(query, config, max_retries=3):
                 return None
         except RateLimitException as e:
             logging.warning(str(e))
+
+            if retry_count < max_retries - 1 and switch_token(config):
+                retry_count += 1
+            else:
+                wait_time = getattr(e, 'wait_time', 60)
+                logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
+                time.sleep(wait_time)
+                retry_count += 1
             retry_count += 1
+
 
     logging.error("Max retries reached. Unable to complete the API request.")
     return None
