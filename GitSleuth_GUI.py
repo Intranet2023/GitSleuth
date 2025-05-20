@@ -1,5 +1,6 @@
 #GitSleuth_GUI.py
 import sys
+import os
 import json
 import csv
 import time
@@ -8,8 +9,15 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEd
                              QPushButton, QVBoxLayout, QHBoxLayout, QComboBox,
                              QTableWidget, QTableWidgetItem, QStatusBar, QProgressBar,
                              QFileDialog, QTextEdit, QTabWidget, QAction, QDialog)
-from PyQt5.QtCore import Qt
+
+import GitSleuth_API
+from GitSleuth_Groups import create_search_queries
+from GitSleuth import extract_snippets
+from GitSleuth_API import RateLimitException, get_headers
+from OAuth_Manager import oauth_login
+from OAuth_Manager import oauth_login
 from Token_Manager import load_tokens, add_token, delete_token
+from OAuth_Manager import oauth_login
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
 from GitSleuth import get_headers, extract_snippets, switch_token, perform_api_request_with_token_rotation
@@ -22,9 +30,7 @@ CONFIG_FILE = 'config.json'
 
 
 def load_config():
-    """
-    Loads the configuration from 'config.json' and the GitHub tokens from 'tokens.json'.
-    """
+    """Load configuration from 'config.json'."""
     try:
         with open('config.json', 'r') as file:
             config = json.load(file)
@@ -32,10 +38,7 @@ def load_config():
         logging.error("Configuration file not found.")
         config = {}
 
-    # Load and decrypt tokens from Token Manager
-    decrypted_tokens = load_tokens()
-    config['GITHUB_TOKENS'] = list(decrypted_tokens.values()) if decrypted_tokens else []
-    logging.debug(f"Config loaded. Tokens available: {len(config['GITHUB_TOKENS'])}")
+    logging.debug("Config loaded")
     return config
 
 config = load_config()
@@ -164,7 +167,7 @@ class GitSleuthGUI(QMainWindow):
         layout.addWidget(QLabel("Domain:"))
         layout.addWidget(self.domain_dropdown)
         # Populate the dropdown with sample domains
-        self.domain_dropdown.addItems(["temp.com", "example.com", "temp.com"])    
+        self.domain_dropdown.addItems(["temp.com", "example.com"])
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
@@ -215,11 +218,12 @@ class GitSleuthGUI(QMainWindow):
         Args:
             layout (QVBoxLayout): The layout to add the groups editor to.
         """
+
         menu_bar = self.menuBar()
         settings_menu = menu_bar.addMenu('Settings')
-        manage_tokens_action = QAction('Manage Tokens', self)
-        manage_tokens_action.triggered.connect(self.open_token_management)
-        settings_menu.addAction(manage_tokens_action)
+        oauth_action = QAction('OAuth Login', self)
+        oauth_action.triggered.connect(self.start_oauth)
+        settings_menu.addAction(oauth_action)
 
         save_button = QPushButton("Save Searches", self)
         save_button.clicked.connect(self.save_groups_file)
@@ -231,6 +235,15 @@ class GitSleuthGUI(QMainWindow):
         Clears the log text in the log tab.
         """
         self.log_output.clear()
+
+    def start_oauth(self):
+        """Trigger OAuth device flow."""
+        token = oauth_login()
+        if token:
+            os.environ["GITHUB_OAUTH_TOKEN"] = token
+            self.status_bar.showMessage("OAuth login successful")
+        else:
+            self.status_bar.showMessage("OAuth login failed")
     
     def clear_results(self):
         """
@@ -309,12 +322,6 @@ class GitSleuthGUI(QMainWindow):
             logging.error(f"Failed to save Groups file: {e}")
             self.status_bar.showMessage("Error saving Groups file.")
 
-    def open_token_management(self):
-        """
-        Opens the token management dialog.
-        """
-        self.token_management_dialog = TokenManagementDialog(self)
-        self.token_management_dialog.show()
 
     def on_search(self):
         """
@@ -365,11 +372,12 @@ class GitSleuthGUI(QMainWindow):
         retry_count = 0
         while retry_count < max_retries:
             try:
-                headers = get_headers(config)
+                headers = get_headers()
                 search_results = GitSleuth_API.search_github_code(query, headers)
                 self.handle_search_results(search_results, query, headers, search_term)
                 break
             except RateLimitException as e:
+
                 logging.warning(f"Rate limit reached for token. {str(e)}")
                 if retry_count < max_retries - 1 and switch_token(config):
                     logging.info("Switched to a new token.")
@@ -377,6 +385,10 @@ class GitSleuthGUI(QMainWindow):
                     wait_time = getattr(e, 'wait_time', 60)
                     logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
                     time.sleep(wait_time)
+
+                logging.warning(f"Rate limit reached: {str(e)}")
+                time.sleep(60)  # Delay before retrying
+
                 retry_count += 1
             except Exception as e:
                 logging.error(f"Unexpected error: {e}")
@@ -419,7 +431,7 @@ class GitSleuthGUI(QMainWindow):
             self.results_table.setCellWidget(row_position, 1, repo_link_label)
 
             # File path column with clickable link
-            file_url = f"{repo_url}/blob/master/{file_path}"
+            file_url = f"{repo_url}/blob/main/{file_path}"
             file_link_label = self.create_clickable_link(file_path, file_url)
             self.results_table.setCellWidget(row_position, 2, file_link_label)
 
@@ -433,6 +445,7 @@ class GitSleuthGUI(QMainWindow):
             self.stop_button.setEnabled(False)
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
+
 
 class TokenManagementDialog(QDialog):
     """
@@ -467,6 +480,11 @@ class TokenManagementDialog(QDialog):
         self.delete_btn = QPushButton('Delete Token')
         self.delete_btn.clicked.connect(self.delete_token)
         btn_layout.addWidget(self.delete_btn)
+
+        self.oauth_btn = QPushButton('OAuth Login')
+        self.oauth_btn.clicked.connect(self.start_oauth)
+
+        btn_layout.addWidget(self.oauth_btn)
 
         self.layout.addLayout(btn_layout)
 
@@ -529,6 +547,12 @@ class TokenManagementDialog(QDialog):
             token_name = self.token_table.item(selected_row, 0).text()
             delete_token(token_name)
             self.load_tokens()
+
+    def start_oauth(self):
+        """Initiate OAuth login and refresh the token table."""
+
+        oauth_login()
+        self.load_tokens()
 
 def main():
     """
