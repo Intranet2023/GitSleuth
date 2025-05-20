@@ -8,6 +8,7 @@ import re
 from GitSleuth_Groups import create_search_queries
 from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit, get_headers
 from OAuth_Manager import oauth_login
+
 import GitSleuth_API
 import platform
 import sys
