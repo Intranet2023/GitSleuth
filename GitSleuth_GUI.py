@@ -203,7 +203,11 @@ class GitSleuthGUI(QMainWindow):
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
         layout.addWidget(self.stop_button)
-    
+
+        self.oauth_button = QPushButton("OAuth Login", self)
+        self.oauth_button.clicked.connect(self.start_oauth)
+        layout.addWidget(self.oauth_button)
+
         # Adding a Quit button
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.clicked.connect(self.close)  # Connects to the close method of the window
