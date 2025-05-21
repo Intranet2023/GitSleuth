@@ -4,13 +4,13 @@
 GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI.
 
 ## Features
-- Predefined and custom search queries
-- Token rotation to handle API rate limits
-- OAuth device flow authentication
+- Predefined and custom search queries with extensive templates from
+  [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and
+  [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
+- OAuth device flow authentication with token rotation and secure token
+  storage to handle API rate limits
 - Export results to Excel or CSV
-- Secure token storage
-- Extensive templates in [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
-- Sleek dark theme (GUI) without the old rule editor pane
+- Sleek dark theme for the GUI
 
 ## Installation
 ### Prerequisites
@@ -40,6 +40,13 @@ The GUI now defaults to a dark theme for improved readability and no longer
 ```bash
 python GitSleuth.py
 ```
+
+## Cleaning up old branches
+Remove merged branches locally and remotely by running:
+```bash
+python cleanup_branches.py
+```
+This skips `main` and any branch containing `protected`.
 
 ## Configuration
 Edit `config.json` to adjust log level and ignored filenames.
