@@ -1,28 +1,62 @@
-# AGENTS.md
+# Automated Git Merge Conflict Resolution
 
-This file provides instructions for automation agents (bots, scripts) managing repository operations.
+This document provides detailed rules for automation agents (bots or AI scripts) to automatically resolve Git merge conflicts consistently and safely, prioritizing incoming changes.
 
-## Merge Conflicts
+## Conflict Resolution Workflow
 
-If an agent encounters a merge conflict during an automated merge:
+### Environment Preparation
+- Confirm working directory is clean (`git status`).
+- Ensure local branch is up-to-date (`git pull`).
 
-- **Check** if the conflict is only whitespace or formatting-related:
-  - If so, auto-resolve by accepting the incoming changes.
-- If code changes conflict:
-  - Create a notification via email or Slack to the repository maintainer.
-  - Do NOT auto-merge code changes.
-  - Tag the PR as "needs human review".
+### Conflict Identification
+- Detect conflicts using `git merge` or `git rebase`.
 
-## Pull Request Issues
+### Resolution Rules
+#### Whitespace and Formatting Conflicts
+- Automatically resolve by accepting incoming changes.
 
-- If a pull request fails automated tests:
-  - Post a comment in the PR with the failure details.
-  - Tag the PR as "failing tests".
-- If the PR includes security vulnerabilities detected by Dependabot:
-  - Auto-close PR and inform the submitter to address security concerns first.
+#### Line-Level Code Conflicts
+- **Do not** auto-merge conflicting code changes.
+- Notify maintainers via email or Slack.
+- Tag the pull request as `needs human review`.
 
-## Branch Management
+#### Deletion vs. Modification Conflicts
+- If the incoming branch deleted a file or line, remove it from the target.
+- If the incoming branch modified content deleted locally, restore and keep the incoming changes.
 
-- Delete feature branches once merged into `main`.
-- Do NOT delete branches labeled as "protected".
+#### Concurrent Additions
+- Preserve both incoming and local additions when independent, ordering incoming additions first.
+- If duplicates or conflicts arise, prefer the incoming additions exclusively.
 
+#### Binary or Unmergeable Files
+- Always choose the incoming branch's version.
+
+#### Other Complex Conflicts
+- Default to incoming branch changes.
+- If the conflict is overly complex (e.g., large code blocks), notify maintainers and tag the PR as `needs human review`.
+
+### Pull Request Issues
+- If automated tests fail on a pull request, post a comment detailing the failure and tag the PR as `failing tests`.
+- If Dependabot reports security vulnerabilities, auto-close the PR and notify the submitter.
+
+### Branch Management
+- Delete feature branches automatically after merging into `main`.
+- Do **not** delete branches labeled `protected`.
+
+### Fallback Strategies
+- Halt automation and alert maintainers when conflicts exceed complexity thresholds or resolution is uncertain.
+- Log unresolved conflicts in detail for maintainers.
+
+### Safety Precautions
+- Record all decisions and actions.
+- Verify removal of conflict markers.
+- Check syntax or compile the code after resolving conflicts.
+- Run available tests and abort the merge if validation fails, alerting maintainers immediately.
+
+### Commit and Push Procedures
+- Stage all resolved changes with `git add -A` and ensure no unresolved paths (`git status`).
+- Commit with a clear message indicating automatic conflict resolution, e.g.,
+  `Merge branch 'feature-branch' into 'main' (Auto-resolved conflicts)`.
+- Push to the remote repository (`git push`) and monitor CI status, alerting maintainers of any issues immediately.
+
+Following these rules ensures reliable automated merge conflict resolution, maintaining codebase integrity and consistency.

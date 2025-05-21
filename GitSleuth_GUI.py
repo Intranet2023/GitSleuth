@@ -239,11 +239,13 @@ class GitSleuthGUI(QMainWindow):
         self.log_output.clear()
 
     def start_oauth(self):
-        """Trigger OAuth device flow."""
-        token = oauth_login()
+        """Trigger OAuth device flow and update UI."""
+        token, username = oauth_login()
         if token:
             os.environ["GITHUB_OAUTH_TOKEN"] = token
             self.status_bar.showMessage("OAuth login successful")
+            if hasattr(self, "oauth_btn"):
+                self.oauth_btn.setText(f"Logged in as: {username}")
         else:
             self.status_bar.showMessage("OAuth login failed")
     
@@ -530,8 +532,9 @@ class TokenManagementDialog(QDialog):
 
     def start_oauth(self):
         """Initiate OAuth login and refresh the token table."""
-
-        oauth_login()
+        token, username = oauth_login()
+        if token:
+            self.oauth_btn.setText(f"Logged in as: {username}")
         self.load_tokens()
 
 def main():

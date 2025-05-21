@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import requests
+import webbrowser
 
 from Token_Manager import add_token
 
@@ -43,21 +44,38 @@ def poll_for_token(device_code, interval):
         raise RuntimeError(result.get('error_description', 'OAuth failed'))
 
 
+def fetch_username(token):
+    """Return the GitHub username associated with the token."""
+    headers = {'Authorization': f'token {token}', 'Accept': 'application/json'}
+    response = requests.get('https://api.github.com/user', headers=headers)
+    try:
+        response.raise_for_status()
+        return response.json().get('login', '')
+    except Exception as exc:
+        logging.error(f'Failed to fetch username: {exc}')
+        return ''
+
+
 def oauth_login(token_name='oauth_token'):
     try:
         device_info = initiate_device_flow()
     except Exception as exc:
         logging.error(f'Failed to start OAuth flow: {exc}')
-        return None
+        return None, ''
 
     print(f"Open {device_info['verification_uri']} and enter code {device_info['user_code']}")
+    try:
+        webbrowser.open(device_info['verification_uri'])
+    except Exception as exc:
+        logging.warning(f'Failed to open browser: {exc}')
     try:
         token = poll_for_token(device_info['device_code'], device_info.get('interval', 5))
     except Exception as exc:
         logging.error(f'OAuth error: {exc}')
-        return None
+        return None, ''
 
     add_token(token_name, token)
     logging.info('OAuth token stored successfully.')
     os.environ['GITHUB_OAUTH_TOKEN'] = token
-    return token
+    username = fetch_username(token)
+    return token, username
