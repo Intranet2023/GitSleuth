@@ -69,7 +69,7 @@ def _save_tokens(tokens):
         json.dump(tokens, f)
 
 def add_token(name, token):
-
+    """Add a new token to the token store."""
     tokens = load_tokens()
     tokens[name] = token
     _save_tokens(tokens)
@@ -77,6 +77,7 @@ def add_token(name, token):
 
 def delete_token(name: str) -> None:
 def delete_token(name):
+    """Remove a token by name if it exists."""
 
     tokens = load_tokens()
     if name in tokens:
