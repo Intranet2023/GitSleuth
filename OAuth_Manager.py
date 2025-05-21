@@ -41,7 +41,9 @@ def initiate_device_flow():
 
 
 def poll_for_token(device_code, interval):
-    """Poll GitHub for the OAuth token using the provided device code."""
+
+    """Poll GitHub for an OAuth token."""
+
     data = {
 
         "client_id": CLIENT_ID,
@@ -58,6 +60,7 @@ def poll_for_token(device_code, interval):
         "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
         "client_secret": CLIENT_SECRET,
     }
+
     headers = {"Accept": "application/json"}
 
     while True:
@@ -70,7 +73,6 @@ def poll_for_token(device_code, interval):
         if result.get("error") == "authorization_pending":
             continue
         raise RuntimeError(result.get("error_description", "OAuth failed"))
-
 
 def fetch_username(token):
     try:
@@ -86,6 +88,7 @@ def fetch_username(token):
     except Exception as exc:
         logging.error(f'Error fetching username: {exc}')
     return None
+
 
 
 def oauth_login(token_name='oauth_token'):
