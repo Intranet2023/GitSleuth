@@ -3,7 +3,9 @@
 import os
 import json
 from cryptography.fernet import Fernet
-
+import json
+import os
+import logging
 TOKEN_FILE = 'tokens.json'
 KEY_FILE = 'token_key.key'
 
@@ -46,12 +48,10 @@ def _save_tokens(tokens: dict) -> None:
 
 
 def add_token(name: str, token: str) -> None:
-
-import json
-import os
-import logging
-
-TOKEN_FILE = 'tokens.json'
+    """Add a new token to the token store."""
+    tokens = load_tokens()
+    tokens[name] = token
+    _save_tokens(tokens)    
 
 def load_tokens():
     """Load saved GitHub tokens from TOKEN_FILE."""
