@@ -4,13 +4,13 @@
 GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI.
 
 ## Features
-- Predefined and custom search queries
-- Token rotation to handle API rate limits
-- OAuth device flow authentication
+- Predefined and custom search queries with extensive templates from
+  [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and
+  [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
+- OAuth device flow authentication with token rotation and secure token
+  storage to handle API rate limits
 - Export results to Excel or CSV
-- Secure token storage
-- Extensive templates in [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
-- Sleek dark theme (GUI) without the old rule editor pane
+- Sleek dark theme for the GUI
 
 ## Installation
 ### Prerequisites
@@ -42,7 +42,10 @@ python GitSleuth.py
 ```
 
 ## Configuration
-Edit `config.json` to adjust log level and ignored filenames.
+Edit `config.json` to adjust log level and ignored filenames. The
+application ships with a default GitHub OAuth client ID so it works out of
+the box. Set `GITHUB_OAUTH_CLIENT_ID` to override it and define
+`GITHUB_OAUTH_CLIENT_SECRET` if your OAuth app requires a secret.
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
