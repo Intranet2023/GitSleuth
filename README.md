@@ -37,6 +37,9 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 python GitSleuth_GUI.py
 ```
 
+The GUI now defaults to a dark theme and includes an OAuth Login button for authentication.
+
+
 The GUI now defaults to a dark theme for improved readability. Click the
 **OAuth Login** button to authenticate via GitHub's device flow.
 
@@ -45,6 +48,8 @@ The GUI now defaults to a dark theme for improved readability. Click the
 ```bash
 python GitSleuth.py
 ```
+When starting OAuth authentication, your default browser will automatically open
+to the GitHub device flow page so you can enter the provided code.
 
 ## Configuration
 Edit `config.json` to adjust log level and ignored filenames.
