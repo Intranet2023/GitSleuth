@@ -15,7 +15,9 @@ TOKEN_URL = 'https://github.com/login/oauth/access_token'
 
 def initiate_device_flow():
     if not CLIENT_ID:
-        raise RuntimeError('GITHUB_OAUTH_CLIENT_ID environment variable not set.')
+        raise RuntimeError(
+            "GITHUB_OAUTH_CLIENT_ID environment variable not set." 
+        )
     data = {'client_id': CLIENT_ID, 'scope': SCOPE}
     headers = {'Accept': 'application/json'}
     response = requests.post(DEVICE_URL, data=data, headers=headers)
@@ -24,11 +26,12 @@ def initiate_device_flow():
 
 
 def poll_for_token(device_code, interval):
+    """Poll GitHub for the OAuth token using the provided device code."""
     data = {
-        'client_id': CLIENT_ID,
-        'device_code': device_code,
-        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
-        'client_secret': CLIENT_SECRET,
+        "client_id": CLIENT_ID,
+        "device_code": device_code,
+        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+        "client_secret": CLIENT_SECRET,
     }
     headers = {'Accept': 'application/json'}
     while True:
