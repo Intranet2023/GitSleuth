@@ -65,16 +65,19 @@ def poll_for_token(device_code, interval):
 
 
 def fetch_username(token):
-
-    """Return the GitHub username associated with the token."""
-    headers = {"Authorization": f"token {token}", "Accept": "application/json"}
     try:
-        response = requests.get("https://api.github.com/user", headers=headers, timeout=10)
-        response.raise_for_status()
-        return response.json().get("login")
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Accept': 'application/vnd.github+json'
+        }
+        resp = requests.get('https://api.github.com/user', headers=headers)
+        if resp.status_code == 200:
+            return resp.json().get('login')
+        else:
+            logging.error(f'Failed to fetch username: {resp.text}')
     except Exception as exc:
-        logging.error(f"Failed to fetch username: {exc}")
-        return None
+        logging.error(f'Error fetching username: {exc}')
+    return None
 
 
 def oauth_login(token_name='oauth_token'):
@@ -89,7 +92,6 @@ def oauth_login(token_name='oauth_token'):
     except Exception as exc:
         logging.error(f"Failed to fetch GitHub username: {exc}")
         return None
-
 
     verification_url = device_info['verification_uri']
     user_code = device_info['user_code']
@@ -120,49 +122,4 @@ def oauth_login(token_name='oauth_token'):
         except Exception as exc:
             logging.warning(f"Failed to copy code to clipboard: {exc}")
 
-def oauth_login(token_name="oauth_token"):
-    """Run the OAuth device flow and store the token.
 
-    Returns a tuple of (token, username) on success or (None, None) on failure.
-    """
-    if not CLIENT_ID or not CLIENT_SECRET:
-        logging.error("OAuth client credentials are not set.")
-        return None, None
-
-    try:
-        device_info = initiate_device_flow()
-    except Exception as exc:
-        logging.error(f"Failed to start OAuth flow: {exc}")
-        return None, None
-
-    print(
-        f"Open {device_info['verification_uri']} and enter code {device_info['user_code']}"
-    )
-
-    if pyperclip:
-        try:
-            pyperclip.copy(device_info["user_code"])
-            logging.info("Verification code copied to clipboard.")
-        except Exception as exc:
-            logging.warning(f"Could not copy code to clipboard: {exc}")
-
-    try:
-        webbrowser.open(device_info["verification_uri"], new=2)
-    except Exception as exc:
-        logging.warning(f"Could not open browser automatically: {exc}")
-
-    try:
-        token = poll_for_token(
-            device_info["device_code"], device_info.get("interval", 5)
-        )
-    except Exception as exc:
-        logging.error(f"OAuth error: {exc}")
-        return None, None
-
-    add_token(token_name, token)
-
-    logging.info('OAuth token stored successfully.')
-    os.environ['GITHUB_OAUTH_TOKEN'] = token
-
-    username = fetch_username(token)
-    return token, username

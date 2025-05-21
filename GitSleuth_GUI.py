@@ -255,6 +255,7 @@ class GitSleuthGUI(QMainWindow):
 
         token, username = oauth_login()
         if token:
+
             os.environ["GITHUB_OAUTH_TOKEN"] = token
             if hasattr(self, 'oauth_btn') and username:
                 self.oauth_btn.setText(f"Logged in as: {username}")
@@ -564,8 +565,6 @@ class TokenManagementDialog(QDialog):
             os.environ["GITHUB_OAUTH_TOKEN"] = token
             if username:
                 self.oauth_btn.setText(f"Logged in as: {username}")
-
-
         self.load_tokens()
 
 def main():
