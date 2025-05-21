@@ -1,9 +1,10 @@
 # GitSleuth
 
-## Overview
-GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI.
+
+GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI with a dark theme.
 
 ## Features
+
 - Predefined and custom search queries with extensive templates from
   [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and
   [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
@@ -20,6 +21,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 
 ### Steps
 1. Clone the repository
+
    ```bash
    git clone https://github.com/your-repository/GitSleuth.git
    cd GitSleuth
@@ -34,7 +36,10 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 ```bash
 python GitSleuth_GUI.py
 ```
-The GUI now defaults to a dark theme for improved readability and no longer
+
+The GUI now defaults to a dark theme for improved readability. Click the
+**OAuth Login** button to authenticate via GitHub's device flow.
+
 
 ### CLI
 ```bash
@@ -46,6 +51,7 @@ Edit `config.json` to adjust log level and ignored filenames.
 The OAuth flow uses a default GitHub client ID of `Iv23liC8cOnETRR9IEV4`.
 Set the `GITHUB_OAUTH_CLIENT_ID` environment variable to override it and
 `GITHUB_OAUTH_CLIENT_SECRET` for private applications.
+
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
