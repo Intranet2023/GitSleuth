@@ -203,7 +203,12 @@ class GitSleuthGUI(QMainWindow):
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
         layout.addWidget(self.stop_button)
-    
+
+        # OAuth login button
+        self.oauth_button = QPushButton("OAuth Login", self)
+        self.oauth_button.clicked.connect(self.start_oauth)
+        layout.addWidget(self.oauth_button)
+
         # Adding a Quit button
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.clicked.connect(self.close)  # Connects to the close method of the window
@@ -239,10 +244,14 @@ class GitSleuthGUI(QMainWindow):
         self.log_output.clear()
 
     def start_oauth(self):
+
         """Trigger OAuth device flow and update UI."""
+
         token, username = oauth_login()
         if token:
             os.environ["GITHUB_OAUTH_TOKEN"] = token
+            if hasattr(self, 'oauth_btn') and username:
+                self.oauth_btn.setText(f"Logged in as: {username}")
             self.status_bar.showMessage("OAuth login successful")
             if hasattr(self, "oauth_btn"):
                 self.oauth_btn.setText(f"Logged in as: {username}")
