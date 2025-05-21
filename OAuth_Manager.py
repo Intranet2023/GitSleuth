@@ -2,6 +2,8 @@ import os
 import requests
 import time
 import logging
+
+import requests
 import webbrowser
 
 try:
@@ -10,8 +12,6 @@ except Exception:  # pragma: no cover - optional dependency
     pyperclip = None
 
 from Token_Manager import add_token
-
-# Default GitHub OAuth client ID used if no environment variable is provided
 DEFAULT_CLIENT_ID = "Iv23liC8cOnETRR9IEV4"
 
 # OAuth device flow URLs and configuration
@@ -25,8 +25,12 @@ SCOPE = os.getenv("GITHUB_OAUTH_SCOPE", "repo")
 
 
 def initiate_device_flow():
-    data = {"client_id": CLIENT_ID, "scope": SCOPE}
-    headers = {"Accept": "application/json"}
+    # CLIENT_ID is always populated with the built-in ID unless overridden.
+    if not CLIENT_ID:
+        logging.error('OAuth client credentials are not set.')
+        return None
+    data = {'client_id': CLIENT_ID, 'scope': SCOPE}
+    headers = {'Accept': 'application/json'}
     response = requests.post(DEVICE_URL, data=data, headers=headers)
     response.raise_for_status()
     return response.json()
@@ -34,12 +38,20 @@ def initiate_device_flow():
 
 def poll_for_token(device_code, interval):
     data = {
+        'client_id': CLIENT_ID,
+        'device_code': device_code,
+        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
+    }
+    if CLIENT_SECRET:
+        data['client_secret'] = CLIENT_SECRET
+    headers = {'Accept': 'application/json'}
         "client_id": CLIENT_ID,
         "device_code": device_code,
         "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
         "client_secret": CLIENT_SECRET,
     }
     headers = {"Accept": "application/json"}
+
     while True:
         time.sleep(interval)
         response = requests.post(TOKEN_URL, data=data, headers=headers)
@@ -63,6 +75,19 @@ def fetch_username(token):
         logging.error(f"Failed to fetch GitHub username: {exc}")
         return None
 
+    url = device_info['verification_uri']
+    code = device_info['user_code']
+    print(f"Open {url} and enter code {code}")
+    try:
+        webbrowser.open(url)
+    except Exception as exc:
+        logging.warning(f"Unable to open web browser automatically: {exc}")
+    if pyperclip:
+        try:
+            pyperclip.copy(code)
+            logging.info("OAuth code copied to clipboard")
+        except Exception as exc:
+            logging.warning(f"Failed to copy code to clipboard: {exc}")
 
 def oauth_login(token_name="oauth_token"):
     """Run the OAuth device flow and store the token.
