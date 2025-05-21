@@ -17,7 +17,7 @@ import requests
 from prettytable import PrettyTable
 from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
-from Token_Manager import load_tokens
+from Token_Manager import load_tokens, switch_token as rotate_token
 
 
 
@@ -389,6 +389,11 @@ def get_headers(config):
         return {}
 
 
+def switch_token(config=None):
+    """Rotate the current OAuth token using saved tokens."""
+    return rotate_token(config)
+
+
 
 def extract_snippets(content, query):
     """
@@ -567,25 +572,6 @@ def main():
                 break
             else:
                 print("Invalid choice. Please enter a number from 1 to 4.")
-            print("\n1. OAuth Login\n2. Set GitHub Token\n3. Delete GitHub Token\n4. View GitHub Token\n5. Perform Group Searches\n6. Perform Custom Search\n7. Exit")
-            choice = input("Enter your choice: ")
-            if choice == '1':
-                authenticate_via_oauth()
-            elif choice == '2':
-                set_github_token()
-            elif choice == '3':
-                delete_github_token()
-            elif choice == '4':
-                view_github_token()
-            elif choice == '5':
-                perform_grouped_searches(domain)
-            elif choice == '6':
-                perform_custom_search(domain)
-            elif choice == '7':
-                print("Exiting the program.")
-                break
-            else:
-                print("Invalid choice. Please enter a number from 1 to 7.")
     except KeyboardInterrupt:
         print("\nInterrupted by user. Saving the data collected so far...")
         formatted_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
