@@ -547,10 +547,11 @@ def check_and_handle_rate_limit(headers):
     Parameters:
     headers (dict): Headers including the current GitHub token for API requests.
     """
-    remaining_limit = GitSleuth_API.check_rate_limit(headers)
+    remaining_limit, wait_time = GitSleuth_API.check_rate_limit(headers)
     if remaining_limit <= 5:
+        wait_time = wait_time or 60
         print("Rate limit is low. Waiting to reset...")
-        time.sleep(60)  # Waits for 1 minute
+        time.sleep(wait_time)
 
 def perform_custom_search(domain):
     """

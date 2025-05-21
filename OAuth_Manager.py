@@ -1,5 +1,4 @@
 import os
-
 import requests
 import time
 import logging
@@ -56,10 +55,12 @@ def oauth_login(token_name="oauth_token"):
     except Exception as exc:
         logging.error(f"Failed to complete OAuth flow: {exc}")
         return None
-import time
-import logging
-import requests
-import webbrowser
+
+
+try:
+    import pyperclip
+except Exception:  # pragma: no cover - optional dependency
+    pyperclip = None
 
 from Token_Manager import add_token
 
@@ -73,6 +74,20 @@ DEVICE_URL = 'https://github.com/login/device/code'
 TOKEN_URL = 'https://github.com/login/oauth/access_token'
 
 USER_URL = 'https://api.github.com/user'
+
+
+def fetch_username(token):
+    """Return GitHub username for the given OAuth token."""
+    try:
+        resp = requests.get(
+            'https://api.github.com/user',
+            headers={'Authorization': f'Bearer {token}', 'Accept': 'application/json'},
+        )
+        if resp.status_code == 200:
+            return resp.json().get('login')
+    except Exception as exc:  # pragma: no cover - network failure
+        logging.error(f'Failed to fetch username: {exc}')
+    return None
 
 
 def initiate_device_flow():
@@ -125,7 +140,16 @@ def oauth_login(token_name='oauth_token'):
         logging.error(f'Failed to start OAuth flow: {exc}')
         return None, None
 
-    print(f"Open {device_info['verification_uri']} and enter code {device_info['user_code']}")
+    print(
+        f"Open {device_info['verification_uri']} and enter code {device_info['user_code']}"
+    )
+    if pyperclip:
+        pyperclip.copy(device_info['user_code'])
+        logging.info('Verification code copied to clipboard.')
+    try:
+        webbrowser.open(device_info['verification_uri'])
+    except Exception as exc:  # pragma: no cover - just log
+        logging.warning(f'Could not open browser: {exc}')
     try:
         webbrowser.open(device_info['verification_uri'], new=2)
     except Exception:
