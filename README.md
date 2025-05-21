@@ -8,8 +8,9 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Predefined and custom search queries with extensive templates from
   [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and
   [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
-- OAuth device flow authentication with token rotation and secure token
-  storage to handle API rate limits
+- OAuth device flow authentication with automatic browser launch, clipboard
+  copy of the user code, token rotation and secure token storage to handle
+  API rate limits
 - Export results to Excel or CSV
 - Sleek dark theme for the GUI
 
