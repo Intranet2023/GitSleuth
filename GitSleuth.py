@@ -17,7 +17,7 @@ import requests
 from prettytable import PrettyTable
 from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
-from Token_Manager import load_tokens
+from Token_Manager import load_tokens, add_token, delete_token, switch_token as token_switch
 
 
 
@@ -387,6 +387,48 @@ def get_headers(config):
     else:
         logging.error("No GitHub tokens are set. Check the configuration.")
         return {}
+
+
+def set_github_token():
+    """Interactively add new GitHub tokens."""
+    while True:
+        name = input("Token name (or press Enter to finish): ").strip()
+        if not name:
+            break
+        value = input("Token value: ").strip()
+        if value:
+            add_token(name, value)
+            print(f"Token '{name}' added.")
+
+
+def delete_github_token():
+    """Remove a stored GitHub token."""
+    tokens = load_tokens()
+    if not tokens:
+        print("No tokens stored.")
+        return
+    for idx, name in enumerate(tokens, start=1):
+        print(f"{idx}. {name}")
+    choice = input("Select a token number to delete: ").strip()
+    if choice.isdigit():
+        idx = int(choice) - 1
+        if 0 <= idx < len(tokens):
+            delete_token(list(tokens.keys())[idx])
+            print("Token deleted.")
+
+
+def view_github_token():
+    """Display stored token names."""
+    tokens = load_tokens()
+    if tokens:
+        print("Stored tokens:", ", ".join(tokens.keys()))
+    else:
+        print("No tokens stored.")
+
+
+def switch_token(config=None):
+    """Switch to the next available token."""
+    return token_switch(config)
 
 
 
