@@ -45,6 +45,8 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 ```bash
 python GitSleuth_GUI.py
 ```
+The GUI now defaults to a dark theme for improved readability and no longer
+includes the rule editor pane.
 
 ### CLI
 ```bash

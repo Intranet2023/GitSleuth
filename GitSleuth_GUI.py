@@ -5,28 +5,59 @@ import json
 import csv
 import time
 import logging
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, QLineEdit,
-                             QPushButton, QVBoxLayout, QHBoxLayout, QComboBox,
-                             QTableWidget, QTableWidgetItem, QStatusBar, QProgressBar,
-                             QFileDialog, QTextEdit, QTabWidget, QAction, QDialog)
+
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QComboBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QStatusBar,
+    QProgressBar,
+    QFileDialog,
+    QTextEdit,
+    QTabWidget,
+    QAction,
+    QDialog,
+)
+from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
-from GitSleuth import extract_snippets
+from GitSleuth import extract_snippets, switch_token
 from GitSleuth_API import RateLimitException, get_headers
 from OAuth_Manager import oauth_login
-from OAuth_Manager import oauth_login
+# Token management imports are kept for future use
 from Token_Manager import load_tokens, add_token, delete_token
-from OAuth_Manager import oauth_login
-import GitSleuth_API
-from GitSleuth_Groups import create_search_queries
-from GitSleuth import get_headers, extract_snippets, switch_token, perform_api_request_with_token_rotation
-from GitSleuth_API import RateLimitException
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QTableWidgetItem
 
 CONFIG_FILE = 'config.json'
+
+
+def apply_dark_palette(app):
+    """Apply a dark palette for a sleeker appearance."""
+    app.setStyle("Fusion")
+    dark_palette = QPalette()
+    dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.WindowText, Qt.white)
+    dark_palette.setColor(QPalette.Base, QColor(35, 35, 35))
+    dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
+    dark_palette.setColor(QPalette.ToolTipText, Qt.white)
+    dark_palette.setColor(QPalette.Text, Qt.white)
+    dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.ButtonText, Qt.white)
+    dark_palette.setColor(QPalette.BrightText, Qt.red)
+    dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
+    dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+    dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+    app.setPalette(dark_palette)
 
 
 def load_config():
@@ -104,11 +135,8 @@ class GitSleuthGUI(QMainWindow):
         tab_widget = QTabWidget(self)
         search_results_tab = QWidget()
         log_tab = QWidget()
-        groups_editor_tab = QWidget()
-
         tab_widget.addTab(search_results_tab, "Search Results")
         tab_widget.addTab(log_tab, "Log")
-        tab_widget.addTab(groups_editor_tab, "Search Editor")
 
         main_layout.addWidget(tab_widget)
 
@@ -144,13 +172,6 @@ class GitSleuthGUI(QMainWindow):
         self.clear_results_button.clicked.connect(self.clear_results)
         self.clear_results_button.setEnabled(False)  # Set it to initially disabled
         search_results_layout.addWidget(self.clear_results_button)
-
-        # Groups editor tab setup
-        groups_editor_layout = QVBoxLayout(groups_editor_tab)
-        self.groups_editor = QTextEdit(self)
-        self.load_groups_file()
-        groups_editor_layout.addWidget(self.groups_editor)
-        self.setupGroupEditor(groups_editor_layout)
 
         # Geometry setup
         self.setGeometry(300, 300, 1000, 600)
@@ -211,25 +232,6 @@ class GitSleuthGUI(QMainWindow):
         layout.addWidget(self.export_button)
 
 
-    def setupGroupEditor(self, layout):
-        """
-        Sets up the groups editor tab in the GUI.
-
-        Args:
-            layout (QVBoxLayout): The layout to add the groups editor to.
-        """
-
-        menu_bar = self.menuBar()
-        settings_menu = menu_bar.addMenu('Settings')
-        oauth_action = QAction('OAuth Login', self)
-        oauth_action.triggered.connect(self.start_oauth)
-        settings_menu.addAction(oauth_action)
-
-        save_button = QPushButton("Save Searches", self)
-        save_button.clicked.connect(self.save_groups_file)
-        layout.addWidget(save_button)
-    
-    # Function definitions within GitSleuthGUI class
     def clear_log(self):
         """
         Clears the log text in the log tab.
@@ -299,28 +301,6 @@ class GitSleuthGUI(QMainWindow):
             logging.error(f"Error exporting to CSV: {e}")
             self.status_bar.showMessage("Error exporting results.")
 
-    def load_groups_file(self):
-        """
-        Loads the search groups from the file into the groups editor.
-        """
-        try:
-            with open('GitSleuth_Groups.py', 'r') as file:
-                self.groups_editor.setText(file.read())
-        except Exception as e:
-            logging.error(f"Failed to load Groups file: {e}")
-
-    def save_groups_file(self):
-        """
-        Saves the modified search groups from the groups editor into the file.
-        """
-        try:
-            with open('GitSleuth_Groups.py', 'w') as file:
-                file.write(self.groups_editor.toPlainText())
-            logging.info("Groups file saved successfully.")
-            self.status_bar.showMessage("Groups file saved successfully.")
-        except Exception as e:
-            logging.error(f"Failed to save Groups file: {e}")
-            self.status_bar.showMessage("Error saving Groups file.")
 
 
     def on_search(self):
@@ -559,6 +539,7 @@ def main():
     Main function to run the GitSleuth application.
     """
     app = QApplication(sys.argv)
+    apply_dark_palette(app)
     ex = GitSleuthGUI()
     ex.show()
     sys.exit(app.exec_())
