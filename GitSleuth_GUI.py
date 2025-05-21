@@ -32,7 +32,7 @@ from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 import GitSleuth_API
 from GitSleuth_Groups import create_search_queries
 from GitSleuth import extract_snippets, switch_token
-from GitSleuth_API import RateLimitException, get_headers
+from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login
 # Token management imports are kept for future use
 from Token_Manager import load_tokens, add_token, delete_token
@@ -203,7 +203,11 @@ class GitSleuthGUI(QMainWindow):
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
         layout.addWidget(self.stop_button)
-    
+
+        self.oauth_button = QPushButton("OAuth Login", self)
+        self.oauth_button.clicked.connect(self.start_oauth)
+        layout.addWidget(self.oauth_button)
+
         # Adding a Quit button
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.clicked.connect(self.close)  # Connects to the close method of the window
@@ -240,10 +244,13 @@ class GitSleuthGUI(QMainWindow):
 
     def start_oauth(self):
         """Trigger OAuth device flow."""
-        token = oauth_login()
-        if token:
+        result = oauth_login()
+        if result:
+            token, username = result
             os.environ["GITHUB_OAUTH_TOKEN"] = token
             self.status_bar.showMessage("OAuth login successful")
+            if username:
+                self.oauth_button.setText(f"Logged in as: {username}")
         else:
             self.status_bar.showMessage("OAuth login failed")
     
@@ -353,11 +360,17 @@ class GitSleuthGUI(QMainWindow):
         while retry_count < max_retries:
             try:
                 headers = get_headers()
+                remaining, wait_time = check_rate_limit(headers)
+                if remaining == 0:
+                    logging.warning("Rate limit exhausted before request.")
+                    if switch_token(config):
+                        headers = get_headers()
+                    else:
+                        time.sleep(wait_time or 60)
                 search_results = GitSleuth_API.search_github_code(query, headers)
                 self.handle_search_results(search_results, query, headers, search_term)
                 break
             except RateLimitException as e:
-
                 logging.warning(f"Rate limit reached for token. {str(e)}")
                 if retry_count < max_retries - 1 and switch_token(config):
                     logging.info("Switched to a new token.")
@@ -367,8 +380,7 @@ class GitSleuthGUI(QMainWindow):
                     time.sleep(wait_time)
 
                 logging.warning(f"Rate limit reached: {str(e)}")
-                time.sleep(60)  # Delay before retrying
-
+                
                 retry_count += 1
             except Exception as e:
                 logging.error(f"Unexpected error: {e}")
@@ -531,7 +543,11 @@ class TokenManagementDialog(QDialog):
     def start_oauth(self):
         """Initiate OAuth login and refresh the token table."""
 
-        oauth_login()
+        result = oauth_login()
+        if result:
+            _, username = result
+            if username:
+                self.oauth_btn.setText(f"Logged in as: {username}")
         self.load_tokens()
 
 def main():
