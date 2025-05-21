@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import requests
+import webbrowser
 
 from Token_Manager import add_token
 
@@ -51,6 +52,10 @@ def oauth_login(token_name='oauth_token'):
         return None
 
     print(f"Open {device_info['verification_uri']} and enter code {device_info['user_code']}")
+    try:
+        webbrowser.open(device_info['verification_uri'], new=2)
+    except Exception:
+        logging.warning('Unable to open web browser automatically.')
     try:
         token = poll_for_token(device_info['device_code'], device_info.get('interval', 5))
     except Exception as exc:
