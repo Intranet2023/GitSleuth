@@ -43,6 +43,7 @@ authenticate with GitHub. The verification code is automatically copied to your
 clipboard and a browser window opens to complete the process.
 
 
+
 ### CLI
 ```bash
 python GitSleuth.py

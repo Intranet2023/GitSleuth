@@ -3,25 +3,24 @@ import requests
 import time
 import logging
 
-import requests
 import webbrowser
+import requests
+import pyperclip
 
-try:
-    import pyperclip
-except Exception:  # pragma: no cover - optional dependency
-    pyperclip = None
 
 from Token_Manager import add_token
 DEFAULT_CLIENT_ID = "Iv23liC8cOnETRR9IEV4"
+
+
+# Default client ID allows running without environment variables
+CLIENT_ID = os.getenv('GITHUB_OAUTH_CLIENT_ID', 'Iv23liC8cOnETRR9IEV4')
+CLIENT_SECRET = os.getenv('GITHUB_OAUTH_CLIENT_SECRET')
+SCOPE = os.getenv('GITHUB_OAUTH_SCOPE', 'repo')
 
 # OAuth device flow URLs and configuration
 DEVICE_URL = "https://github.com/login/device/code"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
 USER_URL = "https://api.github.com/user"
-
-CLIENT_ID = os.getenv("GITHUB_OAUTH_CLIENT_ID", DEFAULT_CLIENT_ID)
-CLIENT_SECRET = os.getenv("GITHUB_OAUTH_CLIENT_SECRET")
-SCOPE = os.getenv("GITHUB_OAUTH_SCOPE", "repo")
 
 
 def initiate_device_flow():
@@ -29,6 +28,7 @@ def initiate_device_flow():
     if not CLIENT_ID:
         logging.error('OAuth client credentials are not set.')
         return None
+
     data = {'client_id': CLIENT_ID, 'scope': SCOPE}
     headers = {'Accept': 'application/json'}
     response = requests.post(DEVICE_URL, data=data, headers=headers)
@@ -65,8 +65,23 @@ def poll_for_token(device_code, interval):
 
 
 def fetch_username(token):
+
+    """Return the GitHub username associated with the token."""
+    headers = {"Authorization": f"token {token}", "Accept": "application/json"}
+    try:
+        response = requests.get("https://api.github.com/user", headers=headers, timeout=10)
+        response.raise_for_status()
+        return response.json().get("login")
+    except Exception as exc:
+        logging.error(f"Failed to fetch username: {exc}")
+        return None
+
+
+def oauth_login(token_name='oauth_token'):
+
     """Return GitHub username for the given OAuth token."""
     headers = {"Authorization": f"token {token}", "Accept": "application/json"}
+
     try:
         response = requests.get(USER_URL, headers=headers, timeout=10)
         response.raise_for_status()
@@ -74,6 +89,22 @@ def fetch_username(token):
     except Exception as exc:
         logging.error(f"Failed to fetch GitHub username: {exc}")
         return None
+
+
+    verification_url = device_info['verification_uri']
+    user_code = device_info['user_code']
+    print(f"Open {verification_url} and enter code {user_code}")
+    try:
+        webbrowser.open(verification_url)
+    except Exception as exc:
+        logging.warning(f'Failed to launch browser automatically: {exc}')
+
+    try:
+        pyperclip.copy(user_code)
+        logging.info('Verification code copied to clipboard.')
+    except Exception as exc:
+        logging.warning(f'Failed to copy code to clipboard: {exc}')
+
 
     url = device_info['verification_uri']
     code = device_info['user_code']
@@ -129,8 +160,9 @@ def oauth_login(token_name="oauth_token"):
         return None, None
 
     add_token(token_name, token)
-    logging.info("OAuth token stored successfully.")
-    os.environ["GITHUB_OAUTH_TOKEN"] = token
+
+    logging.info('OAuth token stored successfully.')
+    os.environ['GITHUB_OAUTH_TOKEN'] = token
 
     username = fetch_username(token)
     return token, username
