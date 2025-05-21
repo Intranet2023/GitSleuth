@@ -74,8 +74,6 @@ def add_token(name, token):
     tokens[name] = token
     _save_tokens(tokens)
 
-
-def delete_token(name: str) -> None:
 def delete_token(name):
     """Remove a token by name if it exists."""
 
