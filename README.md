@@ -46,6 +46,12 @@ The GUI now defaults to a dark theme for improved readability. Click the
 python GitSleuth.py
 ```
 
+## Configuration
+Edit `config.json` to adjust log level and ignored filenames.
+The OAuth flow uses a default GitHub client ID of `Iv23liC8cOnETRR9IEV4`.
+Set the `GITHUB_OAUTH_CLIENT_ID` environment variable to override it and
+`GITHUB_OAUTH_CLIENT_SECRET` for private applications.
+
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
