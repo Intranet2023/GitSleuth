@@ -114,7 +114,6 @@ def fetch_username(token):
         logging.error(f'Failed to fetch GitHub username: {exc}')
         return None
 
-
 def oauth_login(token_name='oauth_token'):
     """Run the OAuth device flow and store the token.
 
@@ -136,6 +135,7 @@ def oauth_login(token_name='oauth_token'):
     except Exception as exc:
         logging.error(f'OAuth error: {exc}')
         return None, None
+
 
     add_token(token_name, token)
     logging.info('OAuth token stored successfully.')
