@@ -43,6 +43,23 @@ def poll_for_token(device_code, interval):
         raise RuntimeError(result.get('error_description', 'OAuth failed'))
 
 
+def fetch_username(token):
+    """Fetch the GitHub username associated with the token."""
+    try:
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Accept': 'application/vnd.github+json'
+        }
+        resp = requests.get('https://api.github.com/user', headers=headers)
+        if resp.status_code == 200:
+            return resp.json().get('login')
+        else:
+            logging.error(f'Failed to fetch username: {resp.text}')
+    except Exception as exc:
+        logging.error(f'Error fetching username: {exc}')
+    return None
+
+
 def oauth_login(token_name='oauth_token'):
     try:
         device_info = initiate_device_flow()
@@ -60,4 +77,5 @@ def oauth_login(token_name='oauth_token'):
     add_token(token_name, token)
     logging.info('OAuth token stored successfully.')
     os.environ['GITHUB_OAUTH_TOKEN'] = token
-    return token
+    username = fetch_username(token)
+    return token, username
