@@ -12,7 +12,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 
 * Extensive search query templates in [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md)
 
-al search templates in [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
+* al search templates in [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
 
 * OAuth device flow authentication
 * Export results to Excel or CSV
@@ -51,9 +51,6 @@ python GitSleuth_GUI.py
 python GitSleuth.py
 ```
 
-## Configuration
-Edit `config.json` for log level and ignored filenames. API tokens are managed via `Token_Manager.py`.
-
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
 
@@ -73,10 +70,7 @@ The `dist` folder contains `GitSleuth_GUI.exe` for Windows users.
 
 ## Configuration
 
-Edit `config.json` for log level and ignored filenames. Set `GITHUB_OAUTH_CLIENT_ID` and `GITHUB_OAUTH_CLIENT_SECRET` environment variables before running the tool.
-
-Edit `config.json` for log level and ignored filenames. API tokens are managed via `Token_Manager.py`.
-
+Edit `config.json` for log level and ignored filenames. 
 
 
 ## Contributing
