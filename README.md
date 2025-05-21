@@ -1,5 +1,18 @@
 # GitSleuth
 
+
+GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI with a dark theme.
+
+## Features
+- Predefined and custom search queries
+- OAuth device flow authentication
+- Token rotation with secure storage
+- Export results to Excel or CSV
+- Extensive query templates in [SEARCH_QUERIES.md](SEARCH_QUERIES.md) and [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md)
+
+## Installation
+1. Clone the repository:
+
 ## Overview
 GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI.
 
@@ -20,6 +33,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 
 ### Steps
 1. Clone the repository
+
    ```bash
    git clone https://github.com/your-repository/GitSleuth.git
    cd GitSleuth
@@ -34,15 +48,12 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 ```bash
 python GitSleuth_GUI.py
 ```
-The GUI now defaults to a dark theme for improved readability and no longer
 
 ### CLI
 ```bash
 python GitSleuth.py
 ```
 
-## Configuration
-Edit `config.json` to adjust log level and ignored filenames.
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.

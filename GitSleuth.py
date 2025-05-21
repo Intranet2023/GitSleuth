@@ -21,6 +21,7 @@ from Token_Manager import load_tokens, switch_token as rotate_token
 
 
 
+
 # Configuration file for storing the API tokens and settings
 CONFIG_FILE = 'config.json'
 
@@ -389,9 +390,52 @@ def get_headers(config):
         return {}
 
 
+
+def set_github_token():
+    """Interactively add new GitHub tokens."""
+    while True:
+        name = input("Token name (or press Enter to finish): ").strip()
+        if not name:
+            break
+        value = input("Token value: ").strip()
+        if value:
+            add_token(name, value)
+            print(f"Token '{name}' added.")
+
+
+def delete_github_token():
+    """Remove a stored GitHub token."""
+    tokens = load_tokens()
+    if not tokens:
+        print("No tokens stored.")
+        return
+    for idx, name in enumerate(tokens, start=1):
+        print(f"{idx}. {name}")
+    choice = input("Select a token number to delete: ").strip()
+    if choice.isdigit():
+        idx = int(choice) - 1
+        if 0 <= idx < len(tokens):
+            delete_token(list(tokens.keys())[idx])
+            print("Token deleted.")
+
+
+def view_github_token():
+    """Display stored token names."""
+    tokens = load_tokens()
+    if tokens:
+        print("Stored tokens:", ", ".join(tokens.keys()))
+    else:
+        print("No tokens stored.")
+
+
+def switch_token(config=None):
+    """Switch to the next available token."""
+    return token_switch(config)
+
 def switch_token(config=None):
     """Rotate the current OAuth token using saved tokens."""
     return rotate_token(config)
+
 
 
 
