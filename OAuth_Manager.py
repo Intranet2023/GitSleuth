@@ -72,6 +72,8 @@ SCOPE = os.getenv('GITHUB_OAUTH_SCOPE', 'repo')
 DEVICE_URL = 'https://github.com/login/device/code'
 TOKEN_URL = 'https://github.com/login/oauth/access_token'
 
+USER_URL = 'https://api.github.com/user'
+
 
 def initiate_device_flow():
     data = {'client_id': CLIENT_ID, 'scope': SCOPE}
@@ -101,12 +103,28 @@ def poll_for_token(device_code, interval):
         raise RuntimeError(result.get('error_description', 'OAuth failed'))
 
 
+def fetch_username(token):
+    """Return the GitHub username associated with the OAuth token."""
+    headers = {'Authorization': f'token {token}', 'Accept': 'application/json'}
+    try:
+        response = requests.get(USER_URL, headers=headers, timeout=10)
+        response.raise_for_status()
+        return response.json().get('login')
+    except Exception as exc:
+        logging.error(f'Failed to fetch GitHub username: {exc}')
+        return None
+
+
 def oauth_login(token_name='oauth_token'):
+    """Run the OAuth device flow and store the token.
+
+    Returns a tuple of (token, username) on success or (None, None) on failure.
+    """
     try:
         device_info = initiate_device_flow()
     except Exception as exc:
         logging.error(f'Failed to start OAuth flow: {exc}')
-        return None
+        return None, None
 
     print(f"Open {device_info['verification_uri']} and enter code {device_info['user_code']}")
     try:
@@ -117,10 +135,11 @@ def oauth_login(token_name='oauth_token'):
         token = poll_for_token(device_info['device_code'], device_info.get('interval', 5))
     except Exception as exc:
         logging.error(f'OAuth error: {exc}')
-        return None
+        return None, None
 
     add_token(token_name, token)
     logging.info('OAuth token stored successfully.')
     os.environ['GITHUB_OAUTH_TOKEN'] = token
-    return token
+    username = fetch_username(token)
+    return token, username
 
