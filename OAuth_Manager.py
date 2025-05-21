@@ -5,7 +5,9 @@ import requests
 
 from Token_Manager import add_token
 
-CLIENT_ID = os.getenv('GITHUB_OAUTH_CLIENT_ID')
+# Default GitHub OAuth client ID used if no environment variable is provided
+DEFAULT_CLIENT_ID = 'Iv23liC8cOnETRR9IEV4'
+CLIENT_ID = os.getenv('GITHUB_OAUTH_CLIENT_ID', DEFAULT_CLIENT_ID)
 CLIENT_SECRET = os.getenv('GITHUB_OAUTH_CLIENT_SECRET')
 SCOPE = os.getenv('GITHUB_OAUTH_SCOPE', 'repo')
 
@@ -14,8 +16,6 @@ TOKEN_URL = 'https://github.com/login/oauth/access_token'
 
 
 def initiate_device_flow():
-    if not CLIENT_ID:
-        raise RuntimeError('GITHUB_OAUTH_CLIENT_ID environment variable not set.')
     data = {'client_id': CLIENT_ID, 'scope': SCOPE}
     headers = {'Accept': 'application/json'}
     response = requests.post(DEVICE_URL, data=data, headers=headers)
