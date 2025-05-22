@@ -3,6 +3,9 @@ import requests
 import time
 import logging
 import webbrowser
+import sys
+import subprocess
+import shutil
 
 try:
     import pyperclip
@@ -20,6 +23,35 @@ SCOPE = os.getenv('GITHUB_OAUTH_SCOPE', 'repo')
 DEVICE_URL = "https://github.com/login/device/code"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
 USER_URL = "https://api.github.com/user"
+
+
+def copy_to_clipboard(text: str) -> bool:
+    """Copy text to the system clipboard if possible."""
+    if pyperclip:
+        try:
+            pyperclip.copy(text)
+            return True
+        except Exception as exc:
+            logging.warning(f'pyperclip failed: {exc}')
+
+    try:
+        if sys.platform == 'darwin':
+            subprocess.run('pbcopy', input=text.encode(), check=True)
+            return True
+        if os.name == 'nt':
+            subprocess.run('clip', input=text.encode('utf-16'), check=True)
+            return True
+        for cmd in ('xclip', 'xsel'):
+            if shutil.which(cmd):
+                if cmd == 'xclip':
+                    subprocess.run([cmd, '-selection', 'clipboard'], input=text.encode(), check=True)
+                else:
+                    subprocess.run([cmd, '-b'], input=text.encode(), check=True)
+                return True
+    except Exception as exc:
+        logging.warning(f'Failed to copy text to clipboard: {exc}')
+
+    return False
 
 
 def initiate_device_flow():
@@ -81,12 +113,11 @@ def oauth_login(token_name='oauth_token'):
         user_code = device_info['user_code']
         print(f"Open {verification_url} and enter code {user_code}")
 
-        if pyperclip:
-            try:
-                pyperclip.copy(user_code)
-                logging.info('Verification code copied to clipboard.')
-            except Exception as exc:
-                logging.warning(f'Failed to copy code to clipboard: {exc}')
+        if copy_to_clipboard(user_code):
+            print("Verification code copied to clipboard.")
+            logging.info('Verification code copied to clipboard.')
+        else:
+            logging.info('Unable to copy code to clipboard automatically.')
 
         try:
             webbrowser.open(verification_url)
