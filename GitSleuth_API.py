@@ -2,6 +2,7 @@
 import requests
 import base64
 import logging
+import time
 import os
 import time
 from OAuth_Manager import oauth_login
@@ -39,9 +40,16 @@ def handle_api_response(response):
 
     if response.status_code == 200:
         return response_json
-    elif response.status_code == 403 and 'rate limit' in response.text.lower():
+    elif response.status_code in (403, 429) and (
+        'rate limit' in response.text.lower()
+        or 'Retry-After' in response.headers
+    ):
         reset = response.headers.get('X-RateLimit-Reset')
-        wait_time = max(int(reset) - int(time.time()), 0) if reset else None
+        retry_after = response.headers.get('Retry-After')
+        if retry_after:
+            wait_time = int(retry_after)
+        else:
+            wait_time = max(int(reset) - int(time.time()), 0) if reset else None
         raise RateLimitException("GitHub API rate limit reached", wait_time)
     else:
         logging.error(f"API request failed with status code {response.status_code}: {response.text}")
@@ -210,22 +218,18 @@ def search_github_code(query, headers):
     return handle_api_response(response)
 
 def check_rate_limit(headers):
-    """
-    Checks the current rate limit for the GitHub API.
-
-    Parameters:
-    - headers (dict): Headers for the GitHub API request.
-
-    Returns:
-    - int: The number of requests remaining before hitting the rate limit.
-    """
+    """Return remaining search requests and wait time until reset."""
     rate_limit_url = f"{GITHUB_API_URL}rate_limit"
     response = requests.get(rate_limit_url, headers=headers)
     rate_limit_data = handle_api_response(response)
     if rate_limit_data:
-        remaining = rate_limit_data['resources']['search']['remaining']
-        logging.debug(f"Search API rate limit remaining: {remaining}")
-        return remaining
-    else:
-        return 0
+        search_limit = rate_limit_data['resources']['search']
+        remaining = search_limit['remaining']
+        reset = search_limit.get('reset')
+        wait_time = max(int(reset) - int(time.time()), 0) if reset else None
+        logging.debug(
+            f"Search API rate limit remaining: {remaining}, resets in {wait_time}s"
+        )
+        return remaining, wait_time
+    return 0, None
 
