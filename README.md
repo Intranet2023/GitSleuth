@@ -11,6 +11,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
   storage to handle API rate limits
 - Export results to Excel or CSV
 - Sleek dark theme for the GUI
+- Keyword filter field in the GUI for quickly narrowing searches
 
 ## Installation
 ### Prerequisites
@@ -37,6 +38,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 ```bash
 python GitSleuth_GUI.py
 ```
+Use the **Keywords** field to limit searches to specific domains or terms.
 
 
 ### CLI
