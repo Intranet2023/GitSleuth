@@ -376,11 +376,21 @@ class GitSleuthGUI(QMainWindow):
             QApplication.processEvents()  # Reflect updated button states
 
 
+
     def check_enable_export(self):
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
         else:
             self.export_button.setEnabled(False)
+
+    def wait_with_events(self, wait_time):
+        """Sleep in small intervals while processing GUI events."""
+        end_time = time.time() + wait_time
+        while time.time() < end_time:
+            if not self.search_active:
+                break
+            QApplication.processEvents()
+            time.sleep(0.1)
 
     def process_query(self, query, max_retries, config, search_term):
         retry_count = 0
@@ -393,7 +403,7 @@ class GitSleuthGUI(QMainWindow):
                     if switch_token(config):
                         headers = get_headers()
                     else:
-                        time.sleep(wait_time or 60)
+                        self.wait_with_events(wait_time or 60)
                 search_results = GitSleuth_API.search_github_code(query, headers)
                 self.handle_search_results(search_results, query, headers, search_term)
                 break
@@ -404,7 +414,7 @@ class GitSleuthGUI(QMainWindow):
                 else:
                     wait_time = getattr(e, 'wait_time', 60)
                     logging.info(f"Waiting {int(wait_time)} seconds for rate limit reset.")
-                    time.sleep(wait_time)
+                    self.wait_with_events(wait_time)
 
                 logging.warning(f"Rate limit reached: {str(e)}")
                 
