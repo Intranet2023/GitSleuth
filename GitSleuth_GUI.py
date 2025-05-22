@@ -338,7 +338,7 @@ class GitSleuthGUI(QMainWindow):
         self.export_button.setEnabled(False)  # Explicitly disable the export button
         self.progress_bar.setValue(0)
         self.perform_search(domain, selected_group)
- 
+
     def perform_search(self, domain, selected_group):
         config = load_config()
         search_groups = create_search_queries(domain)
@@ -363,6 +363,14 @@ class GitSleuthGUI(QMainWindow):
                 self.completed_queries += 1
                 self.progress_bar.setValue(self.completed_queries)
                 QApplication.processEvents()
+
+        # Search finished normally
+        if self.search_active:
+            self.search_active = False
+            self.search_button.setEnabled(True)
+            self.stop_button.setEnabled(False)
+            self.check_enable_export()
+            self.status_bar.showMessage("Search completed.")
 
 
     def check_enable_export(self):
@@ -450,7 +458,6 @@ class GitSleuthGUI(QMainWindow):
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
             self.clear_results_button.setEnabled(True)  # Enable the clear results button
-            self.stop_button.setEnabled(False)
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
 
