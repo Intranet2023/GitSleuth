@@ -5,7 +5,7 @@ import pandas as pd
 import json
 import logging
 import re
-from GitSleuth_Groups import create_search_queries
+from GitSleuth_Groups import create_search_queries, get_query_description
 from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit, get_headers
 from OAuth_Manager import oauth_login
 
@@ -216,6 +216,7 @@ def highlight_search_term(snippet, search_term, color=Fore.RED):
     Parameters:
     - snippet (str): The text snippet where the search term is to be highlighted.
     - search_term (str): The term within the snippet to highlight.
+    - description (str): Description of the query.
     - color (colorama.Fore): The color to use for highlighting the search term.
 
     Returns:
@@ -262,7 +263,7 @@ def perform_api_request_with_token_rotation(query, config, max_retries=3):
     logging.error("Max retries reached. Unable to complete the API request.")
     return None
 
-def process_and_display_data(data, search_term):
+def process_and_display_data(data, search_term, description=""):
     """
     Formats and displays the search result data in a tabular format.
 
@@ -273,10 +274,13 @@ def process_and_display_data(data, search_term):
     Parameters:
     - data (dict): Data of a single repository.
     - search_term (str): The search term used in the GitHub search.
+    - description (str): Description of the query.
     """
     table = PrettyTable()
     table.field_names = [Fore.BLUE + "Attribute" + Style.RESET_ALL, Fore.BLUE + "Value" + Style.RESET_ALL]
     table.align = "l"
+    if description:
+        table.add_row(["description", description])
 
     for key, value in data.items():
         if key == 'snippets':
@@ -288,7 +292,7 @@ def process_and_display_data(data, search_term):
 
     print(table)
 
-def process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames):
+def process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames, domain):
     """
     Processes search results, extracting file contents and snippets.
 
@@ -299,10 +303,12 @@ def process_search_results(search_results, all_data, query, headers, group_name,
     - search_results (dict): The search results from the GitHub API.
     - all_data (list): The list to append processed data to.
     - query (str): The search query used.
+    - domain (str): Domain used in the query.
     - headers (dict): Headers for GitHub API requests.
     - group_name (str): The name of the search group.
     - ignored_filenames (list): List of filenames to ignore in the search.
     """
+    description = get_query_description(query, domain)
     for item in search_results['items']:
         if item['path'] not in ignored_filenames:
             repo_name = item['repository']['full_name']
@@ -317,10 +323,11 @@ def process_search_results(search_results, all_data, query, headers, group_name,
                             'file_path': file_path,
                             'snippets': snippets,
                             'search_term': query,
-                            'group': group_name
+                            'group': group_name,
+                            'description': description
                         }
                         all_data.append(file_data)
-                        process_and_display_data(file_data, query)  # Pass query as search_term
+                        process_and_display_data(file_data, query, description)  # Pass query as search_term
                     else:
                         logging.info(f"No relevant snippets found in {file_path} for query '{query}'")
                 else:
@@ -536,7 +543,7 @@ def perform_grouped_searches(domain):
             headers = GitSleuth_API.get_headers()
             search_results = GitSleuth_API.search_github_code(query, headers)
             if search_results and 'items' in search_results:
-                process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames)
+                process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames, domain)
             else:
                 print(f"No results found for query: {query}")
 
@@ -565,6 +572,7 @@ def perform_custom_search(domain):
     config = load_config()
     headers = GitSleuth_API.get_headers()
     search_results = GitSleuth_API.search_github_code(full_query, headers)
+    description = get_query_description(full_query, domain)
     all_data = []
     if search_results and 'items' in search_results:
         for item in search_results['items']:
@@ -580,10 +588,11 @@ def perform_custom_search(domain):
                     'repo': repo_name,
                     'file_path': file_path,
                     'snippets': snippets,
-                    'search_term': full_query
+                    'search_term': full_query,
+                    'description': description
                 }
                 all_data.append(file_data)
-                process_and_display_data(file_data, full_query)
+                process_and_display_data(file_data, full_query, description)
             else:
                 print(f"No file contents found for {file_path}")
     else:
