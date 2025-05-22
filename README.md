@@ -26,8 +26,10 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
    cd GitSleuth
    ```
 2. Install dependencies
+   Run the setup script to ensure all requirements are installed while network
+   access is available.
    ```bash
-   pip install -r requirements.txt
+   ./setup.sh
    ```
 
 ## Usage
