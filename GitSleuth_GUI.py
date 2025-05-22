@@ -183,12 +183,11 @@ class GitSleuthGUI(QMainWindow):
         Args:
             layout (QHBoxLayout): The layout to add the search input area to.
         """
-        # Add a QComboBox for domain selection
-        self.domain_dropdown = QComboBox(self)
-        layout.addWidget(QLabel("Domain:"))
-        layout.addWidget(self.domain_dropdown)
-        # Populate the dropdown with sample domains
-        self.domain_dropdown.addItems(["temp.com", "example.com"])
+        # Add a QLineEdit for keyword entry
+        self.keyword_input = QLineEdit(self)
+        layout.addWidget(QLabel("Keywords:"))
+        layout.addWidget(self.keyword_input)
+        self.keyword_input.setPlaceholderText("Enter keywords or domain")
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
@@ -321,10 +320,10 @@ class GitSleuthGUI(QMainWindow):
         """
         Handles the event when the search button is clicked.
         """
-        # Use the current text of the domain dropdown
-        domain = self.domain_dropdown.currentText()
-        if not domain:
-            self.statusBar().showMessage("Domain is required for searching.")
+        # Use the entered keywords for filtering
+        keywords = self.keyword_input.text().strip()
+        if not keywords:
+            self.statusBar().showMessage("Keywords are required for searching.")
             return
 
         selected_group = self.search_group_dropdown.currentText()
@@ -333,17 +332,19 @@ class GitSleuthGUI(QMainWindow):
         self.results_table.update()  # Force update of the results table
 
         self.search_active = True
-        self.statusBar().showMessage(f"Searching in {selected_group} for domain: {domain}")
+        self.statusBar().showMessage(
+            f"Searching in {selected_group} for keywords: {keywords}"
+        )
         self.stop_button.setEnabled(True)  # Allow user to stop the search
         self.search_button.setEnabled(False)
         self.export_button.setEnabled(False)  # Explicitly disable the export button
         self.progress_bar.setValue(0)
         QApplication.processEvents()  # Refresh UI state before starting search
-        self.perform_search(domain, selected_group)
+        self.perform_search(keywords, selected_group)
 
-    def perform_search(self, domain, selected_group):
+    def perform_search(self, keywords, selected_group):
         config = load_config()
-        search_groups = create_search_queries(domain)
+        search_groups = create_search_queries(keywords)
         max_retries = 3
 
         if selected_group == "Search All":

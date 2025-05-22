@@ -1,18 +1,20 @@
 #GitSleuth_Groups.py
-def create_search_queries(domain):
+def create_search_queries(keywords):
     """
     Creates a dictionary of search queries for different categories,
-    incorporating the given domain and applying strategies to exclude common placeholders.
+    incorporating the provided keywords and applying strategies to exclude
+    common placeholders.
 
     Parameters:
-    - domain (str): The domain to be included in the search queries.
+    - keywords (str): Keywords or domain terms to include in the search
+      queries.
 
     Returns:
     - dict: A dictionary where each key is a category, and the value is a list of search queries.
     """
     placeholders = "NOT example NOT dummy NOT test NOT sample NOT placeholder"
 
-    domain_filter = f'"{domain}"' if domain else ""
+    domain_filter = f'"{keywords}"' if keywords else ""
     return {
         "Authentication and Credentials": [
 
