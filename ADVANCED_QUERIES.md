@@ -173,10 +173,9 @@ Search queries to detect exposed credentials for major cloud providers like Amaz
 | --- | --- |
 | `org:{ORG_NAME} filename:.env DB_USERNAME NOT homestead` | Environment files containing DB credentials. |
 | `repo:{ORG_NAME}/{REPO_NAME} filename:.env` | Check a specific repo for a committed `.env` file. |
-
+| `filename:.git-credentials` | Git credential store files committed to a repository. |
 | `filename:.git-credentials NOT username` | Git credentials file. |
 | `filename:.git-credentials` | Searches for Git credential store files without filters. |
-
 | `filename:.npmrc _auth` | npm configuration file with auth token. |
 | `filename:.npmrc _authToken` | npm registry credentials containing an auth token. |
 | `filename:.dockercfg auth` | Docker registry config with credentials. |
