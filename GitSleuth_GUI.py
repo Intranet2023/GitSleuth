@@ -359,10 +359,20 @@ class GitSleuthGUI(QMainWindow):
         else:
             groups = [selected_group]
 
+        self.total_queries = sum(len(search_groups.get(g, [])) for g in groups)
+        self.progress_bar.setMaximum(self.total_queries)
+        self.completed_queries = 0
+        QApplication.processEvents()
+
         for group in groups:
             queries = search_groups.get(group, [])
             for query in queries:
+                if not self.search_active:
+                    return
                 self.process_query(query, max_retries, config, query)
+                self.completed_queries += 1
+                self.progress_bar.setValue(self.completed_queries)
+                QApplication.processEvents()
 
 
     def check_enable_export(self):
