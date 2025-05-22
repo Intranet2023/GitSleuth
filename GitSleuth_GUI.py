@@ -30,7 +30,7 @@ from PyQt5.QtCore import QUrl, Qt
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 
 import GitSleuth_API
-from GitSleuth_Groups import create_search_queries
+from GitSleuth_Groups import create_search_queries, get_query_description
 from GitSleuth import extract_snippets, switch_token
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login
@@ -222,13 +222,14 @@ class GitSleuthGUI(QMainWindow):
         Args:
             layout (QVBoxLayout): The layout to add the results table to.
         """
-        self.results_table = QTableWidget(0, 4)  # Set column count to 4
-        self.results_table.setHorizontalHeaderLabels(["Search Term", "Repository", "File Path", "Snippets"])
+        self.results_table = QTableWidget(0, 5)  # Set column count to 5
+        self.results_table.setHorizontalHeaderLabels(["Search Term", "Repository", "File Path", "Snippets", "Description"])
         layout.addWidget(self.results_table)
         self.results_table.setColumnWidth(0, 200)
         self.results_table.setColumnWidth(1, 200)
         self.results_table.setColumnWidth(2, 300)
         self.results_table.setColumnWidth(3, 300)
+        self.results_table.setColumnWidth(4, 300)
 
         # Create a button to export results to CSV
         self.export_button = QPushButton("Export to CSV", self)
@@ -299,7 +300,7 @@ class GitSleuthGUI(QMainWindow):
         try:
             with open(filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(["Search Term", "Repository", "File Path", "Snippet"])
+                writer.writerow(["Search Term", "Repository", "File Path", "Snippet", "Description"])
                 for row in range(self.results_table.rowCount()):
                     search_term = self.results_table.item(row, 0).text()
                     repo_widget = self.results_table.cellWidget(row, 1)
@@ -307,8 +308,10 @@ class GitSleuthGUI(QMainWindow):
                     file_widget = self.results_table.cellWidget(row, 2)
                     file_text = file_widget.text() if file_widget else ""
                     snippet_item = self.results_table.item(row, 3)
-                    snippet_text = snippet_item.text().replace('\n', ' ') if snippet_item else ""
-                    writer.writerow([search_term, repo_text, file_text, snippet_text])
+                    snippet_text = snippet_item.text().replace("\n", " ") if snippet_item else ""
+                    desc_item = self.results_table.item(row, 4)
+                    desc_text = desc_item.text() if desc_item else ""
+                    writer.writerow([search_term, repo_text, file_text, snippet_text, desc_text])
             self.status_bar.showMessage("Results exported successfully to " + filename)
         except Exception as e:
             logging.error(f"Error exporting to CSV: {e}")
@@ -362,7 +365,8 @@ class GitSleuthGUI(QMainWindow):
             for query in queries:
                 if not self.search_active:
                     return
-                self.process_query(query, max_retries, config, query)
+                description = get_query_description(query, keywords)
+                self.process_query(query, max_retries, config, query, description)
                 self.completed_queries += 1
                 self.progress_bar.setValue(self.completed_queries)
                 QApplication.processEvents()
@@ -409,7 +413,7 @@ class GitSleuthGUI(QMainWindow):
         if self.search_active:
             self.status_bar.showMessage(previous_message)
 
-    def process_query(self, query, max_retries, config, search_term):
+    def process_query(self, query, max_retries, config, search_term, description):
         retry_count = 0
         while retry_count < max_retries:
             try:
@@ -422,7 +426,7 @@ class GitSleuthGUI(QMainWindow):
                     else:
                         self.wait_with_events(wait_time or 60)
                 search_results = GitSleuth_API.search_github_code(query, headers)
-                self.handle_search_results(search_results, query, headers, search_term)
+                self.handle_search_results(search_results, query, headers, search_term, description)
                 break
             except RateLimitException as e:
                 logging.warning(f"Rate limit reached for token. {str(e)}")
@@ -446,20 +450,20 @@ class GitSleuthGUI(QMainWindow):
             for item in search_results['items']:
                 self.process_search_item(item, query, headers, search_term)
 
-    def process_search_item(self, item, query, headers, search_term):
+    def process_search_item(self, item, query, headers, search_term, description):
         repo_name = item['repository']['full_name']
         file_path = item.get('path', '')
         file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
         if file_contents:
             snippets = extract_snippets(file_contents, query)
-            self.update_results_table(repo_name, file_path, snippets, search_term)
+            self.update_results_table(repo_name, file_path, snippets, search_term, description)
     def create_clickable_link(self, text, url):
         link_label = QLabel()
         link_label.setText(f'<a href="{url}">{text}</a>')
         link_label.setOpenExternalLinks(True)
         return link_label
     
-    def update_results_table(self, repo_name, file_path, snippets, search_term):
+    def update_results_table(self, repo_name, file_path, snippets, search_term, description):
         github_base_url = "https://github.com/"
         for snippet in snippets:
             row_position = self.results_table.rowCount()
@@ -484,6 +488,7 @@ class GitSleuthGUI(QMainWindow):
             # Snippets column
             self.results_table.setItem(row_position, 3, QTableWidgetItem(snippet))
 
+            self.results_table.setItem(row_position, 4, QTableWidgetItem(description))
         # Enable export button if there are results
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
