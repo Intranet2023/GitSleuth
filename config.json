@@ -5,5 +5,7 @@
         "test.md",
         "sample.config"
     ],
-    "SESSION_KEEP_ALIVE_MINUTES": 0
+    "SESSION_KEEP_ALIVE_MINUTES": 0,
+    "SAVED_USERNAME": ""
+
 }
