@@ -285,6 +285,9 @@ class GitSleuthGUI(QMainWindow):
         token, username = oauth_login()
         if token:
             os.environ["GITHUB_OAUTH_TOKEN"] = token
+            if username:
+                config["SAVED_USERNAME"] = username
+                save_config(config)
             if hasattr(self, "oauth_btn") and username:
                 self.oauth_btn.setText(f"Logged in as: {username}")
             self.status_bar.showMessage("OAuth login successful")
@@ -298,14 +301,17 @@ class GitSleuthGUI(QMainWindow):
             self.status_bar.showMessage("OAuth login failed")
 
     def restore_oauth_session(self):
-        """Load saved OAuth token and update UI if available."""
+        """Restore OAuth session from saved token if available."""
         tokens = load_tokens()
         token = tokens.get("oauth_token")
-        if token and not os.environ.get("GITHUB_OAUTH_TOKEN"):
+        saved_user = config.get("SAVED_USERNAME")
+        if token:
             os.environ["GITHUB_OAUTH_TOKEN"] = token
-        username = config.get("SAVED_USERNAME")
-        if token and username and hasattr(self, "oauth_button"):
-            self.oauth_button.setText(f"Logged in as: {username}")
+            if saved_user:
+                self.oauth_button.setText(f"Logged in as: {saved_user}")
+            return True
+        return False
+
     
     def clear_results(self):
         """
@@ -708,6 +714,8 @@ class TokenManagementDialog(QDialog):
             token, username = result
             os.environ["GITHUB_OAUTH_TOKEN"] = token
             if username:
+                config["SAVED_USERNAME"] = username
+                save_config(config)
                 self.oauth_btn.setText(f"Logged in as: {username}")
                 config["SAVED_USERNAME"] = username
                 save_config(config)
