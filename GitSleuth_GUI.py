@@ -141,6 +141,12 @@ class GitSleuthGUI(QMainWindow):
         """
         self.setWindowTitle("GitSleuth")
 
+        # Menu bar with Settings action
+        menu_bar = self.menuBar()
+        settings_action = QAction("Settings", self)
+        settings_action.triggered.connect(self.open_settings)
+        menu_bar.addAction(settings_action)
+
         # Main widget and layout
         main_widget = QWidget(self)
         self.setCentralWidget(main_widget)
@@ -223,10 +229,6 @@ class GitSleuthGUI(QMainWindow):
         self.oauth_button.clicked.connect(self.start_oauth)
         layout.addWidget(self.oauth_button)
 
-        # Settings button
-        self.settings_button = QPushButton('Settings', self)
-        self.settings_button.clicked.connect(self.open_settings)
-        layout.addWidget(self.settings_button)
     
 
         # Adding a Quit button
