@@ -14,7 +14,9 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Keyword filter field in the GUI for quickly narrowing searches
 
 - Optional session keep-alive after closing the GUI
+
 - Automatic restoration of your OAuth login on launch
+
 
 - Results table now shows a short description for each rule
 

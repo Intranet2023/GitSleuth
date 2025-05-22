@@ -294,6 +294,8 @@ class GitSleuthGUI(QMainWindow):
 
             if username:
                 self.oauth_button.setText(f"Logged in as: {username}")
+                config["SAVED_USERNAME"] = username
+                save_config(config)
 
         else:
             self.status_bar.showMessage("OAuth login failed")
@@ -309,6 +311,7 @@ class GitSleuthGUI(QMainWindow):
                 self.oauth_button.setText(f"Logged in as: {saved_user}")
             return True
         return False
+
     
     def clear_results(self):
         """
@@ -714,6 +717,8 @@ class TokenManagementDialog(QDialog):
                 config["SAVED_USERNAME"] = username
                 save_config(config)
                 self.oauth_btn.setText(f"Logged in as: {username}")
+                config["SAVED_USERNAME"] = username
+                save_config(config)
         self.load_tokens()
 
 def main():
