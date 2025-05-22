@@ -384,13 +384,29 @@ class GitSleuthGUI(QMainWindow):
             self.export_button.setEnabled(False)
 
     def wait_with_events(self, wait_time):
-        """Sleep in small intervals while processing GUI events."""
+        """Sleep in small intervals while processing GUI events.
+
+        While waiting due to hitting the API rate limit, the status bar is
+        updated to inform the user and then restored to its previous text when
+        the wait is over.
+        """
+        previous_message = self.status_bar.currentMessage()
         end_time = time.time() + wait_time
+
+        # Display rate limit pause message and keep UI responsive
         while time.time() < end_time:
             if not self.search_active:
                 break
+            remaining = int(end_time - time.time())
+            self.status_bar.showMessage(
+                f"Paused due to rate limiting. Resuming in {remaining}s"
+            )
             QApplication.processEvents()
-            time.sleep(0.1)
+            time.sleep(1)
+
+        # Restore previous status if search is still active
+        if self.search_active:
+            self.status_bar.showMessage(previous_message)
 
     def process_query(self, query, max_retries, config, search_term):
         retry_count = 0
