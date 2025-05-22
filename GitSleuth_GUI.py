@@ -5,6 +5,7 @@ import json
 import csv
 import time
 import logging
+from typing import Optional
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -25,8 +26,10 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QAction,
     QDialog,
+    QSpinBox,
+    QDialogButtonBox,
 )
-from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 
 import GitSleuth_API
@@ -71,6 +74,15 @@ def load_config():
 
     logging.debug("Config loaded")
     return config
+
+
+def save_config(cfg):
+    """Save configuration to CONFIG_FILE."""
+    try:
+        with open(CONFIG_FILE, "w") as file:
+            json.dump(cfg, file, indent=4)
+    except IOError as e:
+        logging.error(f"Error saving configuration: {e}")
 
 config = load_config()
 log_level = config.get("LOG_LEVEL", "DEBUG").upper()
@@ -118,6 +130,8 @@ class GitSleuthGUI(QMainWindow):
         """
         super(GitSleuthGUI, self).__init__()
         self.search_active = False
+        self.session_keep_alive = config.get("SESSION_KEEP_ALIVE_MINUTES", 0)
+        self.exit_timer: Optional[QTimer] = None
         self.initUI()
 
     def initUI(self):
@@ -207,6 +221,11 @@ class GitSleuthGUI(QMainWindow):
         self.oauth_button = QPushButton('OAuth Login', self)
         self.oauth_button.clicked.connect(self.start_oauth)
         layout.addWidget(self.oauth_button)
+
+        # Settings button
+        self.settings_button = QPushButton('Settings', self)
+        self.settings_button.clicked.connect(self.open_settings)
+        layout.addWidget(self.settings_button)
     
 
         # Adding a Quit button
@@ -250,6 +269,14 @@ class GitSleuthGUI(QMainWindow):
         Clears the log text in the log tab.
         """
         self.log_output.clear()
+
+    def open_settings(self):
+        """Display the settings dialog and persist choices."""
+        dlg = SettingsDialog(self.session_keep_alive, self)
+        if dlg.exec_() == QDialog.Accepted:
+            self.session_keep_alive = dlg.get_duration()
+            config["SESSION_KEEP_ALIVE_MINUTES"] = self.session_keep_alive
+            save_config(config)
 
     def start_oauth(self):
         """Trigger OAuth device flow and update UI."""
@@ -514,6 +541,49 @@ class GitSleuthGUI(QMainWindow):
             self.clear_results_button.setEnabled(True)  # Enable the clear results button
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
+
+
+    def closeEvent(self, event):
+        if self.session_keep_alive and self.session_keep_alive > 0:
+            event.ignore()
+            self.hide()
+            if not self.exit_timer:
+                self.status_bar.showMessage(
+                    f"Continuing session for {self.session_keep_alive} minutes."
+                )
+                self.exit_timer = QTimer(self)
+                self.exit_timer.setSingleShot(True)
+                self.exit_timer.timeout.connect(QApplication.quit)
+                self.exit_timer.start(self.session_keep_alive * 60 * 1000)
+        else:
+            event.accept()
+
+
+class SettingsDialog(QDialog):
+    """Dialog for basic application settings."""
+
+    def __init__(self, current_minutes: int, parent=None):
+        super(SettingsDialog, self).__init__(parent)
+        self.setWindowTitle("Settings")
+        self.setModal(True)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel("Keep session active after closing (0 = None):"))
+
+        self.duration_spin = QSpinBox(self)
+        self.duration_spin.setRange(0, 600)
+        self.duration_spin.setSingleStep(30)
+        self.duration_spin.setValue(current_minutes)
+        self.duration_spin.setSuffix(" min")
+        layout.addWidget(self.duration_spin)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def get_duration(self) -> int:
+        return int(self.duration_spin.value())
 
 
 class TokenManagementDialog(QDialog):
