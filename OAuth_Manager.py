@@ -2,20 +2,26 @@ import os
 import time
 import logging
 import requests
+import webbrowser
+
+try:
+    import pyperclip
+except Exception:  # pyperclip may not be installed
+    pyperclip = None
 
 from Token_Manager import add_token
 
-CLIENT_ID = os.getenv('GITHUB_OAUTH_CLIENT_ID')
-CLIENT_SECRET = os.getenv('GITHUB_OAUTH_CLIENT_SECRET')
-SCOPE = os.getenv('GITHUB_OAUTH_SCOPE', 'repo')
+# Provide a built-in client ID so authentication works without configuration
+DEFAULT_CLIENT_ID = "Iv23liC8cOnETRR9IEV4"
+CLIENT_ID = os.getenv("GITHUB_OAUTH_CLIENT_ID", DEFAULT_CLIENT_ID)
+CLIENT_SECRET = os.getenv("GITHUB_OAUTH_CLIENT_SECRET")
+SCOPE = os.getenv("GITHUB_OAUTH_SCOPE", "repo")
 
 DEVICE_URL = 'https://github.com/login/device/code'
 TOKEN_URL = 'https://github.com/login/oauth/access_token'
 
 
 def initiate_device_flow():
-    if not CLIENT_ID:
-        raise RuntimeError('GITHUB_OAUTH_CLIENT_ID environment variable not set.')
     data = {'client_id': CLIENT_ID, 'scope': SCOPE}
     headers = {'Accept': 'application/json'}
     response = requests.post(DEVICE_URL, data=data, headers=headers)
@@ -50,7 +56,19 @@ def oauth_login(token_name='oauth_token'):
         logging.error(f'Failed to start OAuth flow: {exc}')
         return None
 
-    print(f"Open {device_info['verification_uri']} and enter code {device_info['user_code']}")
+    verification_uri = device_info['verification_uri']
+    user_code = device_info['user_code']
+    logging.info(f"Open {verification_uri} and enter code {user_code}")
+    try:
+        webbrowser.open(verification_uri)
+    except Exception as exc:
+        logging.warning(f"Could not open browser: {exc}")
+    if pyperclip:
+        try:
+            pyperclip.copy(user_code)
+            logging.info("Verification code copied to clipboard")
+        except Exception as exc:
+            logging.warning(f"Clipboard copy failed: {exc}")
     try:
         token = poll_for_token(device_info['device_code'], device_info.get('interval', 5))
     except Exception as exc:
