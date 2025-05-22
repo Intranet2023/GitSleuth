@@ -18,7 +18,8 @@ from Token_Manager import add_token
 DEFAULT_CLIENT_ID = "Iv23liC8cOnETRR9IEV4"
 CLIENT_ID = os.getenv('GITHUB_OAUTH_CLIENT_ID', DEFAULT_CLIENT_ID)
 CLIENT_SECRET = os.getenv('GITHUB_OAUTH_CLIENT_SECRET')
-SCOPE = os.getenv('GITHUB_OAUTH_SCOPE', 'repo')
+# Request read-only repository access by default
+SCOPE = os.getenv('GITHUB_OAUTH_SCOPE', 'public_repo')
 
 DEVICE_URL = "https://github.com/login/device/code"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
