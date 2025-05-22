@@ -281,6 +281,7 @@ class GitSleuthGUI(QMainWindow):
         self.progress_bar.setValue(0)
         self.status_bar.showMessage("Search stopped.")
         self.check_enable_export()
+        QApplication.processEvents()  # Ensure UI updates after stopping
     def export_results_to_csv(self):
         """
         Exports the search results displayed in the table to a CSV file.
@@ -333,10 +334,11 @@ class GitSleuthGUI(QMainWindow):
 
         self.search_active = True
         self.statusBar().showMessage(f"Searching in {selected_group} for domain: {domain}")
-        self.stop_button.setEnabled(True)  # Uncomment if stop functionality is desired
+        self.stop_button.setEnabled(True)  # Allow user to stop the search
         self.search_button.setEnabled(False)
         self.export_button.setEnabled(False)  # Explicitly disable the export button
         self.progress_bar.setValue(0)
+        QApplication.processEvents()  # Refresh UI state before starting search
         self.perform_search(domain, selected_group)
 
     def perform_search(self, domain, selected_group):
@@ -371,6 +373,8 @@ class GitSleuthGUI(QMainWindow):
             self.stop_button.setEnabled(False)
             self.check_enable_export()
             self.status_bar.showMessage("Search completed.")
+            QApplication.processEvents()  # Reflect updated button states
+
 
 
     def check_enable_export(self):
