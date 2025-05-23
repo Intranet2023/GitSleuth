@@ -163,7 +163,7 @@ class GitSleuthGUI(QMainWindow):
 
         # Setup for the search results tab
         search_results_layout = QVBoxLayout(search_results_tab)
-        input_layout = QHBoxLayout()
+        input_layout = QVBoxLayout()
         self.setupSearchInputArea(input_layout)
         search_results_layout.addLayout(input_layout)
         self.setupResultsTable(search_results_layout)
@@ -198,19 +198,16 @@ class GitSleuthGUI(QMainWindow):
         self.setGeometry(300, 300, 1000, 600)
 
     def setupSearchInputArea(self, layout):
-        """
-        Sets up the search input area in the GUI.
+        form_layout = QHBoxLayout()
 
-        Args:
-            layout (QHBoxLayout): The layout to add the search input area to.
-        """
-        # Add a QLineEdit for keyword entry
         self.keyword_input = QLineEdit(self)
-        layout.addWidget(QLabel("Keywords:"))
-        layout.addWidget(self.keyword_input)
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
+        form_layout.addWidget(self.keyword_input)
+
         self.search_group_dropdown = QComboBox(self)
+
         layout.addWidget(self.search_group_dropdown)
+
         self.search_group_dropdown.addItems([
             "Authentication and Credentials",
             "API Keys and Tokens",
@@ -220,28 +217,42 @@ class GitSleuthGUI(QMainWindow):
             "Custom and Regex-Based Searches",
         ])
 
+        form_layout.addWidget(self.search_group_dropdown)
+        layout.addLayout(form_layout)
+
+
+        button_layout = QHBoxLayout()
         self.search_button = QPushButton("Search", self)
+        self.search_button.setFixedWidth(90)
         self.search_button.clicked.connect(self.on_search)
+
         layout.addWidget(self.search_button)
+        button_layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
+        self.stop_button.setFixedWidth(90)
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
-        layout.addWidget(self.stop_button)
+        button_layout.addWidget(self.stop_button)
 
-        # OAuth login button
-        self.oauth_button = QPushButton('OAuth Login', self)
+        self.oauth_button = QPushButton("OAuth Login", self)
+        self.oauth_button.setFixedWidth(100)
         self.oauth_button.clicked.connect(self.start_oauth)
-        layout.addWidget(self.oauth_button)
+        button_layout.addWidget(self.oauth_button)
 
-        self.logout_button = QPushButton('Logout', self)
+
+        self.logout_button = QPushButton("Logout", self)
+        self.logout_button.setFixedWidth(100)
         self.logout_button.clicked.connect(self.logout_user)
-        layout.addWidget(self.logout_button)
+        button_layout.addWidget(self.logout_button)
 
-        # Adding a Quit button
+
         self.quit_button = QPushButton("Quit", self)
-        self.quit_button.clicked.connect(self.close)  # Connects to the close method of the window
-        layout.addWidget(self.quit_button)
+        self.quit_button.setFixedWidth(90)
+        self.quit_button.clicked.connect(self.close)
+        button_layout.addWidget(self.quit_button)
+
+        layout.addLayout(button_layout)
 
 
     def setupResultsTable(self, layout):
