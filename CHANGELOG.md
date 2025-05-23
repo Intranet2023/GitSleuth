@@ -15,6 +15,12 @@ All notable changes to this project are documented in this file.
 - Placeholder filtering now skips results where environment variables
   have empty or placeholder values
 
+## 2025-05-23
+- Added modern API token patterns (Vercel, Hugging Face, Supabase, Sentry, Rollbar)
+  to query generator and documentation
+- Consolidated Token_Manager functions and fixed header generation
+- Generalized `.gitignore` to ignore Python cache files
+
 
 ## 2025-05-21
 - Added comprehensive secret detection queries
