@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 TOKEN_FILE = "tokens.json"
 KEY_FILE = "token_key.key"
@@ -28,7 +28,11 @@ def _encrypt(token: str) -> str:
 
 
 def _decrypt(token_enc: str) -> str:
-    return _cipher.decrypt(token_enc.encode()).decode()
+    try:
+        return _cipher.decrypt(token_enc.encode()).decode()
+    except InvalidToken:
+        logging.error("Invalid token or mismatched encryption key")
+        return ""
 
 
 def load_tokens() -> dict:
@@ -36,7 +40,14 @@ def load_tokens() -> dict:
     try:
         with open(TOKEN_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return {name: _decrypt(tok) for name, tok in data.items()}
+        tokens = {}
+        for name, tok in data.items():
+            plain = _decrypt(tok)
+            if plain:
+                tokens[name] = plain
+            else:
+                logging.warning(f"Skipping token '{name}' due to decryption error")
+        return tokens
     except (FileNotFoundError, json.JSONDecodeError) as exc:
         logging.error(f"Failed to load tokens: {exc}")
         return {}
