@@ -200,10 +200,13 @@ class GitSleuthGUI(QMainWindow):
     def setupSearchInputArea(self, layout):
         """Build the search input widgets and action buttons."""
 
-        layout.addWidget(QLabel("Keywords:"))
+
+        form_layout = QHBoxLayout()
+        form_layout.addWidget(QLabel("Keywords:"))
         self.keyword_input = QLineEdit(self)
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
-        layout.addWidget(self.keyword_input)
+        form_layout.addWidget(self.keyword_input)
+
 
         self.search_group_dropdown = QComboBox(self)
         self.search_group_dropdown.addItems([
@@ -214,7 +217,10 @@ class GitSleuthGUI(QMainWindow):
             "Historical Data and Leakage",
             "Custom and Regex-Based Searches",
         ])
-        layout.addWidget(self.search_group_dropdown)
+
+        form_layout.addWidget(self.search_group_dropdown)
+        layout.addLayout(form_layout)
+        button_layout = QHBoxLayout()
 
         self.search_button = QPushButton("Search", self)
         self.search_button.setFixedWidth(90)
@@ -230,17 +236,22 @@ class GitSleuthGUI(QMainWindow):
         self.oauth_button = QPushButton("OAuth Login", self)
         self.oauth_button.setFixedWidth(100)
         self.oauth_button.clicked.connect(self.start_oauth)
-        layout.addWidget(self.oauth_button)
+        button_layout.addWidget(self.oauth_button)
+
 
         self.logout_button = QPushButton("Logout", self)
         self.logout_button.setFixedWidth(100)
         self.logout_button.clicked.connect(self.logout_user)
-        layout.addWidget(self.logout_button)
+        button_layout.addWidget(self.logout_button)
+
 
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(90)
         self.quit_button.clicked.connect(self.close)
-        layout.addWidget(self.quit_button)
+        button_layout.addWidget(self.quit_button)
+
+        layout.addLayout(button_layout)
+
 
 
 
