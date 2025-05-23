@@ -190,9 +190,22 @@ class GitSleuthGUI(QMainWindow):
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
-        self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
-                                                 "Database and Server Configurations", "Security and Code Vulnerabilities",
-                                                 "Historical Data and Leakage", "Custom and Regex-Based Searches"])
+        self.search_group_dropdown.addItems([
+            "Cloud Credentials (AWS, Azure, GCP)",
+            "Third-Party API Keys and Tokens",
+            "OAuth Credentials",
+            "Database Credentials & Connection Strings",
+            "SSH Keys and Certificates",
+            "Email/SMTP Credentials",
+            "JWT and Application Secrets",
+            "Secrets in Infrastructure-as-Code",
+            "Secrets in CI/CD Configurations",
+            "Secrets in Commit History, Issues, or Gists",
+            "Hardcoded Passwords or Bearer Tokens",
+            "Internationalized Secret Keywords",
+            "General Configuration & Credential Files",
+            "Search All",
+        ])
 
         self.search_button = QPushButton("Search", self)
         self.search_button.clicked.connect(self.on_search)
