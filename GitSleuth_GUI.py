@@ -163,7 +163,7 @@ class GitSleuthGUI(QMainWindow):
 
         # Setup for the search results tab
         search_results_layout = QVBoxLayout(search_results_tab)
-        input_layout = QHBoxLayout()
+        input_layout = QVBoxLayout()
         self.setupSearchInputArea(input_layout)
         search_results_layout.addLayout(input_layout)
         self.setupResultsTable(search_results_layout)
@@ -201,8 +201,40 @@ class GitSleuthGUI(QMainWindow):
         """Build the search input widgets and action buttons."""
 
         self.keyword_input = QLineEdit(self)
+
+
         layout.addWidget(QLabel("Keywords:"))
+        self.keyword_input = QLineEdit(self)
+
+        self.keyword_input.setPlaceholderText("Enter keywords or domain")
         layout.addWidget(self.keyword_input)
+
+        self.search_group_dropdown = QComboBox(self)
+        self.search_group_dropdown.addItems([
+            "Authentication and Credentials",
+            "API Keys and Tokens",
+            "Database and Server Configurations",
+            "Security and Code Vulnerabilities",
+            "Historical Data and Leakage",
+            "Custom and Regex-Based Searches",
+        ])
+
+        self.keyword_input.setPlaceholderText("Enter keywords or domain")
+        layout.addWidget(self.keyword_input)
+
+        self.search_group_dropdown = QComboBox(self)
+        self.search_group_dropdown.addItems([
+            "Authentication and Credentials",
+            "API Keys and Tokens",
+            "Database and Server Configurations",
+            "Security and Code Vulnerabilities",
+            "Historical Data and Leakage",
+            "Custom and Regex-Based Searches",
+        ])
+
+        form_layout = QHBoxLayout()
+
+        self.keyword_input = QLineEdit(self)
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
 
         self.search_group_dropdown = QComboBox(self)
@@ -214,33 +246,60 @@ class GitSleuthGUI(QMainWindow):
             "Historical Data and Leakage",
             "Custom and Regex-Based Searches",
         ])
-        layout.addWidget(self.search_group_dropdown)
 
+        form_layout.addWidget(self.keyword_input)
+
+        self.search_group_dropdown = QComboBox(self)
+
+get(self.search_group_dropdown)
+
+        self.search_group_dropdown.addItems([
+            "Authentication and Credentials",
+            "API Keys and Tokens",
+            "Database and Server Configurations",
+            "Security and Code Vulnerabilities",
+            "Historical Data and Leakage",
+            "Custom and Regex-Based Searches",
+        ])
+
+        form_layout.addWidget(self.search_group_dropdown)
+        layout.addLayout(form_layout)
+
+
+        button_layout = QHBoxLayout()
         self.search_button = QPushButton("Search", self)
         self.search_button.setFixedWidth(90)
         self.search_button.clicked.connect(self.on_search)
-        layout.addWidget(self.search_button)
+
+
+        button_layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.setFixedWidth(90)
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
-        layout.addWidget(self.stop_button)
+        button_layout.addWidget(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
         self.oauth_button.setFixedWidth(100)
         self.oauth_button.clicked.connect(self.start_oauth)
-        layout.addWidget(self.oauth_button)
+        button_layout.addWidget(self.oauth_button)
+
+
 
         self.logout_button = QPushButton("Logout", self)
         self.logout_button.setFixedWidth(100)
         self.logout_button.clicked.connect(self.logout_user)
-        layout.addWidget(self.logout_button)
-
+        button_layout.addWidget(self.logout_button)
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(90)
         self.quit_button.clicked.connect(self.close)
-        layout.addWidget(self.quit_button)
+
+
+
+        button_layout.addWidget(self.quit_button)
+        layout.addLayout(button_layout)
+
 
 
     def setupResultsTable(self, layout):
@@ -585,8 +644,6 @@ class GitSleuthGUI(QMainWindow):
 
             # Snippets column
             self.results_table.setItem(row_position, 4, QTableWidgetItem(snippet))
-
-            self.results_table.setItem(row_position, 4, QTableWidgetItem(description))
         # Enable export button if there are results
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
