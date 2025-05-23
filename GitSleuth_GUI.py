@@ -255,7 +255,7 @@ class GitSleuthGUI(QMainWindow):
 
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(100)
-        self.quit_button.clicked.connect(self.close)
+        self.quit_button.clicked.connect(self.force_quit)
         button_layout.addWidget(self.quit_button)
 
         layout.addLayout(button_layout)
@@ -631,6 +631,13 @@ class GitSleuthGUI(QMainWindow):
                 self.exit_timer.start(self.session_keep_alive * 60 * 1000)
         else:
             event.accept()
+
+    def force_quit(self):
+        """Exit the application immediately, ignoring any keep-alive timer."""
+        if self.exit_timer:
+            self.exit_timer.stop()
+            self.exit_timer = None
+        QApplication.quit()
 
 
 class SettingsDialog(QDialog):
