@@ -41,6 +41,7 @@ After:
 ### Line-Level Code Conflicts
 
 - Automatically resolve by always accepting incoming changes (the new code) over existing code.
+- Delete the conflicting local version so that only the latest incoming code remains.
 
 ### Deletion vs. Modification Conflicts
 
