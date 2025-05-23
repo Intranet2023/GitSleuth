@@ -163,7 +163,7 @@ class GitSleuthGUI(QMainWindow):
 
         # Setup for the search results tab
         search_results_layout = QVBoxLayout(search_results_tab)
-        input_layout = QVBoxLayout()
+        input_layout = QHBoxLayout()
         self.setupSearchInputArea(input_layout)
         search_results_layout.addLayout(input_layout)
         self.setupResultsTable(search_results_layout)
@@ -200,11 +200,13 @@ class GitSleuthGUI(QMainWindow):
     def setupSearchInputArea(self, layout):
         """Build the search input widgets and action buttons."""
 
+
         form_layout = QHBoxLayout()
         form_layout.addWidget(QLabel("Keywords:"))
         self.keyword_input = QLineEdit(self)
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
         form_layout.addWidget(self.keyword_input)
+
 
         self.search_group_dropdown = QComboBox(self)
         self.search_group_dropdown.addItems([
@@ -215,30 +217,33 @@ class GitSleuthGUI(QMainWindow):
             "Historical Data and Leakage",
             "Custom and Regex-Based Searches",
         ])
+
         form_layout.addWidget(self.search_group_dropdown)
         layout.addLayout(form_layout)
-
         button_layout = QHBoxLayout()
+
         self.search_button = QPushButton("Search", self)
         self.search_button.setFixedWidth(90)
         self.search_button.clicked.connect(self.on_search)
-        button_layout.addWidget(self.search_button)
+        layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.setFixedWidth(90)
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
-        button_layout.addWidget(self.stop_button)
+        layout.addWidget(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
         self.oauth_button.setFixedWidth(100)
         self.oauth_button.clicked.connect(self.start_oauth)
         button_layout.addWidget(self.oauth_button)
 
+
         self.logout_button = QPushButton("Logout", self)
         self.logout_button.setFixedWidth(100)
         self.logout_button.clicked.connect(self.logout_user)
         button_layout.addWidget(self.logout_button)
+
 
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(90)
@@ -246,6 +251,7 @@ class GitSleuthGUI(QMainWindow):
         button_layout.addWidget(self.quit_button)
 
         layout.addLayout(button_layout)
+
 
 
 
