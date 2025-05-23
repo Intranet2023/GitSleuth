@@ -13,6 +13,14 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Sleek dark theme for the GUI
 - Keyword filter field in the GUI for quickly narrowing searches
 
+- Optional session keep-alive after closing the GUI
+
+- Automatic restoration of your OAuth login on launch
+
+
+- Results table now shows a short description for each rule
+
+
 ## Installation
 ### Prerequisites
 - Python 3.x
@@ -39,6 +47,9 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 python GitSleuth_GUI.py
 ```
 Use the **Keywords** field to limit searches to specific domains or terms.
+
+Each result row also displays the description of the rule that matched.
+
 
 
 ### CLI

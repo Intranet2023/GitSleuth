@@ -1,5 +1,39 @@
 # GitSleuth_Groups.py
 
+import os
+import re
+
+PLACEHOLDERS = "NOT example NOT dummy NOT test NOT sample NOT placeholder"
+
+
+def load_query_descriptions():
+    descriptions = {}
+    path = os.path.join(os.path.dirname(__file__), "SEARCH_QUERIES.md")
+    if not os.path.exists(path):
+        return descriptions
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("| **") or line.startswith("| `"):
+                parts = [p.strip() for p in line.strip("|").split("|")]
+                if len(parts) >= 3:
+                    query = parts[1]
+                    if query.startswith('`') and query.endswith('`'):
+                        query = query[1:-1]
+                    descriptions[query] = parts[2]
+    return descriptions
+
+QUERY_DESCRIPTIONS = load_query_descriptions()
+
+
+def get_query_description(query, domain=""):
+    base = query.replace(f'"{domain}"', "").replace(domain, "")
+    base = base.replace(PLACEHOLDERS, "").strip()
+    base = " ".join(base.split())
+    return QUERY_DESCRIPTIONS.get(base, "")
+
+
+
 def create_search_queries(keywords):
     """Return categorized GitHub search queries.
 
@@ -13,6 +47,7 @@ def create_search_queries(keywords):
     dict
         Mapping of group name to list of query strings.
     """
+
     placeholders = "NOT example NOT dummy NOT test NOT sample NOT placeholder"
     domain_filter = f'"{keywords}"' if keywords else ""
 
@@ -128,4 +163,5 @@ def create_search_queries(keywords):
             f"filename:settings.py DATABASES {domain_filter} {placeholders}",
             f"filename:prod.secret.exs {domain_filter} {placeholders}",
         ],
+
     }
