@@ -8,6 +8,8 @@ These guidelines define how automation agents resolve merge conflicts in this re
 
 ## Conflict Identification
 - Conflicts will appear during `git merge` or `git rebase`.
+- Run `./auto_resolve_conflicts.sh <branch>` to automatically merge
+  incoming changes while prioritizing the new code.
 
 ## Resolution Rules
 
