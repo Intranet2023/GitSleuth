@@ -1,3 +1,5 @@
+# GitSleuth_Groups.py
+
 import os
 import re
 
@@ -31,148 +33,135 @@ def get_query_description(query, domain=""):
     return QUERY_DESCRIPTIONS.get(base, "")
 
 
+
 def create_search_queries(keywords):
-    """
-    Creates a dictionary of search queries for different categories,
-    incorporating the provided keywords and applying strategies to exclude
-    common placeholders.
+    """Return categorized GitHub search queries.
 
-    Parameters:
-    - keywords (str): Keywords or domain terms to include in the search
-      queries.
+    Parameters
+    ----------
+    keywords : str
+        Extra keywords or a domain to narrow the search.
 
-    Returns:
-    - dict: A dictionary where each key is a category, and the value is a list of search queries.
+    Returns
+    -------
+    dict
+        Mapping of group name to list of query strings.
     """
 
     placeholders = "NOT example NOT dummy NOT test NOT sample NOT placeholder"
-    filter_part = f'"{keywords}"' if keywords else ""
-
+    domain_filter = f'"{keywords}"' if keywords else ""
 
     return {
-        "Authentication and Credentials": [
-            (f"filename:.npmrc _auth {filter_part} {placeholders}", "npm auth token"),
-            (f"filename:.dockercfg auth {filter_part} {placeholders}", "Docker credentials"),
-            (f"extension:pem private {filter_part} {placeholders}", "PEM private key"),
-            (f"extension:ppk private {filter_part} {placeholders}", "PuTTY private key"),
-            (
-                f"filename:id_rsa OR filename:id_dsa {filter_part} {placeholders}",
-                "SSH private key",
-            ),
-            (f"filename:wp-config.php {filter_part} {placeholders}", "WordPress config"),
-            (f"filename:.htpasswd {filter_part} {placeholders}", "htpasswd file"),
-            (
-                f"filename:.env DB_USERNAME NOT homestead {filter_part} {placeholders}",
-                ".env DB credentials",
-            ),
-            (
-                f"filename:credentials aws_access_key_id {filter_part} {placeholders}",
-                "AWS credentials file",
-            ),
-            (f"filename:.s3cfg {filter_part} {placeholders}", "S3 config"),
-            (f"filename:.git-credentials {filter_part} {placeholders}", "Git credentials"),
+        "Cloud Credentials (AWS, Azure, GCP)": [
+            f"filename:.env AWS_ACCESS_KEY_ID {domain_filter} {placeholders}",
+            f"filename:credentials aws_access_key_id {domain_filter} {placeholders}",
+            f"language:Python \"AWS_SECRET_ACCESS_KEY\" {domain_filter} {placeholders}",
+            f"org:{keywords} AWS_ACCESS_KEY_ID" if keywords else "AWS_ACCESS_KEY_ID",
+            f"\"AKIA\" \"AWS_SECRET_ACCESS_KEY\" {domain_filter} {placeholders}",
+            f"\"DefaultEndpointsProtocol=https\" \"AccountKey=\" {domain_filter} {placeholders}",
+            f"filename:.env AZURE_CLIENT_SECRET {domain_filter} {placeholders}",
+            f"filename:*.json private_key \"-----BEGIN PRIVATE KEY-----\" {domain_filter} {placeholders}",
+            f"filename:credentials.json \"type\": \"service_account\" {domain_filter} {placeholders}",
+            f"AIza {domain_filter} {placeholders}",
         ],
-        "API Keys and Tokens": [
-            (
-                f"extension:json api.forecast.io {filter_part} {placeholders}",
-                "forecast.io API key",
-            ),
-            (
-                f"HEROKU_API_KEY language:shell {filter_part} {placeholders}",
-                "Heroku API key in shell script",
-            ),
-            (
-                f"HEROKU_API_KEY language:json {filter_part} {placeholders}",
-                "Heroku API key in JSON",
-            ),
-            (f"xoxp OR xoxb {filter_part} {placeholders}", "Slack token"),
-            (
-                f"filename:github-recovery-codes.txt {filter_part} {placeholders}",
-                "GitHub recovery codes",
-            ),
-            (
-                f"filename:gitlab-recovery-codes.txt {filter_part} {placeholders}",
-                "GitLab recovery codes",
-            ),
-            (
-                f"filename:discord_backup_codes.txt {filter_part} {placeholders}",
-                "Discord backup codes",
-            ),
-            (f"hooks.slack.com/services {filter_part} {placeholders}", "Slack webhook"),
-            (f"sk_live_ {filter_part} {placeholders}", "Stripe live secret key"),
-            (f"AIza {filter_part} {placeholders}", "Google API key"),
-            (
-                f"client_secret extension:json {filter_part} {placeholders}",
-                "OAuth client secret in JSON",
-            ),
+        "Third-Party API Keys and Tokens": [
+            f"sk_live_ {domain_filter} {placeholders}",
+            f"xoxb- OR xoxp- {domain_filter} {placeholders}",
+            f"hooks.slack.com/services/ {domain_filter} {placeholders}",
+            f"SG. {domain_filter} {placeholders}",
+            f"OPENAI_API_KEY {domain_filter} {placeholders}",
+            f"ghp_ {domain_filter} {placeholders}",
+            f"TWILIO_AUTH_TOKEN {domain_filter} {placeholders}",
+            f"org:{keywords} \"sk_live_\"" if keywords else "sk_live_",
+            f"repo:{keywords}/{keywords} \"ghp_\"" if keywords and '/' in keywords else "ghp_",
+            f"shodan_api_key language:Python {domain_filter} {placeholders}",
         ],
-        "Database and Server Configurations": [
-            (f"extension:sql mysql dump {filter_part} {placeholders}", "MySQL dump"),
-            (
-                f"extension:sql mysql dump password {filter_part} {placeholders}",
-                "MySQL dump with passwords",
-            ),
-            (
-                f"password extension:sql {filter_part} {placeholders}",
-                "SQL file with password",
-            ),
-            (
-                f"filename:config.json NOT encrypted NOT secure {filter_part} {placeholders}",
-                "Insecure config file",
-            ),
-            (f"API_BASE_URL {filter_part} {placeholders}", "API base URL"),
-            (
-                f"filename:azure-pipelines.yml {filter_part} {placeholders}",
-                "Azure pipeline config",
-            ),
-            (f"filename:.aws/config {filter_part} {placeholders}", "AWS CLI config"),
+        "OAuth Credentials": [
+            f"extension:json googleusercontent client_secret {domain_filter} {placeholders}",
+            f"filename:client_secrets.json \"client_secret\" {domain_filter} {placeholders}",
+            f"CLIENT_SECRET {domain_filter} {placeholders}",
+            f"consumer_key {domain_filter} {placeholders}",
+            f"consumer_secret {domain_filter} {placeholders}",
+            f"org:{keywords} \"client_secret\"" if keywords else "client_secret",
         ],
-        "Private Keys": [
-            (f"\"-----BEGIN RSA PRIVATE KEY-----\" {placeholders}", "RSA private key"),
-            (f"extension:pfx {placeholders}", "PFX certificate"),
-            (f"extension:jks {placeholders}", "Java KeyStore"),
+        "Database Credentials & Connection Strings": [
+            f"filename:.env DB_PASSWORD {domain_filter} {placeholders}",
+            f"filename:.env DB_USERNAME NOT homestead {domain_filter} {placeholders}",
+            f"filename:wp-config.php {domain_filter} {placeholders}",
+            f"filename:configuration.php JConfig password {domain_filter} {placeholders}",
+            f"filename:config.php dbpasswd {domain_filter} {placeholders}",
+            f"filename:application.properties password {domain_filter} {placeholders}",
+            f"extension:sql \"password\" {domain_filter} {placeholders}",
+            f"filename:.pgpass {domain_filter} {placeholders}",
+            f"repo:{keywords}/{keywords} \"jdbc:mysql://\"" if keywords and '/' in keywords else "jdbc:mysql://",
         ],
-        "Security and Code Vulnerabilities": [
-            (
-                f"password 'admin' {filter_part} {placeholders}",
-                "Hardcoded admin password",
-            ),
-            (f"filename:debug.log {filter_part} {placeholders}", "Debug log"),
-            (f"pre-shared key {filter_part} {placeholders}", "Pre-shared key"),
-            (
-                f"language:java \"// TODO: remove before production {keywords}\" {placeholders}",
-                "TODO in code",
-            ),
-            (
-                f"\\d{{1,3}}\\.\\d{{1,3}}\\.\\d{{1,3}}\\.\\d{{1,3}} {filter_part} {placeholders}",
-                "IP address pattern",
-            ),
-            (
-                f"filename:main.tf aws_access_key_id {filter_part} {placeholders}",
-                "Terraform with AWS key",
-            ),
+        "SSH Keys and Certificates": [
+            f"filename:id_rsa OR filename:id_dsa {domain_filter} {placeholders}",
+            f"extension:pem \"PRIVATE KEY\" {domain_filter} {placeholders}",
+            f"extension:ppk \"PRIVATE KEY\" {domain_filter} {placeholders}",
+            f"filename:server.key {domain_filter} {placeholders}",
+            f"filename:hub oauth_token {domain_filter} {placeholders}",
         ],
-        "Historical Data and Leakage": [
-            (
-                f"\"{filter_part}.com email\" {placeholders}",
-                "Email addresses from domain",
-            ),
-            (
-                f"filename:.env DB_PASSWORD NOT current {filter_part} {placeholders}",
-                "Old DB passwords",
-            ),
-            (f"filename:backup.zip {filter_part} {placeholders}", "Backup zip"),
-            (f"filename:dump.sql {filter_part} {placeholders}", "SQL dump"),
-            (f"filename:old_passwords.txt {filter_part} {placeholders}", "Old passwords"),
+        "Email/SMTP Credentials": [
+            f"filename:.env MAIL_HOST=smtp.gmail.com {domain_filter} {placeholders}",
+            f"filename:.env MAIL_PASSWORD {domain_filter} {placeholders}",
+            f"EMAIL_HOST_PASSWORD {domain_filter} {placeholders}",
+            f"SMTP_PASSWORD {domain_filter} {placeholders}",
+            f"filename:.esmtprc password {domain_filter} {placeholders}",
         ],
-        "Custom and Regex-Based Searches": [
-            (
-                f"1[0-9]{{8}}|2[0-9]{{8}}|3[0-9]{{8}}|4[0-9]{{8}}|5[0-9]{{8}}|6[0-9]{{8}} login {filter_part} {placeholders}",
-                "Employee login pattern",
-            ),
-            (
-                f"SSO 1[0-9]{{8}}|2[0-9]{{8}}|3[0-9]{{8}}|4[0-9]{{8}}|5[0-9]{{8}}|6[0-9]{{8}} {filter_part} {placeholders}",
-                "SSO login pattern",
-            ),
+        "JWT and Application Secrets": [
+            f"filename:settings.py SECRET_KEY {domain_filter} {placeholders}",
+            f"filename:.env JWT_SECRET {domain_filter} {placeholders}",
+            f"filename:.env APP_KEY {domain_filter} {placeholders}",
+            f"JWT_SECRET {domain_filter} {placeholders}",
+            f"APP_SECRET {domain_filter} {placeholders}",
+            f"FLASK_SECRET_KEY {domain_filter} {placeholders}",
         ],
+        "Secrets in Infrastructure-as-Code": [
+            f"filename:terraform.tfvars {domain_filter} {placeholders}",
+            f"filename:terraform.tfstate {domain_filter} {placeholders}",
+            f"extension:tf aws_secret_key {domain_filter} {placeholders}",
+            f"filename:vars.yml password {domain_filter} {placeholders}",
+            f"filename:docker-compose.yml MYSQL_PASSWORD {domain_filter} {placeholders}",
+            f"stringData: {domain_filter} {placeholders}",
+        ],
+        "Secrets in CI/CD Configurations": [
+            f"path:.github/workflows AWS_ACCESS_KEY_ID {domain_filter} {placeholders}",
+            f"filename:.gitlab-ci.yml AWS_SECRET_ACCESS_KEY {domain_filter} {placeholders}",
+            f"filename:Jenkinsfile password {domain_filter} {placeholders}",
+            f"HEROKU_API_KEY language:shell {domain_filter} {placeholders}",
+            f"repo:{keywords}/{keywords} \"CI_SECRET\"" if keywords and '/' in keywords else "CI_SECRET",
+        ],
+        "Secrets in Commit History, Issues, or Gists": [
+            f"type:commit \"API key\" {domain_filter} {placeholders}",
+            f"type:commit password {domain_filter} {placeholders}",
+            f"org:{keywords} type:commit \"SECRET_KEY\"" if keywords else "type:commit \"SECRET_KEY\"",
+            f"type:issue \"AWS_SECRET_ACCESS_KEY\" {domain_filter} {placeholders}",
+            f"site:gist.github.com \"API_KEY\"",
+        ],
+        "Hardcoded Passwords or Bearer Tokens": [
+            f"password = language:Java {domain_filter} {placeholders}",
+            f"password extension:ini {domain_filter} {placeholders}",
+            f"\"Authorization: Bearer\" {domain_filter} {placeholders}",
+            f"Authorization Bearer token {domain_filter} {placeholders}",
+            f"authToken = {domain_filter} {placeholders}",
+        ],
+        "Internationalized Secret Keywords": [
+            f"senha {domain_filter} {placeholders}",
+            f"contrase\u00f1a {domain_filter} {placeholders}",
+            f"\u043f\u0430\u0440\u043e\u043b\u044c {domain_filter} {placeholders}",
+            f"senha = {domain_filter} {placeholders}",
+            f"contrase\u00f1a = {domain_filter} {placeholders}",
+        ],
+        "General Configuration & Credential Files": [
+            f"filename:.git-credentials {domain_filter} {placeholders}",
+            f"filename:.npmrc _authToken {domain_filter} {placeholders}",
+            f"filename:.bash_history {domain_filter} {placeholders}",
+            f"filename:.bashrc password {domain_filter} {placeholders}",
+            f"filename:.netrc password {domain_filter} {placeholders}",
+            f"filename:config.json \"auths\" {domain_filter} {placeholders}",
+            f"filename:settings.py DATABASES {domain_filter} {placeholders}",
+            f"filename:prod.secret.exs {domain_filter} {placeholders}",
+        ],
+
     }
