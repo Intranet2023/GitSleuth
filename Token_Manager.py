@@ -27,12 +27,13 @@ def _encrypt(token: str) -> str:
     return _cipher.encrypt(token.encode()).decode()
 
 
-def _decrypt(token_enc: str) -> str:
+def _decrypt(token_enc: str) -> str | None:
+    """Decrypt an encrypted token string."""
     try:
         return _cipher.decrypt(token_enc.encode()).decode()
     except InvalidToken:
         logging.error("Invalid token or mismatched encryption key")
-        return ""
+        return None
 
 
 def load_tokens() -> dict:
@@ -41,12 +42,18 @@ def load_tokens() -> dict:
         with open(TOKEN_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         tokens = {}
+        dirty = False
         for name, tok in data.items():
             plain = _decrypt(tok)
             if plain:
                 tokens[name] = plain
             else:
-                logging.warning(f"Skipping token '{name}' due to decryption error")
+                logging.warning(
+                    f"Skipping token '{name}' due to decryption error"
+                )
+                dirty = True
+        if dirty:
+            _save_tokens(tokens)
         return tokens
     except (FileNotFoundError, json.JSONDecodeError) as exc:
         logging.error(f"Failed to load tokens: {exc}")
