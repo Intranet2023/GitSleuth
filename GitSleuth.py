@@ -5,7 +5,11 @@ import pandas as pd
 import json
 import logging
 import re
-from GitSleuth_Groups import create_search_queries, get_query_description
+from GitSleuth_Groups import (
+    create_search_queries,
+    get_query_description,
+    is_placeholder_snippet,
+)
 from GitSleuth_API import get_file_contents, search_github_code, check_rate_limit, get_headers
 from OAuth_Manager import oauth_login
 
@@ -46,7 +50,7 @@ def oauth_login_flow():
     else:
         print("OAuth login failed.")
 
-def process_search_item(item, query, headers, all_data):
+def process_search_item(item, query, headers, all_data, filter_placeholders=True):
     """
     Processes a single item from GitHub search results.
 
@@ -55,6 +59,7 @@ def process_search_item(item, query, headers, all_data):
     - query (str): The query used for the search.
     - headers (dict): The headers used for API requests.
     - all_data (list): A list to store the processed data.
+    - filter_placeholders (bool): Whether to ignore placeholder snippets.
 
     This function extracts relevant information from the item, such as repository name,
     file path, and file contents. It then extracts snippets from the contents based
@@ -68,7 +73,7 @@ def process_search_item(item, query, headers, all_data):
     
     if file_contents:
         # Extracting snippets based on the query
-        snippets = extract_snippets(file_contents, query)
+        snippets = extract_snippets(file_contents, query, filter_placeholders)
         logging.info(f"Processed {len(snippets)} snippets from {repo_name}/{file_path}")
 
         # Adding data to all_data list
@@ -144,7 +149,8 @@ def perform_search(domain, selected_group, config, max_retries=3, search_timeout
     start_time = time.time()  # Start time of the search
     last_result_time = start_time  # Last result found time
 
-    search_groups = create_search_queries(domain)
+    filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
+    search_groups = create_search_queries(domain, filter_placeholders=filter_placeholders)
 
     for group in (search_groups if selected_group == "Search All" else [selected_group]):
         for query in search_groups.get(group, []):
@@ -292,7 +298,7 @@ def process_and_display_data(data, search_term, description=""):
 
     print(table)
 
-def process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames, domain):
+def process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames, domain, filter_placeholders=True):
     """
     Processes search results, extracting file contents and snippets.
 
@@ -307,6 +313,7 @@ def process_search_results(search_results, all_data, query, headers, group_name,
     - headers (dict): Headers for GitHub API requests.
     - group_name (str): The name of the search group.
     - ignored_filenames (list): List of filenames to ignore in the search.
+    - filter_placeholders (bool): Whether to ignore placeholder snippets.
     """
     description = get_query_description(query, domain)
     for item in search_results['items']:
@@ -316,7 +323,7 @@ def process_search_results(search_results, all_data, query, headers, group_name,
             try:
                 file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
                 if file_contents:
-                    snippets = extract_snippets(file_contents, query)
+                    snippets = extract_snippets(file_contents, query, filter_placeholders)
                     if snippets:
                         file_data = {
                             'repo': repo_name,
@@ -487,8 +494,19 @@ def extract_search_terms(query):
     return search_terms
 
 
-def extract_snippets(content, query):
-    """Extract and verify snippets that triggered a search rule."""
+def extract_snippets(content, query, filter_placeholders=True):
+    """Extract and verify snippets that triggered a search rule.
+
+    Parameters
+    ----------
+    content : str
+        File content to scan.
+    query : str
+        Query string that produced the hit.
+    filter_placeholders : bool, optional
+        If True, drop snippets that only contain placeholder values or
+        environment variable references.
+    """
 
     query_terms = extract_search_terms(query)
     snippets = []
@@ -505,6 +523,8 @@ def extract_snippets(content, query):
     verified = []
     for snippet in snippets:
         if any(re.search(re.escape(t), snippet, re.IGNORECASE) for t in query_terms):
+            if filter_placeholders and is_placeholder_snippet(snippet):
+                continue
             verified.append(snippet)
 
     return verified
@@ -541,8 +561,9 @@ def perform_grouped_searches(domain):
     Parameters:
     - domain (str): The domain to be used in the search queries.
     """
-    updated_search_groups = create_search_queries(domain)
     config = load_config()
+    filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
+    updated_search_groups = create_search_queries(domain, filter_placeholders=filter_placeholders)
     ignored_filenames = config.get('IGNORED_FILENAMES', [])
     all_data = []  # Initialize an empty list to store all the search results
 
@@ -579,7 +600,16 @@ def perform_grouped_searches(domain):
             headers = GitSleuth_API.get_headers()
             search_results = GitSleuth_API.search_github_code(query, headers)
             if search_results and 'items' in search_results:
-                process_search_results(search_results, all_data, query, headers, group_name, ignored_filenames, domain)
+                process_search_results(
+                    search_results,
+                    all_data,
+                    query,
+                    headers,
+                    group_name,
+                    ignored_filenames,
+                    domain,
+                    filter_placeholders,
+                )
             else:
                 print(f"No results found for query: {query}")
 
@@ -607,6 +637,7 @@ def perform_custom_search(domain):
     full_query = f"{custom_query} {domain}"  # Appends the domain to the search query
     config = load_config()
     headers = GitSleuth_API.get_headers()
+    filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
     search_results = GitSleuth_API.search_github_code(full_query, headers)
     description = get_query_description(full_query, domain)
     all_data = []
@@ -616,7 +647,7 @@ def perform_custom_search(domain):
             file_path = item['path']
             file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
             if file_contents:
-                snippets = extract_snippets(file_contents, full_query)
+                snippets = extract_snippets(file_contents, full_query, filter_placeholders)
                 if not snippets:
                     print(f"No snippets found in {file_path} for query '{full_query}'")
                     continue  # Skip to next item if no snippets are found

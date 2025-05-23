@@ -11,6 +11,9 @@ All notable changes to this project are documented in this file.
 - Introduced session keep-alive feature
 - Bumped `requests` to 2.32.2
 - Multiple README updates and improvements
+- Added configuration option to toggle placeholder filtering in queries
+- Results referencing environment variables are now ignored when
+  placeholder filtering is enabled
 
 ## 2025-05-21
 - Added comprehensive secret detection queries
