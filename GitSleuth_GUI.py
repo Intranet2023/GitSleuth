@@ -200,7 +200,7 @@ class GitSleuthGUI(QMainWindow):
     def setupSearchInputArea(self, layout):
         """
         Sets up the search input area in the GUI.
-    
+
         Args:
             layout (QHBoxLayout): The layout to add the search input area to.
         """
@@ -211,14 +211,19 @@ class GitSleuthGUI(QMainWindow):
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
-        self.search_group_dropdown.addItems(["Authentication and Credentials", "API Keys and Tokens",
-                                                 "Database and Server Configurations", "Security and Code Vulnerabilities",
-                                                 "Historical Data and Leakage", "Custom and Regex-Based Searches"])
+        self.search_group_dropdown.addItems([
+            "Authentication and Credentials",
+            "API Keys and Tokens",
+            "Database and Server Configurations",
+            "Security and Code Vulnerabilities",
+            "Historical Data and Leakage",
+            "Custom and Regex-Based Searches",
+        ])
 
         self.search_button = QPushButton("Search", self)
         self.search_button.clicked.connect(self.on_search)
         layout.addWidget(self.search_button)
-    
+
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
@@ -229,7 +234,9 @@ class GitSleuthGUI(QMainWindow):
         self.oauth_button.clicked.connect(self.start_oauth)
         layout.addWidget(self.oauth_button)
 
-    
+        self.logout_button = QPushButton('Logout', self)
+        self.logout_button.clicked.connect(self.logout_user)
+        layout.addWidget(self.logout_button)
 
         # Adding a Quit button
         self.quit_button = QPushButton("Quit", self)
@@ -301,6 +308,15 @@ class GitSleuthGUI(QMainWindow):
 
         else:
             self.status_bar.showMessage("OAuth login failed")
+
+    def logout_user(self):
+        """Clear stored OAuth credentials and update the UI."""
+        delete_token("oauth_token")
+        os.environ.pop("GITHUB_OAUTH_TOKEN", None)
+        config["SAVED_USERNAME"] = ""
+        save_config(config)
+        self.oauth_button.setText("OAuth Login")
+        self.status_bar.showMessage("Logged out")
 
     def restore_oauth_session(self):
         """Restore OAuth session from saved token if available."""
@@ -480,7 +496,7 @@ class GitSleuthGUI(QMainWindow):
 
     def process_query(self, query, max_retries, config, search_term, description):
         retry_count = 0
-        while retry_count < max_retries:
+        while retry_count < max_retries and self.search_active:
             try:
                 headers = get_headers()
                 remaining, wait_time = check_rate_limit(headers)
@@ -490,7 +506,11 @@ class GitSleuthGUI(QMainWindow):
                         headers = get_headers()
                     else:
                         self.wait_with_events(wait_time or 60)
+                if not self.search_active:
+                    break
                 search_results = GitSleuth_API.search_github_code(query, headers)
+                if not self.search_active:
+                    break
                 self.handle_search_results(search_results, query, description, headers, search_term)
                 break
             except RateLimitException as e:
@@ -511,12 +531,16 @@ class GitSleuthGUI(QMainWindow):
 
 
     def handle_search_results(self, search_results, query, description, headers, search_term):
-        if search_results and 'items' in search_results:
+        if self.search_active and search_results and 'items' in search_results:
             for item in search_results['items']:
+                if not self.search_active:
+                    break
                 self.process_search_item(item, query, description, headers, search_term)
 
     def process_search_item(self, item, query, description, headers, search_term):
 
+        if not self.search_active:
+            return
         repo_name = item['repository']['full_name']
         # Update the status bar with the repository currently being processed
         self.status_bar.showMessage(f"Processing {repo_name}")
@@ -533,8 +557,12 @@ class GitSleuthGUI(QMainWindow):
         return link_label
     
     def update_results_table(self, repo_name, file_path, snippets, search_term, description):
+        if not self.search_active:
+            return
         github_base_url = "https://github.com/"
         for snippet in snippets:
+            if not self.search_active:
+                break
             row_position = self.results_table.rowCount()
             self.results_table.insertRow(row_position)
 
