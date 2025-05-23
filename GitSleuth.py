@@ -73,7 +73,9 @@ def process_search_item(item, query, headers, all_data, filter_placeholders=True
     
     if file_contents:
         # Extracting snippets based on the query
-        snippets = extract_snippets(file_contents, query, filter_placeholders)
+        cfg = load_config()
+        placeholders = cfg.get("FILTER_PLACEHOLDERS", True)
+        snippets = extract_snippets(file_contents, query, filter_placeholders=placeholders)
         logging.info(f"Processed {len(snippets)} snippets from {repo_name}/{file_path}")
 
         # Adding data to all_data list
@@ -323,7 +325,11 @@ def process_search_results(search_results, all_data, query, headers, group_name,
             try:
                 file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
                 if file_contents:
-                    snippets = extract_snippets(file_contents, query, filter_placeholders)
+                    snippets = extract_snippets(
+                        file_contents,
+                        query,
+                        filter_placeholders=filter_placeholders,
+                    )
                     if snippets:
                         file_data = {
                             'repo': repo_name,
@@ -494,6 +500,40 @@ def extract_search_terms(query):
     return search_terms
 
 
+PLACEHOLDER_VALUES = {
+    "",
+    "null",
+    "None",
+    "none",
+    "placeholder",
+    "example",
+    "sample",
+    "test",
+}
+
+ENV_ASSIGN_RE = re.compile(r"\b[A-Z0-9_]+=\s*(\S*)")
+
+
+def _is_placeholder_snippet(snippet):
+    """Return True if the snippet only contains placeholder assignments."""
+
+    if re.search(r"<[^>]+>", snippet):
+        return True
+    if re.search(r"\${[^}]+}", snippet):
+        return True
+
+    assignments = ENV_ASSIGN_RE.findall(snippet)
+    if not assignments:
+        return False
+
+    for val in assignments:
+        clean = val.strip('"\'')
+        if not clean or clean in PLACEHOLDER_VALUES or clean.isdigit():
+            continue
+        return False
+
+    return True
+
 def extract_snippets(content, query, filter_placeholders=True):
     """Extract and verify snippets that triggered a search rule.
 
@@ -523,9 +563,8 @@ def extract_snippets(content, query, filter_placeholders=True):
     verified = []
     for snippet in snippets:
         if any(re.search(re.escape(t), snippet, re.IGNORECASE) for t in query_terms):
-            if filter_placeholders and is_placeholder_snippet(snippet):
-                continue
-            verified.append(snippet)
+            if not filter_placeholders or not _is_placeholder_snippet(snippet):
+                verified.append(snippet)
 
     return verified
 
@@ -647,7 +686,11 @@ def perform_custom_search(domain):
             file_path = item['path']
             file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
             if file_contents:
-                snippets = extract_snippets(file_contents, full_query, filter_placeholders)
+                snippets = extract_snippets(
+                    file_contents,
+                    full_query,
+                    filter_placeholders=config.get("FILTER_PLACEHOLDERS", True),
+                )
                 if not snippets:
                     print(f"No snippets found in {file_path} for query '{full_query}'")
                     continue  # Skip to next item if no snippets are found
