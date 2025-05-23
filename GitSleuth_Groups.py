@@ -34,13 +34,15 @@ def get_query_description(query, domain=""):
 
 
 
-def create_search_queries(keywords):
+def create_search_queries(keywords, filter_placeholders=True):
     """Return categorized GitHub search queries.
 
     Parameters
     ----------
     keywords : str
         Extra keywords or a domain to narrow the search.
+    filter_placeholders : bool
+        If True, exclude common placeholder terms from queries.
 
     Returns
     -------
@@ -48,7 +50,7 @@ def create_search_queries(keywords):
         Mapping of group name to list of query strings.
     """
 
-    placeholders = "NOT example NOT dummy NOT test NOT sample NOT placeholder"
+    placeholders = PLACEHOLDERS if filter_placeholders else ""
     domain_filter = f'"{keywords}"' if keywords else ""
 
     return {

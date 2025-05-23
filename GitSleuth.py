@@ -68,7 +68,9 @@ def process_search_item(item, query, headers, all_data):
     
     if file_contents:
         # Extracting snippets based on the query
-        snippets = extract_snippets(file_contents, query)
+        cfg = load_config()
+        placeholders = cfg.get("FILTER_PLACEHOLDERS", True)
+        snippets = extract_snippets(file_contents, query, filter_placeholders=placeholders)
         logging.info(f"Processed {len(snippets)} snippets from {repo_name}/{file_path}")
 
         # Adding data to all_data list
@@ -144,7 +146,8 @@ def perform_search(domain, selected_group, config, max_retries=3, search_timeout
     start_time = time.time()  # Start time of the search
     last_result_time = start_time  # Last result found time
 
-    search_groups = create_search_queries(domain)
+    filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
+    search_groups = create_search_queries(domain, filter_placeholders=filter_placeholders)
 
     for group in (search_groups if selected_group == "Search All" else [selected_group]):
         for query in search_groups.get(group, []):
@@ -316,7 +319,11 @@ def process_search_results(search_results, all_data, query, headers, group_name,
             try:
                 file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
                 if file_contents:
-                    snippets = extract_snippets(file_contents, query)
+                    snippets = extract_snippets(
+                        file_contents,
+                        query,
+                        filter_placeholders=filter_placeholders,
+                    )
                     if snippets:
                         file_data = {
                             'repo': repo_name,
@@ -487,7 +494,42 @@ def extract_search_terms(query):
     return search_terms
 
 
-def extract_snippets(content, query):
+PLACEHOLDER_VALUES = {
+    "",
+    "null",
+    "None",
+    "none",
+    "placeholder",
+    "example",
+    "sample",
+    "test",
+}
+
+ENV_ASSIGN_RE = re.compile(r"\b[A-Z0-9_]+=\s*(\S*)")
+
+
+def _is_placeholder_snippet(snippet):
+    """Return True if the snippet only contains placeholder assignments."""
+
+    if re.search(r"<[^>]+>", snippet):
+        return True
+    if re.search(r"\${[^}]+}", snippet):
+        return True
+
+    assignments = ENV_ASSIGN_RE.findall(snippet)
+    if not assignments:
+        return False
+
+    for val in assignments:
+        clean = val.strip('"\'')
+        if not clean or clean in PLACEHOLDER_VALUES or clean.isdigit():
+            continue
+        return False
+
+    return True
+
+
+def extract_snippets(content, query, filter_placeholders=True):
     """Extract and verify snippets that triggered a search rule."""
 
     query_terms = extract_search_terms(query)
@@ -505,7 +547,8 @@ def extract_snippets(content, query):
     verified = []
     for snippet in snippets:
         if any(re.search(re.escape(t), snippet, re.IGNORECASE) for t in query_terms):
-            verified.append(snippet)
+            if not filter_placeholders or not _is_placeholder_snippet(snippet):
+                verified.append(snippet)
 
     return verified
 
@@ -541,8 +584,9 @@ def perform_grouped_searches(domain):
     Parameters:
     - domain (str): The domain to be used in the search queries.
     """
-    updated_search_groups = create_search_queries(domain)
     config = load_config()
+    filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
+    updated_search_groups = create_search_queries(domain, filter_placeholders=filter_placeholders)
     ignored_filenames = config.get('IGNORED_FILENAMES', [])
     all_data = []  # Initialize an empty list to store all the search results
 
@@ -616,7 +660,11 @@ def perform_custom_search(domain):
             file_path = item['path']
             file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
             if file_contents:
-                snippets = extract_snippets(file_contents, full_query)
+                snippets = extract_snippets(
+                    file_contents,
+                    full_query,
+                    filter_placeholders=config.get("FILTER_PLACEHOLDERS", True),
+                )
                 if not snippets:
                     print(f"No snippets found in {file_path} for query '{full_query}'")
                     continue  # Skip to next item if no snippets are found

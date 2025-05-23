@@ -60,7 +60,11 @@ When starting OAuth authentication, your default browser will automatically open
 to the GitHub device flow page so you can enter the provided code.
 
 ## Configuration
-Edit `config.json` to adjust log level and ignored filenames. The
+Edit `config.json` to adjust log level, ignored filenames, and whether
+placeholder terms are filtered from queries and results. When enabled the
+filter removes hits where environment variables have empty or placeholder
+values.
+The
 application ships with a default GitHub OAuth client ID so it works out of
 the box. Set `GITHUB_OAUTH_CLIENT_ID` to override it and define
 `GITHUB_OAUTH_CLIENT_SECRET` if your OAuth app requires a secret.
