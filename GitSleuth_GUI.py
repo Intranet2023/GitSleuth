@@ -466,6 +466,7 @@ class GitSleuthGUI(QMainWindow):
         filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
         search_groups = create_search_queries(
             keywords, filter_placeholders=filter_placeholders
+
         )
         max_retries = 3
 
@@ -574,9 +575,18 @@ class GitSleuthGUI(QMainWindow):
             for item in search_results['items']:
                 if not self.search_active:
                     break
-                self.process_search_item(item, query, description, headers, search_term)
+                self.process_search_item(
+                    item,
+                    query,
+                    description,
+                    headers,
+                    search_term,
+                    self.filter_placeholders,
+                )
 
-    def process_search_item(self, item, query, description, headers, search_term):
+    def process_search_item(
+        self, item, query, description, headers, search_term, filter_placeholders=True
+    ):
 
         if not self.search_active:
             return
@@ -591,6 +601,7 @@ class GitSleuthGUI(QMainWindow):
             snippets = extract_snippets(
                 file_contents, query, filter_placeholders=filter_placeholders
             )
+
             self.update_results_table(repo_name, file_path, snippets, search_term, description)
     def create_clickable_link(self, text, url):
         link_label = QLabel()

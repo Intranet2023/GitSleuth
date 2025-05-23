@@ -5,6 +5,35 @@ import re
 
 PLACEHOLDERS = "NOT example NOT dummy NOT test NOT sample NOT placeholder"
 
+# Terms commonly seen in placeholder secrets
+PLACEHOLDER_TERMS = [
+    "example",
+    "dummy",
+    "sample",
+    "test",
+    "placeholder",
+    "your",
+    "enter",
+]
+
+# Detect <placeholder>, ${VAR}, $VAR or {{VAR}} patterns
+PLACEHOLDER_SNIPPET_RE = re.compile(r"<[^>]+>|\$\{?\w+\}?|\{\{\s*\w+\s*\}\}", re.I)
+
+
+def remove_placeholder_terms(text):
+    """Remove common placeholder words from a string."""
+    for term in PLACEHOLDER_TERMS:
+        text = re.sub(rf"\b{re.escape(term)}\b", "", text, flags=re.I)
+    return text
+
+
+def is_placeholder_snippet(snippet):
+    """Return True if a snippet contains placeholder or variable patterns."""
+    if PLACEHOLDER_SNIPPET_RE.search(snippet):
+        return True
+    cleaned = remove_placeholder_terms(snippet)
+    return cleaned.strip() == ""
+
 
 def load_query_descriptions():
     descriptions = {}

@@ -15,6 +15,7 @@ All notable changes to this project are documented in this file.
 - Placeholder filtering now skips results where environment variables
   have empty or placeholder values
 
+
 ## 2025-05-21
 - Added comprehensive secret detection queries
 - Improved result filtering and added rule descriptions
