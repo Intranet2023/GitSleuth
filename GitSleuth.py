@@ -144,7 +144,8 @@ def perform_search(domain, selected_group, config, max_retries=3, search_timeout
     start_time = time.time()  # Start time of the search
     last_result_time = start_time  # Last result found time
 
-    search_groups = create_search_queries(domain)
+    filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
+    search_groups = create_search_queries(domain, filter_placeholders=filter_placeholders)
 
     for group in (search_groups if selected_group == "Search All" else [selected_group]):
         for query in search_groups.get(group, []):
@@ -541,8 +542,9 @@ def perform_grouped_searches(domain):
     Parameters:
     - domain (str): The domain to be used in the search queries.
     """
-    updated_search_groups = create_search_queries(domain)
     config = load_config()
+    filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
+    updated_search_groups = create_search_queries(domain, filter_placeholders=filter_placeholders)
     ignored_filenames = config.get('IGNORED_FILENAMES', [])
     all_data = []  # Initialize an empty list to store all the search results
 
