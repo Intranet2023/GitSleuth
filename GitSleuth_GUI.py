@@ -490,7 +490,7 @@ class GitSleuthGUI(QMainWindow):
                     else:
                         self.wait_with_events(wait_time or 60)
                 search_results = GitSleuth_API.search_github_code(query, headers)
-                self.handle_search_results(search_results, query, headers, search_term, description)
+                self.handle_search_results(search_results, query, description, headers, search_term)
                 break
             except RateLimitException as e:
                 logging.warning(f"Rate limit reached for token. {str(e)}")
@@ -514,9 +514,12 @@ class GitSleuthGUI(QMainWindow):
             for item in search_results['items']:
                 self.process_search_item(item, query, description, headers, search_term)
 
-    def process_search_item(self, item, query, headers, search_term, description):
+    def process_search_item(self, item, query, description, headers, search_term):
 
         repo_name = item['repository']['full_name']
+        # Update the status bar with the repository currently being processed
+        self.status_bar.showMessage(f"Processing {repo_name}")
+        QApplication.processEvents()
         file_path = item.get('path', '')
         file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
         if file_contents:
