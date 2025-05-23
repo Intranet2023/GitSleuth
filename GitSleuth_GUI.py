@@ -211,6 +211,11 @@ class GitSleuthGUI(QMainWindow):
         self.keyword_input.setMinimumWidth(250)
         form_layout.addWidget(self.keyword_input)
 
+        # Add the form layout to the provided layout
+        layout.addLayout(form_layout)
+
+        button_layout = QHBoxLayout()
+
 
         self.search_group_dropdown = QComboBox(self)
         layout.addWidget(self.search_group_dropdown)
