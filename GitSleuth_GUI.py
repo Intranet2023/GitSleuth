@@ -237,6 +237,7 @@ class GitSleuthGUI(QMainWindow):
         self.keyword_input = QLineEdit(self)
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
 
+
         self.search_group_dropdown = QComboBox(self)
         self.search_group_dropdown.addItems([
             "Authentication and Credentials",
@@ -266,12 +267,11 @@ get(self.search_group_dropdown)
         layout.addLayout(form_layout)
 
 
+
         button_layout = QHBoxLayout()
         self.search_button = QPushButton("Search", self)
         self.search_button.setFixedWidth(90)
         self.search_button.clicked.connect(self.on_search)
-
-
         button_layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
@@ -286,7 +286,6 @@ get(self.search_group_dropdown)
         button_layout.addWidget(self.oauth_button)
 
 
-
         self.logout_button = QPushButton("Logout", self)
         self.logout_button.setFixedWidth(100)
         self.logout_button.clicked.connect(self.logout_user)
@@ -294,9 +293,6 @@ get(self.search_group_dropdown)
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(90)
         self.quit_button.clicked.connect(self.close)
-
-
-
         button_layout.addWidget(self.quit_button)
         layout.addLayout(button_layout)
 
