@@ -240,7 +240,9 @@ class GitSleuthGUI(QMainWindow):
         layout.addWidget(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
-        self.oauth_button.setFixedWidth(120)
+
+        # Allow room for "Logged in as" text after authentication
+        self.oauth_button.setFixedWidth(180)
         self.oauth_button.clicked.connect(self.start_oauth)
         button_layout.addWidget(self.oauth_button)
 
@@ -694,6 +696,8 @@ class TokenManagementDialog(QDialog):
         btn_layout.addWidget(self.delete_btn)
 
         self.oauth_btn = QPushButton('OAuth Login')
+        # Wider button so "Logged in as" text fits comfortably
+        self.oauth_btn.setFixedWidth(180)
         self.oauth_btn.clicked.connect(self.start_oauth)
 
         btn_layout.addWidget(self.oauth_btn)
