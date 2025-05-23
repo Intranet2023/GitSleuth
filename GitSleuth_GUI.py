@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QSpinBox,
     QDialogButtonBox,
+    QHeaderView,
 )
 from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
@@ -284,6 +285,10 @@ class GitSleuthGUI(QMainWindow):
         self.results_table.setColumnWidth(2, 180)
         self.results_table.setColumnWidth(3, 250)
         self.results_table.setColumnWidth(4, 300)
+        # Stretch the snippets column to use remaining space
+        self.results_table.horizontalHeader().setSectionResizeMode(
+            4, QHeaderView.Stretch
+        )
 
         # Create a button to export results to CSV
         self.export_button = QPushButton("Export to CSV", self)
