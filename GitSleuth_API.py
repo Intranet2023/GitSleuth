@@ -1,10 +1,10 @@
 #GitSleuth_API
-import requests
 import base64
 import logging
-import time
 import os
 import time
+
+import requests
 from OAuth_Manager import oauth_login
 from Token_Manager import load_tokens
 
@@ -72,35 +72,27 @@ def fetch_paginated_data(url, headers, max_items=100):
 
 _OAUTH_TOKEN = None
 
-def get_headers():
 
-    """Return headers for GitHub API requests using an OAuth token."""
+def get_headers():
+    """Return headers for GitHub API requests."""
     global _OAUTH_TOKEN
     if not _OAUTH_TOKEN:
         _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
         if not _OAUTH_TOKEN:
-            _OAUTH_TOKEN = oauth_login()
+            tokens = load_tokens()
+            if tokens:
+                _OAUTH_TOKEN = list(tokens.values())[0]
+            else:
+                _OAUTH_TOKEN = oauth_login()
             if not _OAUTH_TOKEN:
                 return {}
             os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
-    logging.debug("Using OAuth token")
-    return {"Authorization": f"Bearer {_OAUTH_TOKEN}"}
-
-    """
-    Generates headers for GitHub API requests using the current token.
-    """
-    decrypted_tokens = load_tokens()  # Load and decrypt tokens
-    if decrypted_tokens:
-        token = list(decrypted_tokens.values())[0]  # Use the first token
-        logging.debug(f"Using GitHub token: {token[:10]}****")
-        return {
-            'Authorization': f'token {token}',
-            'Accept': 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28'
-        }
-    else:
-        logging.error("No GitHub tokens are available.")
-        return {}
+    logging.debug("Using GitHub token")
+    return {
+        "Authorization": f"Bearer {_OAUTH_TOKEN}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
     
 def get_repo_info(repo_name, headers):
