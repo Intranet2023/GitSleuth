@@ -136,6 +136,7 @@ class GitSleuthGUI(QMainWindow):
         super(GitSleuthGUI, self).__init__()
         self.search_active = False
         self.session_keep_alive = config.get("SESSION_KEEP_ALIVE_MINUTES", 0)
+        self.filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
         self.exit_timer: Optional[QTimer] = None
         self.initUI()
         self.restore_oauth_session()
@@ -597,7 +598,6 @@ class GitSleuthGUI(QMainWindow):
         file_path = item.get('path', '')
         file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
         if file_contents:
-            filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
             snippets = extract_snippets(
                 file_contents, query, filter_placeholders=filter_placeholders
             )
