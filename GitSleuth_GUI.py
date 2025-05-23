@@ -388,19 +388,20 @@ class GitSleuthGUI(QMainWindow):
         """
         # Use the entered keywords for filtering
         keywords = self.keyword_input.text().strip()
-        if not keywords:
-            self.statusBar().showMessage("Keywords are required for searching.")
-            return
-
         selected_group = self.search_group_dropdown.currentText()
 
         self.clear_results()
         self.results_table.update()  # Force update of the results table
 
         self.search_active = True
-        self.statusBar().showMessage(
-            f"Searching in {selected_group} for keywords: {keywords}"
-        )
+        if keywords:
+            self.statusBar().showMessage(
+                f"Searching in {selected_group} for keywords: {keywords}"
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Searching in {selected_group} with no keywords"
+            )
         self.stop_button.setEnabled(True)  # Allow user to stop the search
         self.search_button.setEnabled(False)
         self.export_button.setEnabled(False)  # Explicitly disable the export button
