@@ -34,7 +34,11 @@ from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 
 import GitSleuth_API
-from GitSleuth_Groups import create_search_queries, get_query_description
+from GitSleuth_Groups import (
+    create_search_queries,
+    get_query_description,
+    PLACEHOLDERS,
+)
 from GitSleuth import extract_snippets, switch_token
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login
@@ -459,7 +463,10 @@ class GitSleuthGUI(QMainWindow):
 
     def perform_search(self, keywords, selected_group):
         config = load_config()
-        search_groups = create_search_queries(keywords)
+        filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
+        search_groups = create_search_queries(
+            keywords, filter_placeholders=filter_placeholders
+        )
         max_retries = 3
 
         if selected_group == "Search All":
@@ -599,7 +606,7 @@ class GitSleuthGUI(QMainWindow):
             self.results_table.insertRow(row_position)
 
             # Filter out unwanted terms from the search term
-            filtered_search_term = search_term.replace("ge.com NOT example NOT dummy NOT test NOT sample NOT placeholder", "").strip()
+            filtered_search_term = search_term.replace(PLACEHOLDERS, "").strip()
 
             # Search term column
             self.results_table.setItem(row_position, 0, QTableWidgetItem(filtered_search_term))
