@@ -72,6 +72,15 @@ Search queries to detect exposed credentials for major cloud providers like Amaz
 | `NPM_TOKEN` | **npm** registry tokens. |
 | `SLACK_API_TOKEN` | Slack API tokens or legacy Slack bot tokens. |
 | `API_KEY` | Generic usage of "API_KEY" in code. |
+| `VERCEL_API_TOKEN` | **Vercel** platform API tokens. |
+| `HUGGINGFACEHUB_API_TOKEN` | **Hugging Face** API tokens. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Supabase** service role keys. |
+| `SENTRY_DSN` | **Sentry** DSN strings containing secrets. |
+| `ROLLBAR_ACCESS_TOKEN` | **Rollbar** access tokens. |
+| `GLPAT-` | **GitLab** personal access tokens. |
+| `CLOUDFLARE_API_TOKEN` | **Cloudflare** API tokens. |
+| `VAULT_TOKEN` | **HashiCorp Vault** tokens. |
+| `PINECONE_API_KEY` | **Pinecone** API keys. |
 
 ## OAuth Client IDs and Secrets
 

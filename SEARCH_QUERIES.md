@@ -76,6 +76,15 @@ This document lists example search queries for locating secrets in public reposi
 | **Third-Party API Keys and Tokens** | `ghp_` | GitHub personal access tokens. |
 | **Third-Party API Keys and Tokens** | `TWILIO_AUTH_TOKEN` | Twilio API auth tokens. |
 | **Third-Party API Keys and Tokens** | `shodan_api_key language:Python` | Shodan API keys in Python projects. |
+| **Third-Party API Keys and Tokens** | `VERCEL_API_TOKEN` | Vercel deployment API tokens. |
+| **Third-Party API Keys and Tokens** | `HUGGINGFACEHUB_API_TOKEN` | Hugging Face API tokens. |
+| **Third-Party API Keys and Tokens** | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role keys. |
+| **Third-Party API Keys and Tokens** | `SENTRY_DSN` | Sentry DSN containing secrets. |
+| **Third-Party API Keys and Tokens** | `ROLLBAR_ACCESS_TOKEN` | Rollbar access tokens. |
+| **Third-Party API Keys and Tokens** | `GLPAT-` | GitLab personal access tokens. |
+| **Third-Party API Keys and Tokens** | `CLOUDFLARE_API_TOKEN` | Cloudflare API tokens. |
+| **Third-Party API Keys and Tokens** | `VAULT_TOKEN` | Vault tokens. |
+| **Third-Party API Keys and Tokens** | `PINECONE_API_KEY` | Pinecone API keys. |
 | **OAuth Credentials** | `extension:json googleusercontent client_secret` | Google OAuth client secrets in JSON. |
 | **OAuth Credentials** | `filename:client_secrets.json "client_secret"` | Typical Google OAuth client_secrets.json file. |
 | **OAuth Credentials** | `CLIENT_SECRET` | Files referencing a generic client secret. |

@@ -449,10 +449,6 @@ def view_github_token():
 
 
 def switch_token(config=None):
-    """Switch to the next available token."""
-    return token_switch(config)
-
-def switch_token(config=None):
     """Rotate the current OAuth token using saved tokens."""
     return rotate_token(config)
 
