@@ -12,6 +12,8 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Export results to Excel or CSV
 - Sleek dark theme for the GUI
 - Keyword filter field in the GUI for quickly narrowing searches
+- Includes detection patterns for modern tokens like Vercel, Hugging Face,
+  Supabase, Sentry, Rollbar, GitLab, Cloudflare, Vault and Pinecone
 
 - Optional session keep-alive after closing the GUI
 
