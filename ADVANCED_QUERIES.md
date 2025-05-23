@@ -82,6 +82,7 @@ Search queries to detect exposed credentials for major cloud providers like Amaz
 | `VAULT_TOKEN` | **HashiCorp Vault** tokens. |
 | `PINECONE_API_KEY` | **Pinecone** API keys. |
 
+
 ## OAuth Client IDs and Secrets
 
 | Query Template | Description |

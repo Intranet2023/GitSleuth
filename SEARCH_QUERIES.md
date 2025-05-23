@@ -85,6 +85,7 @@ This document lists example search queries for locating secrets in public reposi
 | **Third-Party API Keys and Tokens** | `CLOUDFLARE_API_TOKEN` | Cloudflare API tokens. |
 | **Third-Party API Keys and Tokens** | `VAULT_TOKEN` | Vault tokens. |
 | **Third-Party API Keys and Tokens** | `PINECONE_API_KEY` | Pinecone API keys. |
+
 | **OAuth Credentials** | `extension:json googleusercontent client_secret` | Google OAuth client secrets in JSON. |
 | **OAuth Credentials** | `filename:client_secrets.json "client_secret"` | Typical Google OAuth client_secrets.json file. |
 | **OAuth Credentials** | `CLIENT_SECRET` | Files referencing a generic client secret. |

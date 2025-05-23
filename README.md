@@ -73,6 +73,17 @@ By default the application requests the `public_repo` OAuth scope for
 read-only access. Override this by setting `GITHUB_OAUTH_SCOPE` if you
 require additional permissions.
 
+## Automated Conflict Resolution
+The repository includes `auto_resolve_conflicts.sh` to merge incoming
+changes while prioritizing the new code. Run the script with the name
+of the branch you want to merge:
+
+```bash
+./auto_resolve_conflicts.sh main
+```
+It fetches the branch from `origin`, merges it with the `theirs` strategy,
+and verifies that no conflict markers remain.
+
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
