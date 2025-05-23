@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QSpinBox,
     QDialogButtonBox,
+    QHeaderView,
 )
 from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
@@ -195,7 +196,8 @@ class GitSleuthGUI(QMainWindow):
         search_results_layout.addWidget(self.clear_results_button)
 
         # Geometry setup
-        self.setGeometry(300, 300, 1000, 600)
+        # Expand the default window size for better spacing
+        self.setGeometry(200, 150, 1200, 750)
 
     def setupSearchInputArea(self, layout):
         """Build the search input widgets and action buttons."""
@@ -205,6 +207,8 @@ class GitSleuthGUI(QMainWindow):
         form_layout.addWidget(QLabel("Keywords:"))
         self.keyword_input = QLineEdit(self)
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
+        # Give the keyword field a minimum width so longer terms are visible
+        self.keyword_input.setMinimumWidth(250)
         form_layout.addWidget(self.keyword_input)
 
 
@@ -217,36 +221,38 @@ class GitSleuthGUI(QMainWindow):
             "Historical Data and Leakage",
             "Custom and Regex-Based Searches",
         ])
-
+        # Ensure the dropdown is wide enough for the longest entry
+        self.search_group_dropdown.setMinimumWidth(300)
         form_layout.addWidget(self.search_group_dropdown)
         layout.addLayout(form_layout)
         button_layout = QHBoxLayout()
 
         self.search_button = QPushButton("Search", self)
-        self.search_button.setFixedWidth(90)
+        # Slightly wider buttons for clarity
+        self.search_button.setFixedWidth(110)
         self.search_button.clicked.connect(self.on_search)
         layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
-        self.stop_button.setFixedWidth(90)
+        self.stop_button.setFixedWidth(110)
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
         layout.addWidget(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
-        self.oauth_button.setFixedWidth(100)
+        self.oauth_button.setFixedWidth(120)
         self.oauth_button.clicked.connect(self.start_oauth)
         button_layout.addWidget(self.oauth_button)
 
 
         self.logout_button = QPushButton("Logout", self)
-        self.logout_button.setFixedWidth(100)
+        self.logout_button.setFixedWidth(120)
         self.logout_button.clicked.connect(self.logout_user)
         button_layout.addWidget(self.logout_button)
 
 
         self.quit_button = QPushButton("Quit", self)
-        self.quit_button.setFixedWidth(90)
+        self.quit_button.setFixedWidth(100)
         self.quit_button.clicked.connect(self.close)
         button_layout.addWidget(self.quit_button)
 
@@ -277,6 +283,10 @@ class GitSleuthGUI(QMainWindow):
         self.results_table.setColumnWidth(2, 180)
         self.results_table.setColumnWidth(3, 250)
         self.results_table.setColumnWidth(4, 300)
+        # Stretch the snippets column to use remaining space
+        self.results_table.horizontalHeader().setSectionResizeMode(
+            4, QHeaderView.Stretch
+        )
 
         # Create a button to export results to CSV
         self.export_button = QPushButton("Export to CSV", self)
@@ -658,7 +668,8 @@ class TokenManagementDialog(QDialog):
         """
         super(TokenManagementDialog, self).__init__(parent)
         self.setWindowTitle('Token Management')
-        self.setGeometry(100, 100, 400, 300)
+        # Provide more space for token information
+        self.setGeometry(100, 100, 500, 350)
         self.layout = QVBoxLayout(self)
 
         self.setupUI()
