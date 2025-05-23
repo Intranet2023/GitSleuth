@@ -239,6 +239,7 @@ class GitSleuthGUI(QMainWindow):
         layout.addWidget(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
+
         # Allow room for "Logged in as" text after authentication
         self.oauth_button.setFixedWidth(180)
         self.oauth_button.clicked.connect(self.start_oauth)
