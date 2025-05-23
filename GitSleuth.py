@@ -446,32 +446,68 @@ def switch_token(config=None):
 
 
 
+def extract_search_terms(query):
+    """Return the list of search terms contained in a query string.
+
+    The GitHub search queries contain qualifiers such as ``filename:`` or
+    logical operators like ``NOT``. This helper parses the query and extracts
+    only the terms that are expected to be present in the file contents so that
+    snippets can be validated against the rule that triggered the hit.
+    """
+
+    tokens = re.findall(r'"[^"]+"|\S+', query)
+    search_terms = []
+    skip_next = False
+
+    qualifiers = {
+        'filename', 'path', 'repo', 'org', 'extension', 'language', 'type'
+    }
+
+    for token in tokens:
+        if skip_next:
+            skip_next = False
+            continue
+
+        clean = token.strip('"')
+
+        upper = clean.upper()
+        if upper in {'AND', 'OR'}:
+            continue
+        if upper == 'NOT':
+            skip_next = True
+            continue
+
+        if ':' in clean:
+            qualifier = clean.split(':', 1)[0]
+            if qualifier in qualifiers:
+                continue
+
+        search_terms.append(clean)
+
+    return search_terms
+
+
 def extract_snippets(content, query):
-    """
-    Extracts snippets from content that contain any of the terms in the query.
+    """Extract and verify snippets that triggered a search rule."""
 
-    Splits the query into separate terms and searches for each term independently in the content.
-    Extracts a snippet of content around each occurrence of any term.
-
-    Parameters:
-    - content (str): Content to search within.
-    - query (str): Query to match against, can contain multiple terms.
-
-    Returns:
-    - list: A list of snippets that contain any of the terms in the query.
-    """
-    query_terms = query.split()  # Split query into individual terms
+    query_terms = extract_search_terms(query)
     snippets = []
 
     for term in query_terms:
         pattern = re.compile(re.escape(term), re.IGNORECASE)
         for match in pattern.finditer(content):
-            start = max(match.start() - 30, 0)  # Reducing context to 30 characters
+            start = max(match.start() - 30, 0)
             end = min(match.end() + 30, len(content))
             snippet = content[start:end].replace('\n', ' ').strip()
-            if snippet not in snippets:  # Avoid duplicate snippets
+            if snippet not in snippets:
                 snippets.append(snippet)
-    return snippets
+
+    verified = []
+    for snippet in snippets:
+        if any(re.search(re.escape(t), snippet, re.IGNORECASE) for t in query_terms):
+            verified.append(snippet)
+
+    return verified
 
 def save_data_to_excel(data_list, domain):
     """
