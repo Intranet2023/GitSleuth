@@ -203,6 +203,20 @@ class GitSleuthGUI(QMainWindow):
 
         layout.addWidget(QLabel("Keywords:"))
         self.keyword_input = QLineEdit(self)
+
+        self.keyword_input.setPlaceholderText("Enter keywords or domain")
+        layout.addWidget(self.keyword_input)
+
+        self.search_group_dropdown = QComboBox(self)
+        self.search_group_dropdown.addItems([
+            "Authentication and Credentials",
+            "API Keys and Tokens",
+            "Database and Server Configurations",
+            "Security and Code Vulnerabilities",
+            "Historical Data and Leakage",
+            "Custom and Regex-Based Searches",
+        ])
+
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
         layout.addWidget(self.keyword_input)
 
@@ -243,8 +257,8 @@ class GitSleuthGUI(QMainWindow):
         self.search_button = QPushButton("Search", self)
         self.search_button.setFixedWidth(90)
         self.search_button.clicked.connect(self.on_search)
-        button_layout.addWidget(self.search_button)
 
+        button_layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.setFixedWidth(90)
@@ -262,15 +276,15 @@ class GitSleuthGUI(QMainWindow):
         self.logout_button.setFixedWidth(100)
         self.logout_button.clicked.connect(self.logout_user)
         button_layout.addWidget(self.logout_button)
-
-
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(90)
         self.quit_button.clicked.connect(self.close)
 
-        button_layout.addWidget(self.quit_button)
 
+
+        button_layout.addWidget(self.quit_button)
         layout.addLayout(button_layout)
+
 
 
 
@@ -616,8 +630,6 @@ class GitSleuthGUI(QMainWindow):
 
             # Snippets column
             self.results_table.setItem(row_position, 4, QTableWidgetItem(snippet))
-
-            self.results_table.setItem(row_position, 4, QTableWidgetItem(description))
         # Enable export button if there are results
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
