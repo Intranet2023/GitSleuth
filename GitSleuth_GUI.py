@@ -474,7 +474,7 @@ class GitSleuthGUI(QMainWindow):
 
         for group in groups:
             queries = search_groups.get(group, [])
-            for query, description in queries:
+            for query in queries:
                 if not self.search_active:
                     return
 
