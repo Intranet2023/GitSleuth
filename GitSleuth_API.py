@@ -72,7 +72,9 @@ def fetch_paginated_data(url, headers, max_items=100):
 _OAUTH_TOKEN = None
 
 def get_headers():
-    """Return headers for GitHub API requests using the current token."""
+
+    """Generate headers for GitHub API requests."""
+
     global _OAUTH_TOKEN
     if not _OAUTH_TOKEN:
         tokens = load_tokens()
@@ -87,13 +89,14 @@ def get_headers():
             else:
                 _OAUTH_TOKEN = oauth_login()
             if not _OAUTH_TOKEN:
+                logging.error("No GitHub tokens available.")
                 return {}
         os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
     logging.debug("Using OAuth token")
     return {
-        'Authorization': f'token {_OAUTH_TOKEN}',
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28'
+        "Authorization": f"token {_OAUTH_TOKEN}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
 
     }
 

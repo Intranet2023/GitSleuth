@@ -117,6 +117,7 @@ def create_search_queries(keywords, filter_placeholders=True):
             f"PINECONE_API_KEY {domain_filter} {placeholders}",
 
 
+
         ],
         "OAuth Credentials": [
             f"extension:json googleusercontent client_secret {domain_filter} {placeholders}",
