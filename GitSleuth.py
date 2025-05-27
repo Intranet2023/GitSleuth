@@ -326,37 +326,40 @@ def process_search_results(search_results, all_data, query, headers, group_name,
     - filter_placeholders (bool): Whether to ignore placeholder snippets.
     """
     description = get_query_description(query, domain)
+    config = load_config()
+    ignored_patterns = config.get("IGNORED_PATH_PATTERNS", [])
     for item in search_results['items']:
-        if item['path'] not in ignored_filenames:
-            repo_name = item['repository']['full_name']
-            file_path = item.get('path', '')
-            try:
-                file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
-                if file_contents:
-                    allowlist = config.get("ALLOWLIST_PATTERNS", [])
-                    snippets = extract_snippets(
-                        file_contents,
-                        query,
-                        filter_placeholders=filter_placeholders,
-                        allowlist_patterns=allowlist,
-                    )
-                    if snippets:
-                        file_data = {
-                            'repo': repo_name,
-                            'file_path': file_path,
-                            'snippets': snippets,
-                            'search_term': query,
-                            'group': group_name,
-                            'description': description
-                        }
-                        all_data.append(file_data)
-                        process_and_display_data(file_data, query, description)  # Pass query as search_term
-                    else:
-                        logging.info(f"No relevant snippets found in {file_path} for query '{query}'")
+        file_path = item.get('path', '')
+        if file_path in ignored_filenames or _path_is_ignored(file_path, ignored_patterns):
+            continue
+        repo_name = item['repository']['full_name']
+        try:
+            file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
+            if file_contents:
+                allowlist = config.get("ALLOWLIST_PATTERNS", [])
+                snippets = extract_snippets(
+                    file_contents,
+                    query,
+                    filter_placeholders=filter_placeholders,
+                    allowlist_patterns=allowlist,
+                )
+                if snippets:
+                    file_data = {
+                        'repo': repo_name,
+                        'file_path': file_path,
+                        'snippets': snippets,
+                        'search_term': query,
+                        'group': group_name,
+                        'description': description,
+                    }
+                    all_data.append(file_data)
+                    process_and_display_data(file_data, query, description)  # Pass query as search_term
                 else:
-                    logging.info(f"No file contents found for {file_path}")
-            except requests.RequestException as e:
-                logging.error(f"Failed to fetch file contents: {e}")
+                    logging.info(f"No relevant snippets found in {file_path} for query '{query}'")
+            else:
+                logging.info(f"No file contents found for {file_path}")
+        except requests.RequestException as e:
+            logging.error(f"Failed to fetch file contents: {e}")
 
 def initialize_logging():
     """
@@ -547,6 +550,11 @@ def _has_allowlist_comment(content: str, start: int, end: int) -> bool:
     context_start = max(0, start - 100)
     context_end = min(len(content), end + 100)
     return bool(ALLOWLIST_PRAGMA_RE.search(content[context_start:context_end]))
+
+
+def _path_is_ignored(file_path: str, patterns: list[str]) -> bool:
+    """Return True if file_path matches any ignore pattern."""
+    return any(re.search(p, file_path) for p in patterns)
 
 
 def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT_ENTROPY_THRESHOLD):
