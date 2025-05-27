@@ -3,7 +3,11 @@
 All notable changes to this project are documented in this file.
 
 ## [Unreleased]
-- Placeholder for future changes
+### Added
+- Modern API token searches for Vercel, Hugging Face, Supabase, Sentry, Rollbar,
+  GitLab, Cloudflare, Vault and Pinecone
+- Generalized `.gitignore` to ignore Python bytecode
+- Consolidated duplicate token management functions
 
 ## 2025-05-22
 - Created this CHANGELOG in response to a chat request

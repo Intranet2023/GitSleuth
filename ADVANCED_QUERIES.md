@@ -77,6 +77,10 @@ Search queries to detect exposed credentials for major cloud providers like Amaz
 | `SUPABASE_SERVICE_ROLE_KEY` | **Supabase** service role keys. |
 | `SENTRY_DSN` | **Sentry** DSN strings containing secrets. |
 | `ROLLBAR_ACCESS_TOKEN` | **Rollbar** access tokens. |
+| `GLPAT-` | **GitLab** personal access tokens. |
+| `CLOUDFLARE_API_TOKEN` | **Cloudflare** API tokens. |
+| `VAULT_TOKEN` | **HashiCorp Vault** tokens. |
+| `PINECONE_API_KEY` | **Pinecone** API keys. |
 
 ## OAuth Client IDs and Secrets
 

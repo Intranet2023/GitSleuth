@@ -2,5 +2,6 @@ __pycache__/
 *.pyc
 token_key.key
 .DS_Store
+GS-Previous/
 tokens.json
 GS-Previous.zip
