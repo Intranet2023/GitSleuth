@@ -14,6 +14,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Keyword filter field in the GUI for quickly narrowing searches
 - Searches include modern API tokens like Vercel, Hugging Face, Supabase,
   Sentry, and Rollbar
+- Optional integration with Yelp's detect-secrets for advanced secret detection
 
 
 - Optional session keep-alive after closing the GUI
@@ -68,6 +69,9 @@ placeholder terms are filtered from queries and results. When enabled the
 filter removes hits where environment variables have empty or placeholder
 values. You can also define `ALLOWLIST_PATTERNS` with regex strings for
 known dummy secrets so matching snippets are ignored.
+Enable `USE_DETECT_SECRETS` to scan snippets with the `detect-secrets`
+tool and set `DETECT_SECRETS_BASELINE` to a baseline file for allowlisted
+secrets.
 The application ships with a default GitHub OAuth client ID so it works out of
 the box. Set `GITHUB_OAUTH_CLIENT_ID` to override it and define
 `GITHUB_OAUTH_CLIENT_SECRET` if your OAuth app requires a secret.
