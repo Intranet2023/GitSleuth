@@ -3,7 +3,6 @@ import base64
 import logging
 import os
 import time
-
 import requests
 from OAuth_Manager import oauth_login
 from Token_Manager import load_tokens
@@ -72,12 +71,15 @@ def fetch_paginated_data(url, headers, max_items=100):
 
 _OAUTH_TOKEN = None
 
-
 def get_headers():
-    """Return headers for GitHub API requests."""
+    """Return headers for GitHub API requests using the current token."""
     global _OAUTH_TOKEN
     if not _OAUTH_TOKEN:
-        _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
+        tokens = load_tokens()
+        if tokens:
+            _OAUTH_TOKEN = list(tokens.values())[0]
+        else:
+            _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
         if not _OAUTH_TOKEN:
             tokens = load_tokens()
             if tokens:
@@ -86,12 +88,13 @@ def get_headers():
                 _OAUTH_TOKEN = oauth_login()
             if not _OAUTH_TOKEN:
                 return {}
-            os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
-    logging.debug("Using GitHub token")
+        os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
+    logging.debug("Using OAuth token")
     return {
-        "Authorization": f"Bearer {_OAUTH_TOKEN}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
+        'Authorization': f'token {_OAUTH_TOKEN}',
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+
     }
 
     

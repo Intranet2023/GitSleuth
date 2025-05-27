@@ -81,6 +81,7 @@ This document lists example search queries for locating secrets in public reposi
 | **Third-Party API Keys and Tokens** | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role keys. |
 | **Third-Party API Keys and Tokens** | `SENTRY_DSN` | Sentry DSN containing secrets. |
 | **Third-Party API Keys and Tokens** | `ROLLBAR_ACCESS_TOKEN` | Rollbar access tokens. |
+
 | **Third-Party API Keys and Tokens** | `GLPAT-` | GitLab personal access tokens. |
 | **Third-Party API Keys and Tokens** | `CLOUDFLARE_API_TOKEN` | Cloudflare API tokens. |
 | **Third-Party API Keys and Tokens** | `VAULT_TOKEN` | Vault tokens. |
