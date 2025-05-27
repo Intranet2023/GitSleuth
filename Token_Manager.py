@@ -1,9 +1,14 @@
 """Manage GitHub access tokens with optional encryption."""
 
+# Token_Manager.py
 import json
 import logging
 import os
+from cryptography.fernet import Fernet
+TOKEN_FILE = 'tokens.json'
+KEY_FILE = 'token_key.key'
 from cryptography.fernet import Fernet, InvalidToken
+
 
 TOKEN_FILE = "tokens.json"
 KEY_FILE = "token_key.key"
@@ -70,32 +75,30 @@ def add_token(name: str, token: str) -> None:
     """Add a new token to the token store."""
     tokens = load_tokens()
     tokens[name] = token
-    _save_tokens(tokens)
+    _save_tokens(tokens)    
 
 
-def delete_token(name: str) -> None:
-    """Remove a token by name if it exists."""
+def delete_token(name):
+ken by name if it exists."""
     tokens = load_tokens()
     if name in tokens:
         del tokens[name]
         _save_tokens(tokens)
 
-
-def switch_token(_config=None) -> bool:
+def switch_token(_config=None):
     """Rotate the GITHUB_OAUTH_TOKEN environment variable among saved tokens."""
     tokens = list(load_tokens().values())
     if not tokens:
         logging.error("No tokens available for rotation.")
         return False
-    current = os.environ.get("GITHUB_OAUTH_TOKEN")
+    current = os.environ.get('GITHUB_OAUTH_TOKEN')
     if current in tokens:
         idx = tokens.index(current)
         new_token = tokens[(idx + 1) % len(tokens)]
     else:
         new_token = tokens[0]
-    if new_token != current:
-        os.environ["GITHUB_OAUTH_TOKEN"] = new_token
-        logging.info("Switched GitHub token")
-        return True
-    return False
+    os.environ['GITHUB_OAUTH_TOKEN'] = new_token
+    logging.info("Switched GitHub token")
+    return True
+
 

@@ -9,6 +9,12 @@ All notable changes to this project are documented in this file.
 - Generalized `.gitignore` to ignore Python bytecode
 - Consolidated duplicate token management functions
 
+## 2025-05-23
+- Added search patterns for modern API tokens including Vercel, Hugging Face,
+  Supabase, Sentry, and Rollbar.
+- Updated `ADVANCED_QUERIES.md`, `SEARCH_QUERIES.md`, and
+  `GitSleuth_Groups.py` to include these new queries.
+
 ## 2025-05-22
 - Created this CHANGELOG in response to a chat request
 - Added persistent OAuth login across restarts
@@ -18,6 +24,12 @@ All notable changes to this project are documented in this file.
 - Added configuration option to toggle placeholder filtering in queries
 - Placeholder filtering now skips results where environment variables
   have empty or placeholder values
+
+## 2025-05-23
+- Added modern API token patterns (Vercel, Hugging Face, Supabase, Sentry, Rollbar)
+  to query generator and documentation
+- Consolidated Token_Manager functions and fixed header generation
+- Generalized `.gitignore` to ignore Python cache files
 
 
 ## 2025-05-21
