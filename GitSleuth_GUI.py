@@ -201,8 +201,8 @@ class GitSleuthGUI(QMainWindow):
         search_results_layout.addWidget(self.clear_results_button)
 
         # Geometry setup
-        # Expand the default window size for better spacing
-        self.setGeometry(200, 150, 1200, 750)
+        # Expand the default window size to accommodate larger snippets
+        self.setGeometry(200, 150, 1400, 850)
 
     def setupSearchInputArea(self, layout):
         """Build the search input widgets and action buttons."""
@@ -298,7 +298,8 @@ class GitSleuthGUI(QMainWindow):
         self.results_table.setColumnWidth(1, 220)
         self.results_table.setColumnWidth(2, 180)
         self.results_table.setColumnWidth(3, 250)
-        self.results_table.setColumnWidth(4, 300)
+        # Provide a wider column to display longer snippets
+        self.results_table.setColumnWidth(4, 450)
         # Stretch the snippets column to use remaining space
         self.results_table.horizontalHeader().setSectionResizeMode(
             4, QHeaderView.Stretch
@@ -723,7 +724,7 @@ class TokenManagementDialog(QDialog):
         super(TokenManagementDialog, self).__init__(parent)
         self.setWindowTitle('Token Management')
         # Provide more space for token information
-        self.setGeometry(100, 100, 500, 350)
+        self.setGeometry(100, 100, 600, 400)
         self.layout = QVBoxLayout(self)
 
         self.setupUI()
