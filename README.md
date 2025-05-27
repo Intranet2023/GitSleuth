@@ -64,8 +64,9 @@ When starting OAuth authentication, your default browser will automatically open
 to the GitHub device flow page so you can enter the provided code.
 
 ## Configuration
-Edit `config.json` to adjust log level, ignored filenames, and whether
-placeholder terms are filtered from queries and results. When enabled the
+Edit `config.json` to adjust log level, ignored filenames, and path patterns
+that should be skipped (e.g. `tests/`, `examples/`, or files containing `.sample.`).
+You can also control whether placeholder terms are filtered from queries and results. When enabled the
 filter removes hits where environment variables have empty or placeholder
 values. You can also define `ALLOWLIST_PATTERNS` with regex strings for
 known dummy secrets so matching snippets are ignored.

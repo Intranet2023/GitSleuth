@@ -5,6 +5,11 @@
         "test.md",
         "sample.config"
     ],
+    "IGNORED_PATH_PATTERNS": [
+        "tests/",
+        "examples/",
+        ".sample."
+    ],
     "SESSION_KEEP_ALIVE_MINUTES": 0,
     "SAVED_USERNAME": "",
     "FILTER_PLACEHOLDERS": true,

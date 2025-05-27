@@ -39,7 +39,7 @@ from GitSleuth_Groups import (
     get_query_description,
     PLACEHOLDERS,
 )
-from GitSleuth import extract_snippets, switch_token
+from GitSleuth import extract_snippets, switch_token, _path_is_ignored
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
 # Token management imports are kept for future use
@@ -607,6 +607,10 @@ class GitSleuthGUI(QMainWindow):
         self.status_bar.showMessage(f"Processing {repo_name}")
         QApplication.processEvents()
         file_path = item.get('path', '')
+        config = load_config()
+        patterns = config.get("IGNORED_PATH_PATTERNS", [])
+        if _path_is_ignored(file_path, patterns):
+            return
         file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
         if file_contents:
             snippets = extract_snippets(
