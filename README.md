@@ -72,6 +72,8 @@ known dummy secrets so matching snippets are ignored.
 Enable `USE_DETECT_SECRETS` to scan snippets with the `detect-secrets`
 tool and set `DETECT_SECRETS_BASELINE` to a baseline file for allowlisted
 secrets.
+Set `ENTROPY_THRESHOLD` (bits/char) to skip low-entropy values that
+look like placeholders.
 The application ships with a default GitHub OAuth client ID so it works out of
 the box. Set `GITHUB_OAUTH_CLIENT_ID` to override it and define
 `GITHUB_OAUTH_CLIENT_SECRET` if your OAuth app requires a secret.

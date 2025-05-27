@@ -17,6 +17,7 @@
         "changeme"
     ],
     "USE_DETECT_SECRETS": false,
-    "DETECT_SECRETS_BASELINE": ""
+    "DETECT_SECRETS_BASELINE": "",
+    "ENTROPY_THRESHOLD": 3.5
 
 }
