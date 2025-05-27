@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - Consolidated duplicate token management functions
 - Allowlist patterns for ignoring dummy secrets with `ALLOWLIST_PATTERNS` in configuration
 
+
 ## 2025-05-23
 - Added search patterns for modern API tokens including Vercel, Hugging Face,
   Supabase, Sentry, and Rollbar.
