@@ -111,6 +111,13 @@ def create_search_queries(keywords, filter_placeholders=True):
             f"SUPABASE_SERVICE_ROLE_KEY {domain_filter} {placeholders}",
             f"SENTRY_DSN {domain_filter} {placeholders}",
             f"ROLLBAR_ACCESS_TOKEN {domain_filter} {placeholders}",
+            f"GLPAT- {domain_filter} {placeholders}",
+            f"CLOUDFLARE_API_TOKEN {domain_filter} {placeholders}",
+            f"VAULT_TOKEN {domain_filter} {placeholders}",
+            f"PINECONE_API_KEY {domain_filter} {placeholders}",
+
+
+
         ],
         "OAuth Credentials": [
             f"extension:json googleusercontent client_secret {domain_filter} {placeholders}",
