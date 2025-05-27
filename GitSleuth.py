@@ -507,11 +507,23 @@ PLACEHOLDER_VALUES = {
     "test",
 }
 
-ENV_ASSIGN_RE = re.compile(r"\b[A-Z0-9_]+=\s*(\S*)")
+ENV_ASSIGN_RE = re.compile(r"\b([A-Z0-9_]+)=\s*(\S*)")
 
 
-def _is_placeholder_snippet(snippet):
-    """Return True if the snippet only contains placeholder assignments."""
+def _is_placeholder_snippet(snippet, query_terms=None):
+    """Return True if the snippet only contains placeholder assignments.
+
+    Parameters
+    ----------
+    snippet : str
+        The code snippet to inspect.
+    query_terms : list[str] or None, optional
+        Search terms extracted from the query that produced this snippet.
+        When provided, only assignments whose variable name matches one of
+        these terms are considered when determining if the snippet is a
+        placeholder. This helps avoid false positives caused by unrelated
+        variables with real values in the same snippet.
+    """
 
     if re.search(r"<[^>]+>", snippet):
         return True
@@ -522,13 +534,18 @@ def _is_placeholder_snippet(snippet):
     if not assignments:
         return False
 
-    for val in assignments:
-        clean = val.strip('"\'')
-        if not clean or clean in PLACEHOLDER_VALUES or clean.isdigit():
-            continue
-        return False
+    query_vars = {t.upper() for t in query_terms} if query_terms else None
+    found = False
 
-    return True
+    for var, val in assignments:
+        if query_vars and var.upper() not in query_vars:
+            continue
+        found = True
+        clean = val.strip('"\'')
+        if clean and clean not in PLACEHOLDER_VALUES and not clean.isdigit():
+            return False
+
+    return found
 
 def extract_snippets(content, query, filter_placeholders=True):
     """Extract and verify snippets that triggered a search rule.
@@ -559,7 +576,7 @@ def extract_snippets(content, query, filter_placeholders=True):
     verified = []
     for snippet in snippets:
         if any(re.search(re.escape(t), snippet, re.IGNORECASE) for t in query_terms):
-            if not filter_placeholders or not _is_placeholder_snippet(snippet):
+            if not filter_placeholders or not _is_placeholder_snippet(snippet, query_terms=query_terms):
                 verified.append(snippet)
 
     return verified
