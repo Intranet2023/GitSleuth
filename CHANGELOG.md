@@ -9,8 +9,7 @@ All notable changes to this project are documented in this file.
 - Generalized `.gitignore` to ignore Python bytecode
 - Consolidated duplicate token management functions
 - Allowlist patterns for ignoring dummy secrets with `ALLOWLIST_PATTERNS` in configuration
-- Snippet extraction skips matches near `# pragma: allowlist secret` comments and
-  values that match any configured allowlist patterns
+
 
 ## 2025-05-23
 - Added search patterns for modern API tokens including Vercel, Hugging Face,
