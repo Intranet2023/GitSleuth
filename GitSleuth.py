@@ -22,6 +22,7 @@ from prettytable import PrettyTable
 from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens, switch_token as rotate_token
+from Secret_Scanner import snippet_has_secret
 
 
 
@@ -584,6 +585,9 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
 
     query_terms = extract_search_terms(query)
     snippets = []
+    config = load_config()
+    use_scanner = config.get("USE_DETECT_SECRETS", False)
+    baseline = config.get("DETECT_SECRETS_BASELINE") or None
 
     for term in query_terms:
         pattern = re.compile(re.escape(term), re.IGNORECASE)
@@ -598,6 +602,8 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
     for snippet in snippets:
         if any(re.search(re.escape(t), snippet, re.IGNORECASE) for t in query_terms):
             if allowlist_patterns and any(re.search(p, snippet, re.I) for p in allowlist_patterns):
+                continue
+            if use_scanner and not snippet_has_secret(snippet, baseline_file=baseline):
                 continue
             if not filter_placeholders or not _is_placeholder_snippet(snippet, query_terms=query_terms):
                 verified.append(snippet)

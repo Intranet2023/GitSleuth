@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Generalized `.gitignore` to ignore Python bytecode
 - Consolidated duplicate token management functions
 - Allowlist patterns for ignoring dummy secrets with `ALLOWLIST_PATTERNS` in configuration
+- Optional integration with Yelp's `detect-secrets` for improved secret detection
 
 
 ## 2025-05-23
