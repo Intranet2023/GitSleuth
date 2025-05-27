@@ -41,7 +41,7 @@ from GitSleuth_Groups import (
 )
 from GitSleuth import extract_snippets, switch_token
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
-from OAuth_Manager import oauth_login
+from OAuth_Manager import oauth_login, fetch_username
 # Token management imports are kept for future use
 from Token_Manager import load_tokens, add_token, delete_token
 
@@ -361,10 +361,21 @@ class GitSleuthGUI(QMainWindow):
         token = tokens.get("oauth_token")
         saved_user = config.get("SAVED_USERNAME")
         if token:
-            os.environ["GITHUB_OAUTH_TOKEN"] = token
-            if saved_user:
-                self.oauth_button.setText(f"Logged in as: {saved_user}")
-            return True
+            username = fetch_username(token)
+            if username:
+                os.environ["GITHUB_OAUTH_TOKEN"] = token
+                if saved_user:
+                    self.oauth_button.setText(f"Logged in as: {saved_user}")
+                else:
+                    self.oauth_button.setText(f"Logged in as: {username}")
+                    config["SAVED_USERNAME"] = username
+                    save_config(config)
+                return True
+            else:
+                delete_token("oauth_token")
+                os.environ.pop("GITHUB_OAUTH_TOKEN", None)
+                config["SAVED_USERNAME"] = ""
+                save_config(config)
         return False
 
     
