@@ -75,7 +75,13 @@ def process_search_item(item, query, headers, all_data, filter_placeholders=True
         # Extracting snippets based on the query
         cfg = load_config()
         placeholders = cfg.get("FILTER_PLACEHOLDERS", True)
-        snippets = extract_snippets(file_contents, query, filter_placeholders=placeholders)
+        allowlist = cfg.get("ALLOWLIST_PATTERNS", [])
+        snippets = extract_snippets(
+            file_contents,
+            query,
+            filter_placeholders=placeholders,
+            allowlist_patterns=allowlist,
+        )
         logging.info(f"Processed {len(snippets)} snippets from {repo_name}/{file_path}")
 
         # Adding data to all_data list
@@ -325,10 +331,12 @@ def process_search_results(search_results, all_data, query, headers, group_name,
             try:
                 file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
                 if file_contents:
+                    allowlist = config.get("ALLOWLIST_PATTERNS", [])
                     snippets = extract_snippets(
                         file_contents,
                         query,
                         filter_placeholders=filter_placeholders,
+                        allowlist_patterns=allowlist,
                     )
                     if snippets:
                         file_data = {
@@ -507,7 +515,17 @@ PLACEHOLDER_VALUES = {
     "test",
 }
 
+# Inline pragma used by detect-secrets to suppress findings
+ALLOWLIST_PRAGMA_RE = re.compile(r"#\s*pragma:\s*allowlist secret", re.I)
+
 ENV_ASSIGN_RE = re.compile(r"\b([A-Z0-9_]+)=\s*(\S*)")
+
+
+def _has_allowlist_comment(content: str, start: int, end: int) -> bool:
+    """Return True if an allowlist pragma appears near the snippet."""
+    context_start = max(0, start - 100)
+    context_end = min(len(content), end + 100)
+    return bool(ALLOWLIST_PRAGMA_RE.search(content[context_start:context_end]))
 
 
 def _is_placeholder_snippet(snippet, query_terms=None):
@@ -547,7 +565,7 @@ def _is_placeholder_snippet(snippet, query_terms=None):
 
     return found
 
-def extract_snippets(content, query, filter_placeholders=True):
+def extract_snippets(content, query, filter_placeholders=True, allowlist_patterns=None):
     """Extract and verify snippets that triggered a search rule.
 
     Parameters
@@ -559,6 +577,9 @@ def extract_snippets(content, query, filter_placeholders=True):
     filter_placeholders : bool, optional
         If True, drop snippets that only contain placeholder values or
         environment variable references.
+    allowlist_patterns : list[str] or None, optional
+        Patterns that identify allowed or dummy secrets. If a snippet
+        matches any of these patterns it will be ignored.
     """
 
     query_terms = extract_search_terms(query)
@@ -570,12 +591,14 @@ def extract_snippets(content, query, filter_placeholders=True):
             start = max(match.start() - 30, 0)
             end = min(match.end() + 30, len(content))
             snippet = content[start:end].replace('\n', ' ').strip()
-            if snippet not in snippets:
+            if snippet not in snippets and not _has_allowlist_comment(content, start, end):
                 snippets.append(snippet)
 
     verified = []
     for snippet in snippets:
         if any(re.search(re.escape(t), snippet, re.IGNORECASE) for t in query_terms):
+            if allowlist_patterns and any(re.search(p, snippet, re.I) for p in allowlist_patterns):
+                continue
             if not filter_placeholders or not _is_placeholder_snippet(snippet, query_terms=query_terms):
                 verified.append(snippet)
 
@@ -699,10 +722,12 @@ def perform_custom_search(domain):
             file_path = item['path']
             file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
             if file_contents:
+                allowlist = config.get("ALLOWLIST_PATTERNS", [])
                 snippets = extract_snippets(
                     file_contents,
                     full_query,
                     filter_placeholders=config.get("FILTER_PLACEHOLDERS", True),
+                    allowlist_patterns=allowlist,
                 )
                 if not snippets:
                     print(f"No snippets found in {file_path} for query '{full_query}'")
