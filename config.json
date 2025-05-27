@@ -7,6 +7,14 @@
     ],
     "SESSION_KEEP_ALIVE_MINUTES": 0,
     "SAVED_USERNAME": "",
-    "FILTER_PLACEHOLDERS": true
+    "FILTER_PLACEHOLDERS": true,
+    "ALLOWLIST_PATTERNS": [
+        "dummy",
+        "placeholder",
+        "fake",
+        "example",
+        "notasecret",
+        "changeme"
+    ]
 
 }
