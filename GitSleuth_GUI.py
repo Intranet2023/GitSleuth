@@ -33,6 +33,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+
 import GitSleuth_API
 from GitSleuth_Groups import (
     create_search_queries,
@@ -162,8 +166,10 @@ class GitSleuthGUI(QMainWindow):
         tab_widget = QTabWidget(self)
         search_results_tab = QWidget()
         log_tab = QWidget()
+        ml_tab = QWidget()
         tab_widget.addTab(search_results_tab, "Search Results")
         tab_widget.addTab(log_tab, "Log")
+        tab_widget.addTab(ml_tab, "ML")
 
         main_layout.addWidget(tab_widget)
 
@@ -199,6 +205,18 @@ class GitSleuthGUI(QMainWindow):
         self.clear_results_button.clicked.connect(self.clear_results)
         self.clear_results_button.setEnabled(False)  # Set it to initially disabled
         search_results_layout.addWidget(self.clear_results_button)
+
+        # ML tab setup
+        ml_tab_layout = QVBoxLayout(ml_tab)
+        self.ml_output = QTextEdit(self)
+        self.ml_output.setReadOnly(True)
+        ml_tab_layout.addWidget(self.ml_output)
+
+        self.train_button = QPushButton("Train Model", self)
+        self.train_button.clicked.connect(self.train_model)
+        ml_tab_layout.addWidget(self.train_button)
+
+        self.load_labeled_data()
 
         # Geometry setup
         # Expand the default window size to accommodate larger snippets
@@ -285,13 +303,14 @@ class GitSleuthGUI(QMainWindow):
             layout (QVBoxLayout): The layout to add the results table to.
         """
 
-        self.results_table = QTableWidget(0, 5)
+        self.results_table = QTableWidget(0, 6)
         self.results_table.setHorizontalHeaderLabels([
             "Search Term",
             "Description",
             "Repository",
             "File Path",
             "Snippets",
+            "Label",
         ])
         layout.addWidget(self.results_table)
         self.results_table.setColumnWidth(0, 180)
@@ -300,6 +319,7 @@ class GitSleuthGUI(QMainWindow):
         self.results_table.setColumnWidth(3, 250)
         # Provide a wider column to display longer snippets
         self.results_table.setColumnWidth(4, 450)
+        self.results_table.setColumnWidth(5, 120)
         # Stretch the snippets column to use remaining space
         self.results_table.horizontalHeader().setSectionResizeMode(
             4, QHeaderView.Stretch
@@ -310,6 +330,12 @@ class GitSleuthGUI(QMainWindow):
         self.export_button.clicked.connect(self.export_results_to_csv)
         self.export_button.setEnabled(False)  # Initially disabled
         layout.addWidget(self.export_button)
+
+        # Button to export labeled results
+        self.export_labels_button = QPushButton("Export Labels", self)
+        self.export_labels_button.clicked.connect(self.export_labels_to_csv)
+        self.export_labels_button.setEnabled(False)
+        layout.addWidget(self.export_labels_button)
 
 
     def clear_log(self):
@@ -434,16 +460,70 @@ class GitSleuthGUI(QMainWindow):
                     repo_text = repo_widget.text() if repo_widget else ""
                     file_widget = self.results_table.cellWidget(row, 3)
                     file_text = file_widget.text() if file_widget else ""
-                    snippet_item = self.results_table.item(row, 3)
-                    snippet_text = snippet_item.text().replace("\n", " ") if snippet_item else ""
-                    desc_item = self.results_table.item(row, 4)
-                    desc_text = desc_item.text() if desc_item else ""
-                    writer.writerow([search_term, repo_text, file_text, snippet_text, desc_text])
+                    snippet_item = self.results_table.item(row, 4)
+                    snippet_text = (
+                        snippet_item.text().replace("\n", " ") if snippet_item else ""
+                    )
+                    writer.writerow([
+                        search_term,
+                        description,
+                        repo_text,
+                        file_text,
+                        snippet_text,
+                    ])
 
             self.status_bar.showMessage("Results exported successfully to " + filename)
         except Exception as e:
             logging.error(f"Error exporting to CSV: {e}")
             self.status_bar.showMessage("Error exporting results.")
+
+    def export_labels_to_csv(self):
+        """Export labeled results to a CSV file and save to training_labels.csv."""
+        filename, _ = QFileDialog.getSaveFileName(self, "Save Labeled Data", "", "CSV Files (*.csv)")
+        if filename:
+            self.write_labels_to_csv(filename)
+            # Also persist to training_labels.csv
+            self.write_labels_to_csv("training_labels.csv")
+
+    def write_labels_to_csv(self, filename):
+        try:
+            with open(filename, "w", newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow([
+                    "Search Term",
+                    "Description",
+                    "Repository",
+                    "File Path",
+                    "Snippet",
+                    "Label",
+                ])
+                for row in range(self.results_table.rowCount()):
+                    label_widget = self.results_table.cellWidget(row, 5)
+                    label_text = label_widget.currentText() if label_widget else ""
+                    if not label_text:
+                        continue
+                    search_term = self.results_table.item(row, 0).text()
+                    description = self.results_table.item(row, 1).text()
+                    repo_widget = self.results_table.cellWidget(row, 2)
+                    repo_text = repo_widget.text() if repo_widget else ""
+                    file_widget = self.results_table.cellWidget(row, 3)
+                    file_text = file_widget.text() if file_widget else ""
+                    snippet_item = self.results_table.item(row, 4)
+                    snippet_text = (
+                        snippet_item.text().replace("\n", " ") if snippet_item else ""
+                    )
+                    writer.writerow([
+                        search_term,
+                        description,
+                        repo_text,
+                        file_text,
+                        snippet_text,
+                        label_text,
+                    ])
+            self.status_bar.showMessage("Labels exported successfully to " + filename)
+        except Exception as e:
+            logging.error(f"Error exporting labels: {e}")
+            self.status_bar.showMessage("Error exporting labels.")
 
 
 
@@ -519,8 +599,10 @@ class GitSleuthGUI(QMainWindow):
     def check_enable_export(self):
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
+            self.export_labels_button.setEnabled(True)
         else:
             self.export_button.setEnabled(False)
+            self.export_labels_button.setEnabled(False)
 
     def wait_with_events(self, wait_time):
         """Sleep in small intervals while processing GUI events.
@@ -655,9 +737,15 @@ class GitSleuthGUI(QMainWindow):
 
             # Snippets column
             self.results_table.setItem(row_position, 4, QTableWidgetItem(snippet))
-        # Enable export button if there are results
+
+            # Label column with dropdown
+            label_box = QComboBox()
+            label_box.addItems(["", "True Positive", "False Positive"])
+            self.results_table.setCellWidget(row_position, 5, label_box)
+        # Enable export buttons if there are results
         if self.results_table.rowCount() > 0:
             self.export_button.setEnabled(True)
+            self.export_labels_button.setEnabled(True)
             self.clear_results_button.setEnabled(True)  # Enable the clear results button
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
@@ -684,6 +772,37 @@ class GitSleuthGUI(QMainWindow):
             self.exit_timer.stop()
             self.exit_timer = None
         QApplication.quit()
+
+    def load_labeled_data(self):
+        """Load labeled data and display basic info on the ML tab."""
+        self.ml_output.clear()
+        if not os.path.exists("training_labels.csv"):
+            self.ml_output.append("No labeled data found.")
+            return
+        try:
+            df = pd.read_csv("training_labels.csv")
+            self.ml_output.append(f"Loaded {len(df)} labeled rows.")
+        except Exception as e:
+            self.ml_output.append(f"Error loading labels: {e}")
+
+    def train_model(self):
+        """Train a simple text model on labeled data."""
+        if not os.path.exists("training_labels.csv"):
+            self.ml_output.append("No labeled data to train on.")
+            return
+        try:
+            df = pd.read_csv("training_labels.csv")
+            if df.empty:
+                self.ml_output.append("No labeled data to train on.")
+                return
+            vectorizer = TfidfVectorizer()
+            X = vectorizer.fit_transform(df["Snippet"])
+            y = df["Label"].apply(lambda x: 1 if x == "True Positive" else 0)
+            model = LogisticRegression(max_iter=1000)
+            model.fit(X, y)
+            self.ml_output.append(f"Model trained on {len(df)} samples.")
+        except Exception as e:
+            self.ml_output.append(f"Training failed: {e}")
 
 
 class SettingsDialog(QDialog):
