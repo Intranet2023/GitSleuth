@@ -23,6 +23,7 @@ from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens, switch_token as rotate_token
 from Secret_Scanner import snippet_has_secret
+import math
 
 
 
@@ -516,10 +517,29 @@ PLACEHOLDER_VALUES = {
     "test",
 }
 
+# Default entropy threshold to determine whether a value looks random enough
+# to be considered a real secret.
+DEFAULT_ENTROPY_THRESHOLD = 3.5
+
 # Inline pragma used by detect-secrets to suppress findings
 ALLOWLIST_PRAGMA_RE = re.compile(r"#\s*pragma:\s*allowlist secret", re.I)
 
 ENV_ASSIGN_RE = re.compile(r"\b([A-Z0-9_]+)=\s*(\S*)")
+
+
+def _shannon_entropy(data: str) -> float:
+    """Return the Shannon entropy of *data* in bits per character."""
+    if not data:
+        return 0.0
+    freq = {}
+    for ch in data:
+        freq[ch] = freq.get(ch, 0) + 1
+    entropy = 0.0
+    length = len(data)
+    for count in freq.values():
+        p = count / length
+        entropy -= p * math.log2(p)
+    return entropy
 
 
 def _has_allowlist_comment(content: str, start: int, end: int) -> bool:
@@ -529,7 +549,7 @@ def _has_allowlist_comment(content: str, start: int, end: int) -> bool:
     return bool(ALLOWLIST_PRAGMA_RE.search(content[context_start:context_end]))
 
 
-def _is_placeholder_snippet(snippet, query_terms=None):
+def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT_ENTROPY_THRESHOLD):
     """Return True if the snippet only contains placeholder assignments.
 
     Parameters
@@ -562,7 +582,8 @@ def _is_placeholder_snippet(snippet, query_terms=None):
         found = True
         clean = val.strip('"\'')
         if clean and clean not in PLACEHOLDER_VALUES and not clean.isdigit():
-            return False
+            if _shannon_entropy(clean) > entropy_threshold:
+                return False
 
     return found
 
@@ -588,6 +609,7 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
     config = load_config()
     use_scanner = config.get("USE_DETECT_SECRETS", False)
     baseline = config.get("DETECT_SECRETS_BASELINE") or None
+    entropy_threshold = config.get("ENTROPY_THRESHOLD", DEFAULT_ENTROPY_THRESHOLD)
 
     for term in query_terms:
         pattern = re.compile(re.escape(term), re.IGNORECASE)
@@ -605,7 +627,7 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
                 continue
             if use_scanner and not snippet_has_secret(snippet, baseline_file=baseline):
                 continue
-            if not filter_placeholders or not _is_placeholder_snippet(snippet, query_terms=query_terms):
+            if not filter_placeholders or not _is_placeholder_snippet(snippet, query_terms=query_terms, entropy_threshold=entropy_threshold):
                 verified.append(snippet)
 
     return verified
