@@ -22,6 +22,7 @@ All notable changes to this project are documented in this file.
 - Environment variable references filtered to avoid false positives
 - Graceful handling of token decryption errors
 - Fixed training error when only one label class
+- Updated `AGENTS.md` to require changelog updates for every change
 
 
 ## 2025-05-23
