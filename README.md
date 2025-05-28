@@ -27,6 +27,8 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
   ordinary words, UUIDs, or dates
 - Pattern detection identifies environment variable names and token strings
   to reduce false positives
+- Snippets that reference environment variables (e.g. `os.environ` or
+  `process.env`) are automatically ignored to avoid false positives
 
 
 ## Installation
@@ -86,7 +88,8 @@ Edit `config.json` to adjust log level, ignored filenames, and path patterns
 that should be skipped (e.g. `tests/`, `examples/`, or files containing `.sample.`).
 You can also control whether placeholder terms are filtered from queries and results. When enabled the
 filter removes hits where environment variables have empty or placeholder
-values. You can also define `ALLOWLIST_PATTERNS` with regex strings for
+values, and ignores snippets that retrieve values from environment variables.
+You can also define `ALLOWLIST_PATTERNS` with regex strings for
 known dummy secrets so matching snippets are ignored.
 Enable `USE_DETECT_SECRETS` to scan snippets with the `detect-secrets`
 tool and set `DETECT_SECRETS_BASELINE` to a baseline file for allowlisted

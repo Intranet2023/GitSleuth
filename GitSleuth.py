@@ -530,6 +530,11 @@ ALLOWLIST_PRAGMA_RE = re.compile(r"#\s*pragma:\s*allowlist secret", re.I)
 
 ENV_ASSIGN_RE = re.compile(r"\b([A-Z0-9_]+)=\s*(\S*)")
 
+# Common patterns used to reference environment variables in code.
+ENV_REF_RE = re.compile(
+    r"(?i)(?:os\.environ|os\.getenv|process\.env|\benv\(|\bgetenv\(|\bENV\[|\bENV\.|System\.getenv|std::env)"
+)
+
 # Regexes for well-known non-secret formats
 UUID_RE = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
@@ -585,7 +590,8 @@ def _path_is_ignored(file_path: str, patterns: list[str]) -> bool:
 
 
 def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT_ENTROPY_THRESHOLD):
-    """Return True if the snippet only contains placeholder assignments.
+    """Return True if the snippet only contains placeholder assignments or
+    references environment variables.
 
     Parameters
     ----------
@@ -602,6 +608,8 @@ def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT
     if re.search(r"<[^>]+>", snippet):
         return True
     if re.search(r"\${[^}]+}", snippet):
+        return True
+    if ENV_REF_RE.search(snippet):
         return True
 
     assignments = ENV_ASSIGN_RE.findall(snippet)
