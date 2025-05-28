@@ -55,6 +55,7 @@ from GitSleuth import (
     switch_token,
     _path_is_ignored,
     _shannon_entropy,
+    extract_search_terms,
 )
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
@@ -153,6 +154,18 @@ def compute_features(text: str, file_path: str = "") -> list[float]:
         base = [entropy, float(length), numeric / length, alpha / length, special / length]
 
     return base + _file_type_features(file_path) + _structural_features(text)
+
+
+def highlight_terms_html(text: str, query: str) -> str:
+    """Return HTML text with search terms highlighted in red."""
+    terms = extract_search_terms(query)
+    for term in terms:
+        pattern = re.compile(re.escape(term), re.IGNORECASE)
+        text = pattern.sub(
+            lambda m: f'<span style="color:red">{m.group(0)}</span>',
+            text,
+        )
+    return text
 
 class ClickableTableWidgetItem(QTableWidgetItem):
     def __init__(self, text, url):
@@ -885,8 +898,13 @@ class GitSleuthGUI(QMainWindow):
             file_link_label = self.create_clickable_link(file_path, file_url)
             self.results_table.setCellWidget(row_position, 3, file_link_label)
 
-            # Snippets column
-            self.results_table.setItem(row_position, 4, QTableWidgetItem(snippet))
+            # Snippets column with highlighted search terms
+            highlighted = highlight_terms_html(snippet, filtered_search_term)
+            snippet_label = QLabel()
+            snippet_label.setTextFormat(Qt.RichText)
+            snippet_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            snippet_label.setText(highlighted)
+            self.results_table.setCellWidget(row_position, 4, snippet_label)
 
             # Label column with dropdown
             label_box = QComboBox()
