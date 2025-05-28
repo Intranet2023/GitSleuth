@@ -36,6 +36,9 @@ from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+import numpy as np
+from scipy.sparse import hstack, csr_matrix
+
 
 import GitSleuth_API
 from GitSleuth_Groups import (
@@ -43,7 +46,12 @@ from GitSleuth_Groups import (
     get_query_description,
     PLACEHOLDERS,
 )
-from GitSleuth import extract_snippets, switch_token, _path_is_ignored
+from GitSleuth import (
+    extract_snippets,
+    switch_token,
+    _path_is_ignored,
+    _shannon_entropy,
+)
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
 # Token management imports are kept for future use
@@ -100,6 +108,23 @@ log_level = config.get("LOG_LEVEL", "DEBUG").upper()
 logging.basicConfig(level=getattr(logging, log_level, logging.INFO),
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
+
+def compute_features(text: str) -> list[float]:
+    """Return entropy and composition features for a text snippet."""
+    length = len(text)
+    if length == 0:
+        return [0.0, 0.0, 0.0, 0.0, 0.0]
+    numeric = sum(ch.isdigit() for ch in text)
+    alpha = sum(ch.isalpha() for ch in text)
+    special = length - numeric - alpha
+    entropy = _shannon_entropy(text)
+    return [
+        entropy,
+        float(length),
+        numeric / length,
+        alpha / length,
+        special / length,
+    ]
 
 class ClickableTableWidgetItem(QTableWidgetItem):
     def __init__(self, text, url):
@@ -455,7 +480,8 @@ class GitSleuthGUI(QMainWindow):
                 ])
                 for row in range(self.results_table.rowCount()):
                     search_term = self.results_table.item(row, 0).text()
-                    description = self.results_table.item(row, 1).text()
+                    description_item = self.results_table.item(row, 1)
+                    description = description_item.text() if description_item else ""
                     repo_widget = self.results_table.cellWidget(row, 2)
                     repo_text = repo_widget.text() if repo_widget else ""
                     file_widget = self.results_table.cellWidget(row, 3)
@@ -796,7 +822,10 @@ class GitSleuthGUI(QMainWindow):
                 self.ml_output.append("No labeled data to train on.")
                 return
             vectorizer = TfidfVectorizer()
-            X = vectorizer.fit_transform(df["Snippet"])
+            text_features = vectorizer.fit_transform(df["Snippet"])
+            extra = np.array([compute_features(t) for t in df["Snippet"]])
+            X = hstack([text_features, csr_matrix(extra)])
+
             y = df["Label"].apply(lambda x: 1 if x == "True Positive" else 0)
             model = LogisticRegression(max_iter=1000)
             model.fit(X, y)

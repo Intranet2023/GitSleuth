@@ -61,6 +61,9 @@ Use the **Label** column to mark each result as a **True Positive** or **False P
 Open the **ML** tab and click **Train Model** to train a simple text classifier on the saved labels. Training progress is shown in the tab's output area.
 The labeled data is stored in `training_labels.csv`. Models are currently kept in memory after training.
 Example passwords for experimentation are provided in `training_data.csv`.
+Training uses TF‑IDF text features combined with entropy and character composition metrics
+(length, numeric %, alphabetic %, special %) to help distinguish real secrets
+
 
 
 
