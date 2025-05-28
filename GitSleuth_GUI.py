@@ -5,6 +5,7 @@ import json
 import csv
 import time
 import logging
+import re
 from typing import Optional
 
 from PyQt5.QtWidgets import (
@@ -105,26 +106,50 @@ config = load_config()
 log_level = config.get("LOG_LEVEL", "DEBUG").upper()
 
 # Configure logging with the level from config.json
-logging.basicConfig(level=getattr(logging, log_level, logging.INFO),
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
-def compute_features(text: str) -> list[float]:
-    """Return entropy and composition features for a text snippet."""
+CONFIG_EXTS = {'.json', '.yml', '.yaml', '.ini', '.cfg', '.conf', '.toml', '.env'}
+SOURCE_EXTS = {
+    '.py', '.js', '.ts', '.java', '.go', '.rb', '.php', '.cpp', '.c', '.cs', '.swift'
+}
+LOG_EXTS = {'.log', '.out', '.txt'}
+
+
+def _file_type_features(file_path: str) -> list[int]:
+    """Return one-hot encoded file type features."""
+    ext = os.path.splitext(file_path)[1].lower()
+    is_config = int(ext in CONFIG_EXTS or 'config' in file_path.lower())
+    is_source = int(ext in SOURCE_EXTS or '/src/' in file_path.lower())
+    is_log = int(ext in LOG_EXTS or 'log' in file_path.lower())
+    is_other = int(not (is_config or is_source or is_log))
+    return [is_config, is_source, is_log, is_other]
+
+
+def _structural_features(snippet: str) -> list[int]:
+    """Return simple structural features for a snippet."""
+    assignment = int(bool(re.search(r"\b\w+\s*[:=]\s*\S+", snippet)))
+    func_arg = int(
+        bool(re.search(r"set(pass(word|phrase)?|password|token|key|secret)\s*\(", snippet, re.I))
+    )
+    return [assignment, func_arg]
+
+def compute_features(text: str, file_path: str = "") -> list[float]:
+    """Return entropy, composition and contextual features for a snippet."""
     length = len(text)
     if length == 0:
-        return [0.0, 0.0, 0.0, 0.0, 0.0]
-    numeric = sum(ch.isdigit() for ch in text)
-    alpha = sum(ch.isalpha() for ch in text)
-    special = length - numeric - alpha
-    entropy = _shannon_entropy(text)
-    return [
-        entropy,
-        float(length),
-        numeric / length,
-        alpha / length,
-        special / length,
-    ]
+        base = [0.0, 0.0, 0.0, 0.0, 0.0]
+    else:
+        numeric = sum(ch.isdigit() for ch in text)
+        alpha = sum(ch.isalpha() for ch in text)
+        special = length - numeric - alpha
+        entropy = _shannon_entropy(text)
+        base = [entropy, float(length), numeric / length, alpha / length, special / length]
+
+    return base + _file_type_features(file_path) + _structural_features(text)
 
 class ClickableTableWidgetItem(QTableWidgetItem):
     def __init__(self, text, url):
@@ -823,7 +848,10 @@ class GitSleuthGUI(QMainWindow):
                 return
             vectorizer = TfidfVectorizer()
             text_features = vectorizer.fit_transform(df["Snippet"])
-            extra = np.array([compute_features(t) for t in df["Snippet"]])
+            paths = df.get("File Path", ["" for _ in range(len(df))])
+            extra = np.array(
+                [compute_features(snippet, path) for snippet, path in zip(df["Snippet"], paths)]
+            )
             X = hstack([text_features, csr_matrix(extra)])
 
             y = df["Label"].apply(lambda x: 1 if x == "True Positive" else 0)

@@ -66,7 +66,9 @@ Example passwords for experimentation are provided in `training_data.csv`.
 Training uses TF‑IDF text features combined with entropy and character composition metrics
 
 (length, numeric %, alphabetic %, special %) plus simple dictionary and pattern
-checks to help distinguish real secrets from placeholders.
+checks to help distinguish real secrets from placeholders. Additional features
+also encode the file type (config, source, log, other) and simple structural
+context such as assignments or secret-setting function calls.
 
 
 
