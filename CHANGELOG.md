@@ -17,6 +17,11 @@ All notable changes to this project are documented in this file.
 - Added dictionary and format heuristics to reduce false positives
 - Fixed CSV export column order
 - Standardized scikit-learn imports and one-hot file type features
+- Automated conflict resolution via `auto_resolve_conflicts.sh`
+- README improvements covering ML workflow and compile checks
+- Environment variable references filtered to avoid false positives
+- Graceful handling of token decryption errors
+- Fixed training error when only one label class
 
 
 ## 2025-05-23
