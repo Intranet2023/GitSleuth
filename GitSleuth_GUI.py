@@ -302,6 +302,7 @@ class GitSleuthGUI(QMainWindow):
         ml_tab_layout.addWidget(self.ml_output)
 
         self.train_button = QPushButton("Train Model", self)
+        self.train_button.setToolTip("Train the machine learning model")
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
 
@@ -356,42 +357,49 @@ class GitSleuthGUI(QMainWindow):
 
         self.save_preset_btn = QPushButton("Save Preset", self)
         self.save_preset_btn.setFixedWidth(110)
+        self.save_preset_btn.setToolTip("Save the current search as a preset")
         self.save_preset_btn.clicked.connect(self.save_current_preset)
         layout.addWidget(self.save_preset_btn)
 
         self.delete_preset_btn = QPushButton("Delete", self)
         self.delete_preset_btn.setFixedWidth(80)
+        self.delete_preset_btn.setToolTip("Delete the selected preset")
         self.delete_preset_btn.clicked.connect(self.delete_current_preset)
         layout.addWidget(self.delete_preset_btn)
 
         self.search_button = QPushButton("Search", self)
         # Slightly wider buttons for clarity
         self.search_button.setFixedWidth(110)
+        self.search_button.setToolTip("Start the search")
         self.search_button.clicked.connect(self.on_search)
         layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.setFixedWidth(110)
+        self.stop_button.setToolTip("Stop the ongoing search")
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
         layout.addWidget(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
-
+        
         # Allow room for "Logged in as" text after authentication
         self.oauth_button.setFixedWidth(180)
+        self.oauth_button.setToolTip("Authenticate using OAuth")
         self.oauth_button.clicked.connect(self.start_oauth)
         button_layout.addWidget(self.oauth_button)
 
 
         self.logout_button = QPushButton("Logout", self)
         self.logout_button.setFixedWidth(120)
+        self.logout_button.setToolTip("Clear OAuth credentials")
         self.logout_button.clicked.connect(self.logout_user)
         button_layout.addWidget(self.logout_button)
 
 
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(100)
+        self.quit_button.setToolTip("Exit the application")
         self.quit_button.clicked.connect(self.force_quit)
         button_layout.addWidget(self.quit_button)
 
@@ -972,6 +980,8 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.duration_spin)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+        buttons.button(QDialogButtonBox.Ok).setToolTip("Save settings")
+        buttons.button(QDialogButtonBox.Cancel).setToolTip("Cancel")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -1008,16 +1018,19 @@ class TokenManagementDialog(QDialog):
         # Add, Delete Buttons
         btn_layout = QHBoxLayout()
         self.add_btn = QPushButton('Add Token')
+        self.add_btn.setToolTip('Add a new token')
         self.add_btn.clicked.connect(self.add_token_dialog)
         btn_layout.addWidget(self.add_btn)
 
         self.delete_btn = QPushButton('Delete Token')
+        self.delete_btn.setToolTip('Delete the selected token')
         self.delete_btn.clicked.connect(self.delete_token)
         btn_layout.addWidget(self.delete_btn)
 
         self.oauth_btn = QPushButton('OAuth Login')
         # Wider button so "Logged in as" text fits comfortably
         self.oauth_btn.setFixedWidth(180)
+        self.oauth_btn.setToolTip('Authenticate using OAuth')
         self.oauth_btn.clicked.connect(self.start_oauth)
 
         btn_layout.addWidget(self.oauth_btn)
@@ -1057,6 +1070,7 @@ class TokenManagementDialog(QDialog):
         layout.addWidget(self.token_input)
 
         add_button = QPushButton("Add", dialog)
+        add_button.setToolTip("Add token")
         add_button.clicked.connect(lambda: self.add_token(dialog))
         layout.addWidget(add_button)
 
