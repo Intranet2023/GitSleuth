@@ -529,12 +529,8 @@ class GitSleuthGUI(QMainWindow):
             self.status_bar.showMessage("Error exporting results.")
 
     def export_labels_to_csv(self):
-        """Export labeled results to a CSV file and save to training_labels.csv."""
-        filename, _ = QFileDialog.getSaveFileName(self, "Save Labeled Data", "", "CSV Files (*.csv)")
-        if filename:
-            self.write_labels_to_csv(filename)
-            # Also persist to training_labels.csv
-            self.write_labels_to_csv("training_labels.csv")
+        """Export labeled results directly to training_labels.csv."""
+        self.write_labels_to_csv("training_labels.csv")
 
     def write_labels_to_csv(self, filename):
         try:
