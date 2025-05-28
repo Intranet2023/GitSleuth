@@ -65,6 +65,12 @@ checks to help distinguish real secrets from placeholders. Additional features
 also encode the file type (config, source, log, other) and simple structural
 context such as assignments or secret-setting function calls.
 
+#### ML Workflow
+1. After running a search, mark each result row as **True Positive** or **False Positive** using the **Label** column.
+2. Click **Export Labels** to save the selections. This writes them to `training_labels.csv` so the ML tab can load them.
+3. Switch to the **ML** tab and click **Train Model**. The application reads `training_labels.csv`, extracts text and entropy features and trains a logistic regression classifier.
+4. When training completes, the tab displays how many samples were used and the model remains in memory for the current session.
+
 
 
 ### CLI
