@@ -479,7 +479,8 @@ class GitSleuthGUI(QMainWindow):
                 ])
                 for row in range(self.results_table.rowCount()):
                     search_term = self.results_table.item(row, 0).text()
-                    description = self.results_table.item(row, 1).text()
+                    description_item = self.results_table.item(row, 1)
+                    description = description_item.text() if description_item else ""
                     repo_widget = self.results_table.cellWidget(row, 2)
                     repo_text = repo_widget.text() if repo_widget else ""
                     file_widget = self.results_table.cellWidget(row, 3)
