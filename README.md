@@ -9,6 +9,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - OAuth device flow authentication with secure token storage and rotation
 - Optional session keep-alive after closing the GUI with automatic login restoration
 - Dark-themed GUI and CLI with a keyword filter to narrow searches
+- User-defined search presets for quick access to common search groups
 - Searches include tokens for Vercel, Hugging Face, Supabase, Sentry, Rollbar, GitLab, Cloudflare, Vault and Pinecone
 - Status bar shows rate limit pauses and tokens rotate automatically
 - Export results to Excel or CSV
@@ -48,6 +49,9 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 python GitSleuth_GUI.py
 ```
 Use the **Keywords** field to limit searches to specific domains or terms.
+
+Use **Save Preset** to store the current keywords and group selection.
+Choose a preset from the dropdown to quickly re-run saved searches.
 
 Each result row also displays the description of the rule that matched.
 
