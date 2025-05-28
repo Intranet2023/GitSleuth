@@ -71,27 +71,37 @@ def fetch_paginated_data(url, headers, max_items=100):
 
 _OAUTH_TOKEN = None
 
-def get_headers():
 
+def _choose_token(tokens: dict) -> str | None:
+    """Return the preferred token from stored tokens."""
+    if "oauth_token" in tokens:
+        return tokens["oauth_token"]
+    if tokens:
+        # Use first token in dictionary order
+        return list(tokens.values())[0]
+    return None
+
+
+def get_headers():
     """Generate headers for GitHub API requests."""
 
     global _OAUTH_TOKEN
     if not _OAUTH_TOKEN:
-        tokens = load_tokens()
-        if tokens:
-            _OAUTH_TOKEN = list(tokens.values())[0]
-        else:
-            _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
+        _OAUTH_TOKEN = os.environ.get("GITHUB_OAUTH_TOKEN")
         if not _OAUTH_TOKEN:
             tokens = load_tokens()
-            if tokens:
-                _OAUTH_TOKEN = list(tokens.values())[0]
-            else:
-                _OAUTH_TOKEN = oauth_login()
-            if not _OAUTH_TOKEN:
-                logging.error("No GitHub tokens available.")
-                return {}
+            _OAUTH_TOKEN = _choose_token(tokens)
+
+        if not _OAUTH_TOKEN:
+            result = oauth_login()
+            _OAUTH_TOKEN = result[0] if isinstance(result, tuple) else result
+
+        if not _OAUTH_TOKEN:
+            logging.error("No GitHub tokens available.")
+            return {}
+
         os.environ["GITHUB_OAUTH_TOKEN"] = _OAUTH_TOKEN
+
     logging.debug("Using OAuth token")
     return {
         "Authorization": f"token {_OAUTH_TOKEN}",
