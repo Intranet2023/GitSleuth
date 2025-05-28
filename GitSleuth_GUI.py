@@ -31,6 +31,8 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QHeaderView,
     QInputDialog,
+    QToolBar,
+    QStyle,
 )
 from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
@@ -209,6 +211,41 @@ class GitSleuthGUI(QMainWindow):
         settings_action.triggered.connect(self.open_settings)
         menu_bar.addAction(settings_action)
 
+        # Toolbar for commonly used actions
+        toolbar = QToolBar("Tools", self)
+        self.addToolBar(toolbar)
+
+        self.clear_results_action = QAction(
+            self.style().standardIcon(QStyle.SP_DialogResetButton),
+            "Clear Results",
+            self,
+        )
+        self.clear_results_action.triggered.connect(self.clear_results)
+        self.clear_results_action.setEnabled(False)
+        toolbar.addAction(self.clear_results_action)
+
+        self.clear_log_action = QAction(
+            self.style().standardIcon(QStyle.SP_DialogResetButton), "Clear Log", self
+        )
+        self.clear_log_action.triggered.connect(self.clear_log)
+        toolbar.addAction(self.clear_log_action)
+
+        self.export_action = QAction(
+            self.style().standardIcon(QStyle.SP_DialogSaveButton), "Export to CSV", self
+        )
+        self.export_action.triggered.connect(self.export_results_to_csv)
+        self.export_action.setEnabled(False)
+        toolbar.addAction(self.export_action)
+
+        self.export_labels_action = QAction(
+            self.style().standardIcon(QStyle.SP_DialogSaveButton),
+            "Export Labels",
+            self,
+        )
+        self.export_labels_action.triggered.connect(self.export_labels_to_csv)
+        self.export_labels_action.setEnabled(False)
+        toolbar.addAction(self.export_labels_action)
+
         # Main widget and layout
         main_widget = QWidget(self)
         self.setCentralWidget(main_widget)
@@ -247,16 +284,8 @@ class GitSleuthGUI(QMainWindow):
         logging.root.addHandler(log_handler)
         log_tab_layout.addWidget(self.log_output)
 
-        # Create a button to clear the log
-        self.clear_log_button = QPushButton("Clear Log", self)
-        self.clear_log_button.clicked.connect(self.clear_log)
-        log_tab_layout.addWidget(self.clear_log_button)
 
-        # Create a button to clear the search results
-        self.clear_results_button = QPushButton("Clear Results", self)
-        self.clear_results_button.clicked.connect(self.clear_results)
-        self.clear_results_button.setEnabled(False)  # Set it to initially disabled
-        search_results_layout.addWidget(self.clear_results_button)
+        # Actions now provided in the toolbar
 
         # ML tab setup
         ml_tab_layout = QVBoxLayout(ml_tab)
@@ -393,17 +422,8 @@ class GitSleuthGUI(QMainWindow):
             4, QHeaderView.Stretch
         )
 
-        # Create a button to export results to CSV
-        self.export_button = QPushButton("Export to CSV", self)
-        self.export_button.clicked.connect(self.export_results_to_csv)
-        self.export_button.setEnabled(False)  # Initially disabled
-        layout.addWidget(self.export_button)
 
-        # Button to export labeled results
-        self.export_labels_button = QPushButton("Export Labels", self)
-        self.export_labels_button.clicked.connect(self.export_labels_to_csv)
-        self.export_labels_button.setEnabled(False)
-        layout.addWidget(self.export_labels_button)
+        # Export actions now available via toolbar
 
 
     def clear_log(self):
@@ -521,10 +541,10 @@ class GitSleuthGUI(QMainWindow):
         Clears the content of the search results table.
         """
         self.results_table.setRowCount(0)
-        # Disable the export button after clearing results
-        self.export_button.setEnabled(False)
-        # Update the enabled state of the clear_results_button
-        self.clear_results_button.setEnabled(False)
+        # Disable the export actions after clearing results
+        self.export_action.setEnabled(False)
+        self.export_labels_action.setEnabled(False)
+        self.clear_results_action.setEnabled(False)
 
     def stop_search(self):
         """
@@ -656,7 +676,8 @@ class GitSleuthGUI(QMainWindow):
             )
         self.stop_button.setEnabled(True)  # Allow user to stop the search
         self.search_button.setEnabled(False)
-        self.export_button.setEnabled(False)  # Explicitly disable the export button
+        self.export_action.setEnabled(False)  # Explicitly disable the export button
+        self.export_labels_action.setEnabled(False)
         self.progress_bar.setValue(0)
         QApplication.processEvents()  # Refresh UI state before starting search
         self.perform_search(keywords, selected_group)
@@ -705,11 +726,11 @@ class GitSleuthGUI(QMainWindow):
 
     def check_enable_export(self):
         if self.results_table.rowCount() > 0:
-            self.export_button.setEnabled(True)
-            self.export_labels_button.setEnabled(True)
+            self.export_action.setEnabled(True)
+            self.export_labels_action.setEnabled(True)
         else:
-            self.export_button.setEnabled(False)
-            self.export_labels_button.setEnabled(False)
+            self.export_action.setEnabled(False)
+            self.export_labels_action.setEnabled(False)
 
     def wait_with_events(self, wait_time):
         """Sleep in small intervals while processing GUI events.
@@ -851,9 +872,9 @@ class GitSleuthGUI(QMainWindow):
             self.results_table.setCellWidget(row_position, 5, label_box)
         # Enable export buttons if there are results
         if self.results_table.rowCount() > 0:
-            self.export_button.setEnabled(True)
-            self.export_labels_button.setEnabled(True)
-            self.clear_results_button.setEnabled(True)  # Enable the clear results button
+            self.export_action.setEnabled(True)
+            self.export_labels_action.setEnabled(True)
+            self.clear_results_action.setEnabled(True)  # Enable the clear results button
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
 
