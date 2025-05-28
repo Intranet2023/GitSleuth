@@ -4,32 +4,23 @@
 GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI with a dark theme.
 
 ## Features
-- Predefined and custom search queries with extensive templates from
-  [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and
-  [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
-- OAuth device flow authentication with token rotation and secure token
-  storage to handle API rate limits
+
+- Predefined and custom search queries using templates in [ADVANCED_QUERIES.md](ADVANCED_QUERIES.md) and [SEARCH_QUERIES.md](SEARCH_QUERIES.md)
+- OAuth device flow authentication with secure token storage and rotation
+- Optional session keep-alive after closing the GUI with automatic login restoration
+- Dark-themed GUI and CLI with a keyword filter to narrow searches
+- Searches include tokens for Vercel, Hugging Face, Supabase, Sentry, Rollbar, GitLab, Cloudflare, Vault and Pinecone
+- Status bar shows rate limit pauses and tokens rotate automatically
 - Export results to Excel or CSV
-- Sleek dark theme for the GUI
-- Keyword filter field in the GUI for quickly narrowing searches
-- Searches include modern API tokens like Vercel, Hugging Face, Supabase,
-  Sentry, and Rollbar
-- Optional integration with Yelp's detect-secrets for advanced secret detection
-
-
-- Optional session keep-alive after closing the GUI
-
-- Automatic restoration of your OAuth login on launch
-
-
-- Results table now shows a short description for each rule
-- Simple dictionary and format heuristics filter out values that look like
-  ordinary words, UUIDs, or dates
+- Machine learning tab to label results and train a classifier using entropy and context features
+- Optional integration with Yelp's `detect-secrets` for advanced scanning
+- Results table includes rule descriptions
+- Dictionary and format heuristics filter out common words, UUIDs or dates
 - Pattern detection identifies environment variable names and token strings
-  to reduce false positives
-- Snippets that reference environment variables (e.g. `os.environ` or
-  `process.env`) are automatically ignored to avoid false positives
-
+- Snippets referencing environment variables (e.g. `os.environ` or `process.env`) are ignored
+- Allowlist patterns skip known dummy secrets via `ALLOWLIST_PATTERNS`
+- `auto_resolve_conflicts.sh` script merges branches while keeping incoming changes
+- `setup.sh` allows installing dependencies before network access is disabled
 
 ## Installation
 ### Prerequisites
@@ -114,6 +105,13 @@ of the branch you want to merge:
 It fetches the branch from `origin`, merges it with the `theirs` strategy,
 and verifies that no conflict markers remain.
 
+
+## Checks
+Before committing, ensure the main modules compile:
+
+```bash
+python -m py_compile GitSleuth_GUI.py OAuth_Manager.py Token_Manager.py GitSleuth.py GitSleuth_API.py
+```
 
 ## Contributing
 Contributions are welcome. Please follow standard open-source practices.
