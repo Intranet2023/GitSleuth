@@ -72,7 +72,7 @@ def apply_dark_palette(app):
     dark_palette.setColor(QPalette.WindowText, Qt.white)
     dark_palette.setColor(QPalette.Base, QColor(35, 35, 35))
     dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
+    dark_palette.setColor(QPalette.ToolTipBase, QColor(53, 53, 53))
     dark_palette.setColor(QPalette.ToolTipText, Qt.white)
     dark_palette.setColor(QPalette.Text, Qt.white)
     dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
@@ -220,19 +220,26 @@ class GitSleuthGUI(QMainWindow):
             "Clear Results",
             self,
         )
+        self.clear_results_action.setToolTip("Clear the search results")
         self.clear_results_action.triggered.connect(self.clear_results)
         self.clear_results_action.setEnabled(False)
         toolbar.addAction(self.clear_results_action)
 
         self.clear_log_action = QAction(
-            self.style().standardIcon(QStyle.SP_DialogResetButton), "Clear Log", self
+            self.style().standardIcon(QStyle.SP_TrashIcon),
+            "Clear Log",
+            self,
         )
+        self.clear_log_action.setToolTip("Clear the log output")
         self.clear_log_action.triggered.connect(self.clear_log)
         toolbar.addAction(self.clear_log_action)
 
         self.export_action = QAction(
-            self.style().standardIcon(QStyle.SP_DialogSaveButton), "Export to CSV", self
+            self.style().standardIcon(QStyle.SP_DialogSaveButton),
+            "Export to CSV",
+            self,
         )
+        self.export_action.setToolTip("Export results to CSV")
         self.export_action.triggered.connect(self.export_results_to_csv)
         self.export_action.setEnabled(False)
         toolbar.addAction(self.export_action)
@@ -242,6 +249,7 @@ class GitSleuthGUI(QMainWindow):
             "Export Labels",
             self,
         )
+        self.export_labels_action.setToolTip("Export label data")
         self.export_labels_action.triggered.connect(self.export_labels_to_csv)
         self.export_labels_action.setEnabled(False)
         toolbar.addAction(self.export_labels_action)
