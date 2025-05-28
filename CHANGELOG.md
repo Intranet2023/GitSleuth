@@ -26,6 +26,7 @@ All notable changes to this project are documented in this file.
 - Fixed training error when only one label class
 - Updated `AGENTS.md` to require changelog updates for every change
 - Case-insensitive highlighting of search terms in snippets
+- Placeholder filtering checks assigned values for key reuse and bold markup
 - Enabled color highlighting of secrets by initializing colorama
 - GUI results table now highlights matched terms in red
 
