@@ -19,7 +19,10 @@ import sys
 from datetime import datetime
 import requests
 from prettytable import PrettyTable
-from colorama import Fore, Style
+from colorama import init, Fore, Style
+
+# Initialize color handling for consistent snippet highlighting
+init(autoreset=True)
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens, switch_token as rotate_token
 from Secret_Scanner import snippet_has_secret
@@ -227,19 +230,28 @@ def truncate_snippet(snippet, length=200):
     return (snippet[:length] + '...') if len(snippet) > length else snippet
 
 def highlight_search_term(snippet, search_term, color=Fore.RED):
-    """
-    Highlights the search term within a snippet.
+    """Highlight ``search_term`` within ``snippet`` using the specified color.
 
-    Parameters:
-    - snippet (str): The text snippet where the search term is to be highlighted.
-    - search_term (str): The term within the snippet to highlight.
-    - description (str): Description of the query.
-    - color (colorama.Fore): The color to use for highlighting the search term.
+    The replacement is performed case-insensitively so that matches are
+    highlighted even if the snippet uses a different case than the search term.
 
-    Returns:
-    - str: The snippet with the search term highlighted.
+    Parameters
+    ----------
+    snippet : str
+        The text snippet where the search term should be highlighted.
+    search_term : str
+        The term within the snippet to highlight.
+    color : colorama.Fore, optional
+        The color to use for highlighting the search term. Defaults to
+        ``Fore.RED``.
+
+    Returns
+    -------
+    str
+        The snippet with the search term highlighted.
     """
-    return snippet.replace(search_term, color + search_term + Style.RESET_ALL)
+    pattern = re.compile(re.escape(search_term), re.IGNORECASE)
+    return pattern.sub(lambda m: color + m.group(0) + Style.RESET_ALL, snippet)
 # GitSleuth.py
 
 def perform_api_request_with_token_rotation(query, config, max_retries=3):
