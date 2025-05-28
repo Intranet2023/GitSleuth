@@ -855,6 +855,12 @@ class GitSleuthGUI(QMainWindow):
             X = hstack([text_features, csr_matrix(extra)])
 
             y = df["Label"].apply(lambda x: 1 if x == "True Positive" else 0)
+            if y.nunique() < 2:
+                self.ml_output.append(
+                    "Training requires at least two label classes."
+                )
+                return
+
             model = LogisticRegression(max_iter=1000)
             model.fit(X, y)
             self.ml_output.append(f"Model trained on {len(df)} samples.")
