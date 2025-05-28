@@ -25,6 +25,7 @@ All notable changes to this project are documented in this file.
 - Updated `AGENTS.md` to require changelog updates for every change
 - Fixed invisible tooltips for toolbar actions and differentiated clear icons
 - Dedicated toolbar with icons for clearing log/results and exporting
+- Added tooltips for all buttons
 
 
 ## 2025-05-23
