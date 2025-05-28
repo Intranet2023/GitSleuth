@@ -56,6 +56,7 @@ from GitSleuth import (
     _path_is_ignored,
     _shannon_entropy,
     extract_search_terms,
+    get_secret_entropy,
 )
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
@@ -435,13 +436,14 @@ class GitSleuthGUI(QMainWindow):
             layout (QVBoxLayout): The layout to add the results table to.
         """
 
-        self.results_table = QTableWidget(0, 6)
+        self.results_table = QTableWidget(0, 7)
         self.results_table.setHorizontalHeaderLabels([
             "Search Term",
             "Description",
             "Repository",
             "File Path",
             "Snippets",
+            "Entropy",
             "Label",
         ])
         layout.addWidget(self.results_table)
@@ -451,7 +453,8 @@ class GitSleuthGUI(QMainWindow):
         self.results_table.setColumnWidth(3, 250)
         # Provide a wider column to display longer snippets
         self.results_table.setColumnWidth(4, 450)
-        self.results_table.setColumnWidth(5, 120)
+        self.results_table.setColumnWidth(5, 90)
+        self.results_table.setColumnWidth(6, 120)
         # Stretch the snippets column to use remaining space
         self.results_table.horizontalHeader().setSectionResizeMode(
             4, QHeaderView.Stretch
@@ -617,6 +620,7 @@ class GitSleuthGUI(QMainWindow):
                     "Repository",
                     "File Path",
                     "Snippet",
+                    "Entropy",
                 ])
                 for row in range(self.results_table.rowCount()):
                     search_term = self.results_table.item(row, 0).text()
@@ -630,12 +634,15 @@ class GitSleuthGUI(QMainWindow):
                     snippet_text = (
                         snippet_item.text().replace("\n", " ") if snippet_item else ""
                     )
+                    entropy_item = self.results_table.item(row, 5)
+                    entropy_text = entropy_item.text() if entropy_item else ""
                     writer.writerow([
                         search_term,
                         description,
                         repo_text,
                         file_text,
                         snippet_text,
+                        entropy_text,
                     ])
 
             self.status_bar.showMessage("Results exported successfully to " + filename)
@@ -657,10 +664,11 @@ class GitSleuthGUI(QMainWindow):
                     "Repository",
                     "File Path",
                     "Snippet",
+                    "Entropy",
                     "Label",
                 ])
                 for row in range(self.results_table.rowCount()):
-                    label_widget = self.results_table.cellWidget(row, 5)
+                    label_widget = self.results_table.cellWidget(row, 6)
                     label_text = label_widget.currentText() if label_widget else ""
                     if not label_text:
                         continue
@@ -674,12 +682,15 @@ class GitSleuthGUI(QMainWindow):
                     snippet_text = (
                         snippet_item.text().replace("\n", " ") if snippet_item else ""
                     )
+                    entropy_item = self.results_table.item(row, 5)
+                    entropy_text = entropy_item.text() if entropy_item else ""
                     writer.writerow([
                         search_term,
                         description,
                         repo_text,
                         file_text,
                         snippet_text,
+                        entropy_text,
                         label_text,
                     ])
             self.status_bar.showMessage("Labels exported successfully to " + filename)
@@ -862,19 +873,29 @@ class GitSleuthGUI(QMainWindow):
             snippets = extract_snippets(
                 file_contents, query, filter_placeholders=filter_placeholders
             )
+            query_terms = extract_search_terms(query)
+            entropies = [get_secret_entropy(s, query_terms=query_terms) for s in snippets]
 
-            self.update_results_table(repo_name, file_path, snippets, search_term, description)
+            self.update_results_table(
+                repo_name,
+                file_path,
+                snippets,
+                search_term,
+                description,
+                entropies,
+            )
     def create_clickable_link(self, text, url):
         link_label = QLabel()
         link_label.setText(f'<a href="{url}">{text}</a>')
         link_label.setOpenExternalLinks(True)
         return link_label
     
-    def update_results_table(self, repo_name, file_path, snippets, search_term, description):
+    def update_results_table(self, repo_name, file_path, snippets, search_term, description, entropies=None):
         if not self.search_active:
             return
         github_base_url = "https://github.com/"
-        for snippet in snippets:
+        scores = entropies or [None] * len(snippets)
+        for snippet, score in zip(snippets, scores):
             if not self.search_active:
                 break
             row_position = self.results_table.rowCount()
@@ -906,13 +927,20 @@ class GitSleuthGUI(QMainWindow):
             snippet_label.setText(highlighted)
             self.results_table.setCellWidget(row_position, 4, snippet_label)
 
+            # Entropy column
+            if score is None:
+                entropy_item = QTableWidgetItem("N/A")
+            else:
+                entropy_item = QTableWidgetItem(f"{score:.2f}")
+            self.results_table.setItem(row_position, 5, entropy_item)
+
             # Label column with dropdown
             label_box = QComboBox()
             label_box.setToolTip(
                 "Classify the result as a true or false positive"
             )
             label_box.addItems(["", "True Positive", "False Positive"])
-            self.results_table.setCellWidget(row_position, 5, label_box)
+            self.results_table.setCellWidget(row_position, 6, label_box)
         # Enable export buttons if there are results
         if self.results_table.rowCount() > 0:
             self.export_action.setEnabled(True)

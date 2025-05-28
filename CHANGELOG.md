@@ -18,6 +18,7 @@ All notable changes to this project are documented in this file.
 - Introduced entropy-based and contextual features for ML training
 - Added dictionary and format heuristics to reduce false positives
 - Fixed CSV export column order
+- GUI results table now displays entropy scores with CSV export support
 - Standardized scikit-learn imports and one-hot file type features
 - Automated conflict resolution via `auto_resolve_conflicts.sh`
 - README improvements covering ML workflow and compile checks
