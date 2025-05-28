@@ -671,9 +671,9 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
     for term in query_terms:
         pattern = re.compile(re.escape(term), re.IGNORECASE)
         for match in pattern.finditer(content):
-            # Grab a larger snippet around the search term for more context
-            start = max(match.start() - 60, 0)
-            end = min(match.end() + 60, len(content))
+            # Capture 40 chars before and 100 after the term for context
+            start = max(match.start() - 40, 0)
+            end = min(match.end() + 100, len(content))
             snippet = content[start:end].replace('\n', ' ').strip()
             if snippet not in snippets and not _has_allowlist_comment(content, start, end):
                 snippets.append(snippet)
