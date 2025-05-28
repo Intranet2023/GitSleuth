@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - Consolidated duplicate token management functions
 - Allowlist patterns for ignoring dummy secrets with `ALLOWLIST_PATTERNS` in configuration
 - Optional integration with Yelp's `detect-secrets` for improved secret detection
+- Added detection utilities for environment variable names and token strings
 
 
 ## 2025-05-23

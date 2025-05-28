@@ -23,6 +23,7 @@ from colorama import Fore, Style
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens, switch_token as rotate_token
 from Secret_Scanner import snippet_has_secret
+from Pattern_Detector import is_env_var_name, is_token
 import math
 
 
@@ -562,7 +563,13 @@ def _looks_like_word(text: str) -> bool:
 
 def _matches_known_format(text: str) -> bool:
     """Return True if *text* matches a common non-secret pattern."""
-    return bool(UUID_RE.match(text) or DATE_RE.match(text) or ERROR_CODE_RE.match(text))
+    return bool(
+        UUID_RE.match(text)
+        or DATE_RE.match(text)
+        or ERROR_CODE_RE.match(text)
+        or is_env_var_name(text)
+        or is_token(text)
+    )
 
 
 def _has_allowlist_comment(content: str, start: int, end: int) -> bool:

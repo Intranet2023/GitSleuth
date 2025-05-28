@@ -35,8 +35,8 @@ from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 
 import pandas as pd
-from scikit-learn.feature_extraction.text import TfidfVectorizer
-from scikit-learn.linear_model import LogisticRegression
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
 
