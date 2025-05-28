@@ -19,7 +19,10 @@ import sys
 from datetime import datetime
 import requests
 from prettytable import PrettyTable
-from colorama import Fore, Style
+from colorama import init, Fore, Style
+
+# Initialize color handling for consistent snippet highlighting
+init(autoreset=True)
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens, switch_token as rotate_token
 from Secret_Scanner import snippet_has_secret

@@ -24,6 +24,8 @@ All notable changes to this project are documented in this file.
 - Fixed training error when only one label class
 - Updated `AGENTS.md` to require changelog updates for every change
 - Case-insensitive highlighting of search terms in snippets
+- Enabled color highlighting of secrets by initializing colorama
+
 - Fixed invisible tooltips for toolbar actions and differentiated clear icons
 - Dedicated toolbar with icons for clearing log/results and exporting
 - Added tooltips for all buttons
