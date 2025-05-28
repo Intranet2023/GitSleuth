@@ -28,6 +28,7 @@ from Token_Manager import load_tokens, switch_token as rotate_token
 from Secret_Scanner import snippet_has_secret
 from Pattern_Detector import is_env_var_name, is_token
 import math
+from typing import Optional
 
 
 
@@ -314,10 +315,13 @@ def process_and_display_data(data, search_term, description=""):
     for key, value in data.items():
         if key == 'snippets':
             rows = []
-            for snippet in value:
-                entropy = _shannon_entropy(snippet)
+            scores = data.get('entropy_scores', [])
+            for snippet, score in zip(value, scores):
                 highlighted = highlight_search_term(truncate_snippet(snippet), search_term)
-                rows.append(f"{highlighted} (entropy: {entropy:.2f})")
+                if score is None:
+                    rows.append(f"{highlighted} (entropy: N/A)")
+                else:
+                    rows.append(f"{highlighted} (entropy: {score:.2f})")
             snippets_text = '\n'.join(rows)
             table.add_row([key, snippets_text])
         else:
@@ -345,6 +349,7 @@ def process_search_results(search_results, all_data, query, headers, group_name,
     description = get_query_description(query, domain)
     config = load_config()
     ignored_patterns = config.get("IGNORED_PATH_PATTERNS", [])
+    query_terms = extract_search_terms(query)
     for item in search_results['items']:
         file_path = item.get('path', '')
         if file_path in ignored_filenames or _path_is_ignored(file_path, ignored_patterns):
@@ -361,10 +366,12 @@ def process_search_results(search_results, all_data, query, headers, group_name,
                     allowlist_patterns=allowlist,
                 )
                 if snippets:
+                    entropies = [get_secret_entropy(s, query_terms=query_terms) for s in snippets]
                     file_data = {
                         'repo': repo_name,
                         'file_path': file_path,
                         'snippets': snippets,
+                        'entropy_scores': entropies,
                         'search_term': query,
                         'group': group_name,
                         'description': description,
@@ -646,7 +653,10 @@ def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT
         if clean and clean not in PLACEHOLDER_VALUES and not clean.isdigit():
             norm_var = re.sub(r"[^a-z0-9]", "", var.lower())
             norm_val = re.sub(r"[^a-z0-9]", "", clean.lower())
-            if norm_val == norm_var or norm_val in norm_var:
+            if norm_val == norm_var or norm_var in norm_val:
+                continue
+            upper = clean.upper()
+            if clean.isupper() or "SECRET" in upper or "PASSWORD" in upper:
                 continue
             if _matches_known_format(clean) or _looks_like_word(clean):
                 continue
@@ -654,6 +664,44 @@ def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT
                 return False
 
     return found
+
+
+def get_secret_entropy(snippet: str, query_terms=None) -> Optional[float]:
+    """Return the entropy of an assigned secret in *snippet*.
+
+    The function looks for ``VAR=VALUE`` assignments that match one of
+    the provided query terms and returns the Shannon entropy of the
+    assigned value if it resembles a real secret. Placeholder values
+    containing the variable name, the words ``SECRET`` or ``PASSWORD`` or
+    written entirely in uppercase are ignored.
+    """
+
+    assignments = ENV_ASSIGN_RE.findall(snippet)
+    query_vars = {t.upper() for t in query_terms} if query_terms else None
+    entropies = []
+
+    for var, val in assignments:
+        if query_vars and var.upper() not in query_vars:
+            continue
+        clean = val.strip('"\'').strip().strip('*_`')
+        if not clean:
+            continue
+        norm_var = re.sub(r"[^a-z0-9]", "", var.lower())
+        norm_val = re.sub(r"[^a-z0-9]", "", clean.lower())
+        upper = clean.upper()
+        if (
+            norm_val == norm_var
+            or norm_var in norm_val
+            or clean.isupper()
+            or "SECRET" in upper
+            or "PASSWORD" in upper
+            or _matches_known_format(clean)
+            or _looks_like_word(clean)
+        ):
+            continue
+        entropies.append(_shannon_entropy(clean))
+
+    return max(entropies) if entropies else None
 
 def extract_snippets(content, query, filter_placeholders=True, allowlist_patterns=None):
     """Extract and verify snippets that triggered a search rule.
@@ -731,8 +779,14 @@ def save_data_to_excel(data_list, domain):
     filename = f"{domain}_search_results_{timestamp}.xlsx"
 
     df = pd.DataFrame(data_list)
-    # Convert the list of snippets into a string for Excel compatibility
+    # Convert lists into strings for Excel compatibility
     df['snippets'] = df['snippets'].apply(lambda x: '\n'.join(x) if isinstance(x, list) else x)
+    if 'entropy_scores' in df.columns:
+        df['entropy_scores'] = df['entropy_scores'].apply(
+            lambda vals: '\n'.join(
+                f"{v:.2f}" if isinstance(v, float) else "" for v in vals
+            ) if isinstance(vals, list) else vals
+        )
     df.to_excel(filename, index=False)
     print(f"Data saved to {filename}")
 
@@ -842,10 +896,12 @@ def perform_custom_search(domain):
                 if not snippets:
                     print(f"No snippets found in {file_path} for query '{full_query}'")
                     continue  # Skip to next item if no snippets are found
+                entropies = [get_secret_entropy(s, query_terms=extract_search_terms(full_query)) for s in snippets]
                 file_data = {
                     'repo': repo_name,
                     'file_path': file_path,
                     'snippets': snippets,
+                    'entropy_scores': entropies,
                     'search_term': full_query,
                     'description': description
                 }
@@ -875,10 +931,12 @@ def perform_entropy_search(domain):
                 snippets = find_high_entropy_snippets(file_contents, entropy_threshold=threshold)
                 if snippets:
                     description = f"Entropy >= {threshold}"
+                    entropies = [get_secret_entropy(s) for s in snippets]
                     file_data = {
                         'repo': repo_name,
                         'file_path': file_path,
                         'snippets': snippets,
+                        'entropy_scores': entropies,
                         'search_term': 'high_entropy',
                         'description': description,
                     }
