@@ -23,6 +23,7 @@
     ],
     "USE_DETECT_SECRETS": false,
     "DETECT_SECRETS_BASELINE": "",
-    "ENTROPY_THRESHOLD": 3.5
+    "ENTROPY_THRESHOLD": 3.5,
+    "SEARCH_PRESETS": {}
 
 }
