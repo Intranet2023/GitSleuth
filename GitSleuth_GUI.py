@@ -324,7 +324,7 @@ class GitSleuthGUI(QMainWindow):
 
         # Geometry setup
         # Expand the default window size to accommodate larger snippets
-        self.setGeometry(200, 150, 1400, 850)
+        self.setGeometry(200, 150, 1600, 900)
 
     def setupSearchInputArea(self, layout):
         """Build the search input widgets and action buttons."""
@@ -458,6 +458,10 @@ class GitSleuthGUI(QMainWindow):
         # Stretch the snippets column to use remaining space
         self.results_table.horizontalHeader().setSectionResizeMode(
             4, QHeaderView.Stretch
+        )
+
+        self.results_table.verticalHeader().setSectionResizeMode(
+            QHeaderView.ResizeToContents
         )
 
 
@@ -924,8 +928,10 @@ class GitSleuthGUI(QMainWindow):
             snippet_label = QLabel()
             snippet_label.setTextFormat(Qt.RichText)
             snippet_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            snippet_label.setWordWrap(True)
             snippet_label.setText(highlighted)
             self.results_table.setCellWidget(row_position, 4, snippet_label)
+            self.results_table.resizeRowToContents(row_position)
 
             # Entropy column
             if score is None:
