@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - Added detection utilities for environment variable names and token strings
 - Expanded snippet and window sizes for better context
 - Added machine learning training interface with label export
+- High entropy search with entropy scores displayed in results
 - Introduced entropy-based and contextual features for ML training
 - Added dictionary and format heuristics to reduce false positives
 - Fixed CSV export column order
