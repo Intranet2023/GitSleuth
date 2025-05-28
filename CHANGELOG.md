@@ -11,6 +11,12 @@ All notable changes to this project are documented in this file.
 - Allowlist patterns for ignoring dummy secrets with `ALLOWLIST_PATTERNS` in configuration
 - Optional integration with Yelp's `detect-secrets` for improved secret detection
 - Added detection utilities for environment variable names and token strings
+- Expanded snippet and window sizes for better context
+- Added machine learning training interface with label export
+- Introduced entropy-based and contextual features for ML training
+- Added dictionary and format heuristics to reduce false positives
+- Fixed CSV export column order
+- Standardized scikit-learn imports and one-hot file type features
 
 
 ## 2025-05-23
