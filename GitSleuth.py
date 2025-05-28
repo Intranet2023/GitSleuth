@@ -313,8 +313,12 @@ def process_and_display_data(data, search_term, description=""):
 
     for key, value in data.items():
         if key == 'snippets':
-            highlighted_snippets = [highlight_search_term(truncate_snippet(snippet), search_term) for snippet in value]
-            snippets_text = '\n'.join(highlighted_snippets)
+            rows = []
+            for snippet in value:
+                entropy = _shannon_entropy(snippet)
+                highlighted = highlight_search_term(truncate_snippet(snippet), search_term)
+                rows.append(f"{highlighted} (entropy: {entropy:.2f})")
+            snippets_text = '\n'.join(rows)
             table.add_row([key, snippets_text])
         else:
             table.add_row([key, value])
@@ -690,6 +694,19 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
 
     return verified
 
+
+def find_high_entropy_snippets(content, entropy_threshold=DEFAULT_ENTROPY_THRESHOLD, min_length=20):
+    """Return lines containing tokens with entropy above ``entropy_threshold``."""
+    snippets = []
+    for line in content.splitlines():
+        for token in re.findall(r"\S+", line):
+            if len(token) >= min_length and _shannon_entropy(token) >= entropy_threshold:
+                snippet = line.strip()
+                if snippet and snippet not in snippets:
+                    snippets.append(snippet)
+                break
+    return snippets
+
 def save_data_to_excel(data_list, domain):
     """
     Saves the search results data to an Excel file with a filename that includes
@@ -833,6 +850,37 @@ def perform_custom_search(domain):
         print("No results found for your query.")
     save_data_to_excel(all_data, 'custom_search_results.xlsx')
 
+
+def perform_entropy_search(domain):
+    """Search GitHub and filter results for high entropy snippets."""
+    config = load_config()
+    threshold = config.get("ENTROPY_THRESHOLD", DEFAULT_ENTROPY_THRESHOLD)
+    query = domain or "a"
+    headers = GitSleuth_API.get_headers()
+    search_results = GitSleuth_API.search_github_code(query, headers)
+    all_data = []
+    if search_results and 'items' in search_results:
+        for item in search_results['items']:
+            repo_name = item['repository']['full_name']
+            file_path = item['path']
+            file_contents = GitSleuth_API.get_file_contents(repo_name, file_path, headers)
+            if file_contents:
+                snippets = find_high_entropy_snippets(file_contents, entropy_threshold=threshold)
+                if snippets:
+                    description = f"Entropy >= {threshold}"
+                    file_data = {
+                        'repo': repo_name,
+                        'file_path': file_path,
+                        'snippets': snippets,
+                        'search_term': 'high_entropy',
+                        'description': description,
+                    }
+                    all_data.append(file_data)
+                    process_and_display_data(file_data, 'high_entropy', description)
+    else:
+        print("No results found for your query.")
+    save_data_to_excel(all_data, 'entropy_search_results')
+
 def main():
     """
     The main function for running the gitsleuth application.
@@ -847,7 +895,7 @@ def main():
     try:
         while True:
 
-            print("\n1. OAuth Login\n2. Perform Group Searches\n3. Perform Custom Search\n4. Exit")
+            print("\n1. OAuth Login\n2. Perform Group Searches\n3. Perform Custom Search\n4. High Entropy Search\n5. Exit")
             choice = input("Enter your choice: ")
             if choice == '1':
                 oauth_login_flow()
@@ -856,10 +904,12 @@ def main():
             elif choice == '3':
                 perform_custom_search(domain)
             elif choice == '4':
+                perform_entropy_search(domain)
+            elif choice == '5':
                 print("Exiting the program.")
                 break
             else:
-                print("Invalid choice. Please enter a number from 1 to 4.")
+                print("Invalid choice. Please enter a number from 1 to 5.")
     except KeyboardInterrupt:
         print("\nInterrupted by user. Saving the data collected so far...")
         formatted_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
