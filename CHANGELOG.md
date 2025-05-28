@@ -12,6 +12,7 @@ All notable changes to this project are documented in this file.
 - Optional integration with Yelp's `detect-secrets` for improved secret detection
 - Added detection utilities for environment variable names and token strings
 - Expanded snippet and window sizes for better context
+- Adjusted snippet context to 40 characters before and 100 after search terms
 - Added machine learning training interface with label export
 - Introduced entropy-based and contextual features for ML training
 - Added dictionary and format heuristics to reduce false positives
