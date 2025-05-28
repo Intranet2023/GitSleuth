@@ -429,16 +429,23 @@ class GitSleuthGUI(QMainWindow):
                 ])
                 for row in range(self.results_table.rowCount()):
                     search_term = self.results_table.item(row, 0).text()
-                    description = self.results_table.item(row, 1).text()
+                    description_item = self.results_table.item(row, 1)
+                    description = description_item.text() if description_item else ""
                     repo_widget = self.results_table.cellWidget(row, 2)
                     repo_text = repo_widget.text() if repo_widget else ""
                     file_widget = self.results_table.cellWidget(row, 3)
                     file_text = file_widget.text() if file_widget else ""
-                    snippet_item = self.results_table.item(row, 3)
-                    snippet_text = snippet_item.text().replace("\n", " ") if snippet_item else ""
-                    desc_item = self.results_table.item(row, 4)
-                    desc_text = desc_item.text() if desc_item else ""
-                    writer.writerow([search_term, repo_text, file_text, snippet_text, desc_text])
+                    snippet_item = self.results_table.item(row, 4)
+                    snippet_text = (
+                        snippet_item.text().replace("\n", " ") if snippet_item else ""
+                    )
+                    writer.writerow([
+                        search_term,
+                        description,
+                        repo_text,
+                        file_text,
+                        snippet_text,
+                    ])
 
             self.status_bar.showMessage("Results exported successfully to " + filename)
         except Exception as e:
