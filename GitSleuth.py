@@ -529,6 +529,13 @@ ALLOWLIST_PRAGMA_RE = re.compile(r"#\s*pragma:\s*allowlist secret", re.I)
 
 ENV_ASSIGN_RE = re.compile(r"\b([A-Z0-9_]+)=\s*(\S*)")
 
+# Regexes for well-known non-secret formats
+UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+)
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2})?$")
+ERROR_CODE_RE = re.compile(r"^(?:ERR|ERROR|E)\d{3,}$", re.I)
+
 
 def _shannon_entropy(data: str) -> float:
     """Return the Shannon entropy of *data* in bits per character."""
@@ -543,6 +550,19 @@ def _shannon_entropy(data: str) -> float:
         p = count / length
         entropy -= p * math.log2(p)
     return entropy
+
+
+def _looks_like_word(text: str) -> bool:
+    """Return True if *text* resembles a human-readable word."""
+    if not text.isalpha():
+        return False
+    vowels = sum(ch.lower() in "aeiou" for ch in text)
+    return vowels / len(text) >= 0.3
+
+
+def _matches_known_format(text: str) -> bool:
+    """Return True if *text* matches a common non-secret pattern."""
+    return bool(UUID_RE.match(text) or DATE_RE.match(text) or ERROR_CODE_RE.match(text))
 
 
 def _has_allowlist_comment(content: str, start: int, end: int) -> bool:
@@ -590,6 +610,8 @@ def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT
         found = True
         clean = val.strip('"\'')
         if clean and clean not in PLACEHOLDER_VALUES and not clean.isdigit():
+            if _matches_known_format(clean) or _looks_like_word(clean):
+                continue
             if _shannon_entropy(clean) > entropy_threshold:
                 return False
 
