@@ -10,3 +10,4 @@ pyperclip==1.8.2
 detect-secrets==1.4.0
 scikit-learn==1.5.1
 
+

@@ -39,6 +39,7 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
 
+
 import GitSleuth_API
 from GitSleuth_Groups import (
     create_search_queries,
@@ -824,6 +825,7 @@ class GitSleuthGUI(QMainWindow):
             text_features = vectorizer.fit_transform(df["Snippet"])
             extra = np.array([compute_features(t) for t in df["Snippet"]])
             X = hstack([text_features, csr_matrix(extra)])
+
             y = df["Label"].apply(lambda x: 1 if x == "True Positive" else 0)
             model = LogisticRegression(max_iter=1000)
             model.fit(X, y)
