@@ -28,6 +28,7 @@ All notable changes to this project are documented in this file.
 - Dedicated toolbar with icons for clearing log/results and exporting
 - Added tooltips for all buttons
 - Added tooltips for dropdown selections
+- Fixed OAuth token retrieval to prefer the active login token
 
 
 ## 2025-05-23
