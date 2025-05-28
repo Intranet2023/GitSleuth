@@ -20,6 +20,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Pattern detection identifies environment variable names and token strings
 - Snippets referencing environment variables (e.g. `os.environ` or `process.env`) are ignored
 - Allowlist patterns skip known dummy secrets via `ALLOWLIST_PATTERNS`
+- Placeholder filtering now detects values repeating the key name or wrapped in bold markup
 - `auto_resolve_conflicts.sh` script merges branches while keeping incoming changes
 - `setup.sh` allows installing dependencies before network access is disabled
 

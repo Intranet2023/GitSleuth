@@ -639,8 +639,15 @@ def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT
         if query_vars and var.upper() not in query_vars:
             continue
         found = True
-        clean = val.strip('"\'')
+        clean = val.strip('"\'').strip()
+        # remove common markup emphasis characters
+        clean = clean.strip('*_`')
+
         if clean and clean not in PLACEHOLDER_VALUES and not clean.isdigit():
+            norm_var = re.sub(r"[^a-z0-9]", "", var.lower())
+            norm_val = re.sub(r"[^a-z0-9]", "", clean.lower())
+            if norm_val == norm_var or norm_val in norm_var:
+                continue
             if _matches_known_format(clean) or _looks_like_word(clean):
                 continue
             if _shannon_entropy(clean) > entropy_threshold:
