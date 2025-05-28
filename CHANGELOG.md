@@ -25,6 +25,7 @@ All notable changes to this project are documented in this file.
 - Environment variable references filtered to avoid false positives
 - Graceful handling of token decryption errors
 - Fixed training error when only one label class
+- Fixed training failure when file paths contain non-string values
 - Updated `AGENTS.md` to require changelog updates for every change
 - Case-insensitive highlighting of search terms in snippets
 - Placeholder filtering checks assigned values for key reuse and bold markup

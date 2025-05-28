@@ -125,11 +125,21 @@ LOG_EXTS = {'.log', '.out', '.txt'}
 
 
 def _file_type_features(file_path: str) -> list[int]:
-    """Return one-hot encoded file type features."""
+    """Return one-hot encoded file type features.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file. May be empty or ``None``.
+    """
+
+    if not isinstance(file_path, str):
+        file_path = ""
+
     ext = os.path.splitext(file_path)[1].lower()
-    is_config = int(ext in CONFIG_EXTS or 'config' in file_path.lower())
-    is_source = int(ext in SOURCE_EXTS or '/src/' in file_path.lower())
-    is_log = int(ext in LOG_EXTS or 'log' in file_path.lower())
+    is_config = int(ext in CONFIG_EXTS or "config" in file_path.lower())
+    is_source = int(ext in SOURCE_EXTS or "/src/" in file_path.lower())
+    is_log = int(ext in LOG_EXTS or "log" in file_path.lower())
     is_other = int(not (is_config or is_source or is_log))
     return [is_config, is_source, is_log, is_other]
 
@@ -144,6 +154,13 @@ def _structural_features(snippet: str) -> list[int]:
 
 def compute_features(text: str, file_path: str = "") -> list[float]:
     """Return entropy, composition and contextual features for a snippet."""
+
+    if not isinstance(text, str):
+        text = "" if text is None else str(text)
+
+    if not isinstance(file_path, str):
+        file_path = ""
+
     length = len(text)
     if length == 0:
         base = [0.0, 0.0, 0.0, 0.0, 0.0]
