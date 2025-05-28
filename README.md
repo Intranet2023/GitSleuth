@@ -60,6 +60,9 @@ The labeled data is stored in `training_labels.csv`. Models are currently kept i
 Example passwords for experimentation are provided in `training_data.csv`.
 Training uses TF‑IDF text features combined with entropy and character composition metrics
 
+Ensure your labeled dataset includes both **True Positive** and **False Positive** examples,
+otherwise model training will fail with a single-class error.
+
 (length, numeric %, alphabetic %, special %) plus simple dictionary and pattern
 checks to help distinguish real secrets from placeholders. Additional features
 also encode the file type (config, source, log, other) and simple structural
