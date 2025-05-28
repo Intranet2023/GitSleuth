@@ -25,6 +25,8 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Results table now shows a short description for each rule
 - Simple dictionary and format heuristics filter out values that look like
   ordinary words, UUIDs, or dates
+- Pattern detection identifies environment variable names and token strings
+  to reduce false positives
 
 
 ## Installation
