@@ -331,6 +331,9 @@ class GitSleuthGUI(QMainWindow):
 
 
         self.search_group_dropdown = QComboBox(self)
+        self.search_group_dropdown.setToolTip(
+            "Choose the category of secrets to search for"
+        )
         layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems([
             "Cloud Credentials (AWS, Azure, GCP)",
@@ -350,6 +353,9 @@ class GitSleuthGUI(QMainWindow):
         ])
 
         self.preset_dropdown = QComboBox(self)
+        self.preset_dropdown.setToolTip(
+            "Select a saved search preset"
+        )
         self.preset_dropdown.addItem("None")
         self.preset_dropdown.activated.connect(self.apply_selected_preset)
         layout.addWidget(self.preset_dropdown)
@@ -884,6 +890,9 @@ class GitSleuthGUI(QMainWindow):
 
             # Label column with dropdown
             label_box = QComboBox()
+            label_box.setToolTip(
+                "Classify the result as a true or false positive"
+            )
             label_box.addItems(["", "True Positive", "False Positive"])
             self.results_table.setCellWidget(row_position, 5, label_box)
         # Enable export buttons if there are results
