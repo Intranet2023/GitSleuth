@@ -643,7 +643,7 @@ def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT
     found = False
 
     for var, val in assignments:
-        if query_vars and var.upper() not in query_vars:
+        if query_vars and not any(q in var.upper() for q in query_vars):
             continue
         found = True
         clean = val.strip('"\'').strip()
@@ -681,7 +681,7 @@ def get_secret_entropy(snippet: str, query_terms=None) -> Optional[float]:
     entropies = []
 
     for var, val in assignments:
-        if query_vars and var.upper() not in query_vars:
+        if query_vars and not any(q in var.upper() for q in query_vars):
             continue
         clean = val.strip('"\'').strip().strip('*_`')
         if not clean:

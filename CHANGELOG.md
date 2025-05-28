@@ -18,6 +18,7 @@ All notable changes to this project are documented in this file.
 - Introduced entropy-based and contextual features for ML training
 - Added dictionary and format heuristics to reduce false positives
 - Fixed CSV export column order
+- GUI results table now displays entropy scores with CSV export support
 - Standardized scikit-learn imports and one-hot file type features
 - Automated conflict resolution via `auto_resolve_conflicts.sh`
 - README improvements covering ML workflow and compile checks
@@ -30,6 +31,7 @@ All notable changes to this project are documented in this file.
 - Enabled color highlighting of secrets by initializing colorama
 - GUI results table now highlights matched terms in red
 - Entropy scores computed for assigned values with placeholder filtering
+- Entropy detection now matches query terms within variable names, preventing "N/A" scores
 
 - Fixed invisible tooltips for toolbar actions and differentiated clear icons
 - Dedicated toolbar with icons for clearing log/results and exporting
