@@ -302,7 +302,7 @@ class GitSleuthGUI(QMainWindow):
         self.export_labels_action.setEnabled(False)
         toolbar.addAction(self.export_labels_action)
 
-        self.high_entropy_checkbox = QCheckBox("Show High Entropy Only", self)
+        self.high_entropy_checkbox = QCheckBox("Hide Low Entropy Results", self)
         self.high_entropy_checkbox.setToolTip(
 
             "Hide results with entropy scores at or below the threshold"
@@ -453,7 +453,7 @@ class GitSleuthGUI(QMainWindow):
         self.quit_button.clicked.connect(self.force_quit)
         add(self.quit_button)
 
-        self.high_entropy_checkbox = QCheckBox("Show High Entropy Only", self)
+        self.high_entropy_checkbox = QCheckBox("Hide Low Entropy Results", self)
         self.high_entropy_checkbox.setToolTip(
             "Hide results with entropy 3.5 or lower and disable ML features"
         )
