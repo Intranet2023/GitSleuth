@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - Cleaned AGENTS.md to remove merge conflict markers and clarify instructions
 - Introduced `auto_pull.sh` wrapper to run `git pull` with automatic conflict
   resolution and updated AGENTS.md accordingly
+- Console table output centered for improved readability
 
 
 ## 2025-05-29
