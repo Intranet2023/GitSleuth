@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file.
   resolution and updated AGENTS.md accordingly
 - Console table output centered for improved readability
 
+- Status bar and log window now provide detailed messages on search progress,
+  exports, and training
+
 - GUI results table centered for improved readability
 - GUI secrets now display the secret text in red and preceding search terms in blue
 
