@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file.
 ### Added
 - Labels export now appends to existing training_labels.csv without duplicates
 - ML button renamed to "Perform Machine Learning" and automatically saves labels before training
+- ML tab refreshes when exporting labels
+- ML and Log tabs swapped for easier access
 - Modern API token searches for Vercel, Hugging Face, Supabase, Sentry, Rollbar,
   GitLab, Cloudflare, Vault and Pinecone
 - Generalized `.gitignore` to ignore Python bytecode

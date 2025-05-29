@@ -309,11 +309,11 @@ class GitSleuthGUI(QMainWindow):
         # Tab widget setup
         tab_widget = QTabWidget(self)
         search_results_tab = QWidget()
-        log_tab = QWidget()
         ml_tab = QWidget()
+        log_tab = QWidget()
         tab_widget.addTab(search_results_tab, "Search Results")
-        tab_widget.addTab(log_tab, "Log")
         tab_widget.addTab(ml_tab, "ML")
+        tab_widget.addTab(log_tab, "Log")
 
         main_layout.addWidget(tab_widget)
 
@@ -629,6 +629,7 @@ class GitSleuthGUI(QMainWindow):
     def export_labels_to_csv(self):
         """Export labeled results directly to training_labels.csv."""
         self.write_labels_to_csv("training_labels.csv")
+        self.load_labeled_data()
 
     def write_labels_to_csv(self, filename):
         try:
