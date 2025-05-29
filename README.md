@@ -76,6 +76,7 @@ context such as assignments or secret-setting function calls.
 2. Click **Export Labels** to save the selections. This writes them to `training_labels.csv` so the ML tab can load them.
 3. Switch to the **ML** tab and click **Perform Machine Learning**. The application reads `training_labels.csv`, extracts text and entropy features and trains a logistic regression classifier.
 4. When training completes, the tab displays how many samples were used and the model remains in memory for the current session.
+5. Click **Evaluate Model** to run cross-validated accuracy tests and view the results in the output area.
 
 
 

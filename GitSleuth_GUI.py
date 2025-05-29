@@ -42,6 +42,7 @@ from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
 
@@ -364,6 +365,11 @@ class GitSleuthGUI(QMainWindow):
         self.train_button.setToolTip("Train the machine learning model")
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
+
+        self.test_button = QPushButton("Evaluate Model", self)
+        self.test_button.setToolTip("Run cross-validated accuracy test")
+        self.test_button.clicked.connect(self.evaluate_model)
+        ml_tab_layout.addWidget(self.test_button)
 
         self.load_labeled_data()
 
@@ -1156,6 +1162,41 @@ class GitSleuthGUI(QMainWindow):
             self.ml_output.append(f"Training failed: {e}")
             self.status_bar.showMessage("Training failed")
             logging.error(f"Training failed: {e}")
+
+    def evaluate_model(self):
+        """Evaluate the model using 5-fold cross-validation."""
+        if not os.path.exists("training_labels.csv"):
+            self.ml_output.append("No labeled data to evaluate.")
+            self.status_bar.showMessage("No labeled data to evaluate.")
+            return
+        try:
+            df = pd.read_csv("training_labels.csv")
+            if df.empty:
+                self.ml_output.append("No labeled data to evaluate.")
+                self.status_bar.showMessage("No labeled data to evaluate.")
+                return
+            df["Snippet"] = df["Snippet"].astype(str).fillna("")
+            vectorizer = TfidfVectorizer()
+            text_features = vectorizer.fit_transform(df["Snippet"])
+            paths = df.get("File Path", ["" for _ in range(len(df))])
+            extra = np.array([
+                compute_features(snippet, path) for snippet, path in zip(df["Snippet"], paths)
+            ])
+            X = hstack([text_features, csr_matrix(extra)])
+            y = df["Label"].apply(lambda x: 1 if x == "True Positive" else 0)
+            if y.nunique() < 2:
+                self.ml_output.append("Evaluation requires at least two label classes.")
+                self.status_bar.showMessage("Evaluation requires at least two label classes.")
+                return
+            model = LogisticRegression(max_iter=1000)
+            scores = cross_val_score(model, X, y, cv=5)
+            accuracy = scores.mean()
+            self.ml_output.append(f"Cross-validated accuracy: {accuracy:.2f}")
+            self.status_bar.showMessage(f"Accuracy: {accuracy:.2f}")
+        except Exception as e:
+            self.ml_output.append(f"Evaluation failed: {e}")
+            self.status_bar.showMessage("Evaluation failed")
+            logging.error(f"Evaluation failed: {e}")
 
 
 class SettingsDialog(QDialog):
