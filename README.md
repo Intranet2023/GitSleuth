@@ -57,7 +57,8 @@ Each result row also displays the description of the rule that matched.
 Use the **Label** column to mark each result as a **True Positive** or **False Positive**. Click **Export Labels** to save the selections to `training_labels.csv` for machine-learning.
 
 #### Training
-Open the **ML** tab and click **Perform Machine Learning** to train a simple text classifier on the saved labels. Training progress is shown in the tab's output area.
+Open the **ML** tab and click **Perform Machine Learning** to train a simple text classifier on the saved labels. Any newly labeled rows are automatically appended to `training_labels.csv` before training begins to ensure no data is lost. Training progress is shown in the tab's output area.
+
 The labeled data is stored in `training_labels.csv`. Models are currently kept in memory after training.
 Example passwords for experimentation are provided in `training_data.csv`.
 Training uses TF‑IDF text features combined with entropy and character composition metrics
