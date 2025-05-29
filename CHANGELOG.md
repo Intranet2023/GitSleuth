@@ -17,6 +17,7 @@ All notable changes to this project are documented in this file.
 
 - GUI results table centered for improved readability
 - GUI secrets now display the secret text in red and preceding search terms in blue
+- Added "Evaluate Model" button to test ML accuracy with cross-validation
 
 
 
