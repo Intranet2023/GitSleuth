@@ -1017,6 +1017,8 @@ class GitSleuthGUI(QMainWindow):
             if df.empty:
                 self.ml_output.append("No labeled data to train on.")
                 return
+            # Ensure snippets are strings to avoid vectorizer errors
+            df["Snippet"] = df["Snippet"].astype(str).fillna("")
             vectorizer = TfidfVectorizer()
             text_features = vectorizer.fit_transform(df["Snippet"])
             paths = df.get("File Path", ["" for _ in range(len(df))])
