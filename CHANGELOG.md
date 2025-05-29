@@ -37,6 +37,7 @@ All notable changes to this project are documented in this file.
 - GUI results table now highlights matched terms in red
 - Entropy scores computed for assigned values with placeholder filtering
 - Entropy detection now matches query terms within variable names, preventing "N/A" scores
+- Extracts secret values after common keywords with blue highlighting and entropy displayed as 'LOW' when unknown
 
 - Fixed invisible tooltips for toolbar actions and differentiated clear icons
 - Dedicated toolbar with icons for clearing log/results and exporting

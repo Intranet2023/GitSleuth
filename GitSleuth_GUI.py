@@ -57,6 +57,7 @@ from GitSleuth import (
     _shannon_entropy,
     extract_search_terms,
     get_secret_entropy,
+    PRECEDING_KEYWORDS,
 )
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
@@ -175,7 +176,20 @@ def compute_features(text: str, file_path: str = "") -> list[float]:
 
 
 def highlight_terms_html(text: str, query: str) -> str:
-    """Return HTML text with search terms highlighted in red."""
+    """Return HTML text with search terms highlighted in red and secrets in blue."""
+    # Highlight secrets first
+    def _highlight_secret(match: re.Match) -> str:
+        secret = match.group(1)
+        highlighted = f'<b><span style="color:blue">{secret}</span></b>'
+        return match.group(0).replace(secret, highlighted)
+
+    secret_pattern = re.compile(
+        r'(?:' + '|'.join(re.escape(k) for k in PRECEDING_KEYWORDS) + r')\s*[=:]\s*[\'\"]?([^\'\"\s,;]+)[\'\"]?',
+        re.IGNORECASE,
+    )
+    text = secret_pattern.sub(_highlight_secret, text)
+
+    # Then highlight search terms
     terms = extract_search_terms(query)
     for term in terms:
         pattern = re.compile(re.escape(term), re.IGNORECASE)
@@ -914,7 +928,7 @@ class GitSleuthGUI(QMainWindow):
 
             # Entropy column
             if score is None:
-                entropy_item = QTableWidgetItem("N/A")
+                entropy_item = QTableWidgetItem("LOW")
             else:
                 entropy_item = QTableWidgetItem(f"{score:.2f}")
             self.results_table.setItem(row_position, 5, entropy_item)
