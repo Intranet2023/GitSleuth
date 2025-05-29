@@ -14,7 +14,8 @@ Always keep the incoming branch’s code and discard conflicting local code. Thi
    python -m py_compile GitSleuth_GUI.py OAuth_Manager.py Token_Manager.py GitSleuth.py GitSleuth_API.py
    ```
 3. Record your change in `CHANGELOG.md` under the **Unreleased** heading.
-4. Commit with `Merge branch 'feature-branch' into 'main' (Auto-resolved conflicts)`.
+4. When releasing, move all entries from the **Unreleased** section into a new heading with the release date (YYYY-MM-DD).
+5. Commit with `Merge branch 'feature-branch' into 'main' (Auto-resolved conflicts)`.
 
 ## Examples of Conflict Resolution
 
@@ -297,7 +298,8 @@ Replace the current branch’s file entirely with the incoming file version.
    python -m py_compile GitSleuth_GUI.py OAuth_Manager.py Token_Manager.py GitSleuth.py GitSleuth_API.py
    ```
 4. Record your change in `CHANGELOG.md` under the **Unreleased** heading.
-5. Commit with standardized message:
+5. When releasing, move all entries from the **Unreleased** section into a new heading with the release date (YYYY-MM-DD).
+6. Commit with standardized message:
    ```
    Merge branch 'feature-branch' into 'main' (Auto-resolved conflicts)
    ```

@@ -3,6 +3,10 @@
 All notable changes to this project are documented in this file.
 
 ## [Unreleased]
+- Documented release date for prior changes in this file
+- Documented automatic changelog update instructions in `AGENTS.md`
+
+## 2025-05-29
 ### Added
 - Labels export now appends to existing training_labels.csv without duplicates
 - ML button renamed to "Perform Machine Learning" and automatically saves labels before training
@@ -40,6 +44,7 @@ All notable changes to this project are documented in this file.
 - Entropy detection now matches query terms within variable names, preventing "N/A" scores
 - Extracts secret values after common keywords with blue highlighting and entropy displayed as 'LOW' when unknown
 
+### Fixed
 - Fixed invisible tooltips for toolbar actions and differentiated clear icons
 - Dedicated toolbar with icons for clearing log/results and exporting
 - Added tooltips for all buttons
