@@ -69,8 +69,6 @@ from Token_Manager import load_tokens, add_token, delete_token
 CONFIG_FILE = 'config.json'
 HIGH_ENTROPY_THRESHOLD = 4.0
 
-# Threshold used to consider a result as high entropy
-HIGH_ENTROPY_THRESHOLD = 3.5
 
 
 def apply_dark_palette(app):
@@ -306,7 +304,9 @@ class GitSleuthGUI(QMainWindow):
 
         self.high_entropy_checkbox = QCheckBox("Show High Entropy Only", self)
         self.high_entropy_checkbox.setToolTip(
-            "Hide low entropy results and disable ML features"
+
+            "Hide results with entropy scores at or below the threshold"
+
         )
         self.high_entropy_checkbox.stateChanged.connect(self.apply_entropy_filter)
         toolbar.addWidget(self.high_entropy_checkbox)
@@ -320,13 +320,15 @@ class GitSleuthGUI(QMainWindow):
         main_layout = QVBoxLayout(main_widget)
 
         # Tab widget setup
-        self.tab_widget = QTabWidget(self)
+
+        tab_widget = QTabWidget(self)
+        self.tab_widget = tab_widget
         search_results_tab = QWidget()
         ml_tab = QWidget()
         log_tab = QWidget()
-        self.tab_widget.addTab(search_results_tab, "Search Results")
-        self.ml_tab_index = self.tab_widget.addTab(ml_tab, "ML")
-        self.tab_widget.addTab(log_tab, "Log")
+        tab_widget.addTab(search_results_tab, "Search Results")
+        self.ml_tab_index = tab_widget.addTab(ml_tab, "ML")
+        tab_widget.addTab(log_tab, "Log")
 
         main_layout.addWidget(self.tab_widget)
 
@@ -811,6 +813,21 @@ class GitSleuthGUI(QMainWindow):
             self.export_action.setEnabled(False)
             self.export_labels_action.setEnabled(False)
 
+    def apply_entropy_filter(self):
+        """Hide low entropy rows and disable ML features when filtering."""
+        filter_on = self.high_entropy_checkbox.isChecked()
+        for row in range(self.results_table.rowCount()):
+            item = self.results_table.item(row, 5)
+            text = item.text() if item else ""
+            try:
+                value = float(text)
+            except ValueError:
+                value = None
+            hide = filter_on and (value is None or value <= HIGH_ENTROPY_THRESHOLD)
+            self.results_table.setRowHidden(row, hide)
+        self.tab_widget.setTabEnabled(self.ml_tab_index, not filter_on)
+        self.train_button.setEnabled(not filter_on)
+
     def wait_with_events(self, wait_time):
         """Sleep in small intervals while processing GUI events.
 
@@ -932,6 +949,7 @@ class GitSleuthGUI(QMainWindow):
             if not self.search_active:
                 break
             if self.high_entropy_checkbox.isChecked() and (
+
                 score is None or score < HIGH_ENTROPY_THRESHOLD
             ):
                 continue
