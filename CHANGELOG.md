@@ -7,6 +7,8 @@ All notable changes to this project are documented in this file.
 - Results label defaults to "False Positive" for LOW entropy or scores ≤ 3.5
 - Added "Show High Entropy Only" checkbox to hide low-entropy results and disable ML features
 - Cleaned AGENTS.md to remove merge conflict markers and clarify instructions
+- Introduced `auto_pull.sh` wrapper to run `git pull` with automatic conflict
+  resolution and updated AGENTS.md accordingly
 
 
 ## 2025-05-29
