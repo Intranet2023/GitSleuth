@@ -592,7 +592,9 @@ class GitSleuthGUI(QMainWindow):
         self.stop_button.setEnabled(False)
         self.search_button.setEnabled(True)
         self.progress_bar.setValue(0)
-        self.status_bar.showMessage("Search stopped.")
+        results = self.results_table.rowCount()
+        self.status_bar.showMessage(f"Search stopped. {results} results so far.")
+        logging.info(f"Search stopped with {results} results.")
         self.check_enable_export()
         QApplication.processEvents()  # Ensure UI updates after stopping
 
@@ -660,6 +662,9 @@ class GitSleuthGUI(QMainWindow):
                     ])
 
             self.status_bar.showMessage("Results exported successfully to " + filename)
+            logging.info(
+                f"Exported {self.results_table.rowCount()} results to {filename}"
+            )
         except Exception as e:
             logging.error(f"Error exporting to CSV: {e}")
             self.status_bar.showMessage("Error exporting results.")
@@ -728,8 +733,10 @@ class GitSleuthGUI(QMainWindow):
                     if row_tuple not in existing_rows:
                         writer.writerow(row)
                         existing_rows.add(row_tuple)
-
             self.status_bar.showMessage("Labels exported successfully to " + filename)
+            logging.info(
+                f"Exported {len(new_rows)} labeled rows to {filename}"
+            )
         except Exception as e:
             logging.error(f"Error exporting labels: {e}")
             self.status_bar.showMessage("Error exporting labels.")
@@ -752,10 +759,14 @@ class GitSleuthGUI(QMainWindow):
             self.statusBar().showMessage(
                 f"Searching in {selected_group} for keywords: {keywords}"
             )
+            logging.info(
+                f"Search started in {selected_group} for keywords: {keywords}"
+            )
         else:
             self.statusBar().showMessage(
                 f"Searching in {selected_group} with no keywords"
             )
+            logging.info(f"Search started in {selected_group} with no keywords")
         self.stop_button.setEnabled(True)  # Allow user to stop the search
         self.search_button.setEnabled(False)
         self.export_action.setEnabled(False)  # Explicitly disable the export button
@@ -793,6 +804,12 @@ class GitSleuthGUI(QMainWindow):
                 self.process_query(query, max_retries, config, query, description)
                 self.completed_queries += 1
                 self.progress_bar.setValue(self.completed_queries)
+                self.status_bar.showMessage(
+                    f"Completed {self.completed_queries}/{self.total_queries} queries"
+                )
+                logging.debug(
+                    f"Completed {self.completed_queries}/{self.total_queries} queries"
+                )
                 QApplication.processEvents()
 
         # Search finished normally
@@ -801,7 +818,11 @@ class GitSleuthGUI(QMainWindow):
             self.search_button.setEnabled(True)
             self.stop_button.setEnabled(False)
             self.check_enable_export()
-            self.status_bar.showMessage("Search completed.")
+            result_count = self.results_table.rowCount()
+            self.status_bar.showMessage(
+                f"Search completed with {result_count} results."
+            )
+            logging.info(f"Search completed with {result_count} results.")
             QApplication.processEvents()  # Reflect updated button states
 
 
@@ -1025,8 +1046,9 @@ class GitSleuthGUI(QMainWindow):
             self.export_action.setEnabled(True)
             self.export_labels_action.setEnabled(True)
             self.clear_results_action.setEnabled(True)  # Enable the clear results button
-            self.status_bar.showMessage("Results found.")
-            logging.info("Results found.")
+            count = self.results_table.rowCount()
+            self.status_bar.showMessage(f"Results found ({count}).")
+            logging.info(f"Results found ({count}).")
 
     def apply_entropy_filter(self, state):
         """Show only rows above the entropy threshold and toggle ML access."""
@@ -1075,12 +1097,17 @@ class GitSleuthGUI(QMainWindow):
         self.ml_output.clear()
         if not os.path.exists("training_labels.csv"):
             self.ml_output.append("No labeled data found.")
+            self.status_bar.showMessage("No labeled data found.")
             return
         try:
             df = pd.read_csv("training_labels.csv")
             self.ml_output.append(f"Loaded {len(df)} labeled rows.")
+            self.status_bar.showMessage(
+                f"Loaded {len(df)} labeled rows"
+            )
         except Exception as e:
             self.ml_output.append(f"Error loading labels: {e}")
+            self.status_bar.showMessage("Error loading labels")
 
     def train_model(self):
         """Train a simple text model on labeled data."""
@@ -1088,11 +1115,13 @@ class GitSleuthGUI(QMainWindow):
         self.write_labels_to_csv("training_labels.csv")
         if not os.path.exists("training_labels.csv"):
             self.ml_output.append("No labeled data to train on.")
+            self.status_bar.showMessage("No labeled data to train on.")
             return
         try:
             df = pd.read_csv("training_labels.csv")
             if df.empty:
                 self.ml_output.append("No labeled data to train on.")
+                self.status_bar.showMessage("No labeled data to train on.")
                 return
             # Ensure snippets are strings to avoid vectorizer errors
             df["Snippet"] = df["Snippet"].astype(str).fillna("")
@@ -1109,13 +1138,24 @@ class GitSleuthGUI(QMainWindow):
                 self.ml_output.append(
                     "Training requires at least two label classes."
                 )
+                self.status_bar.showMessage(
+                    "Training requires at least two label classes."
+                )
                 return
 
+            self.status_bar.showMessage("Training model...")
+            logging.info("Training model started.")
             model = LogisticRegression(max_iter=1000)
             model.fit(X, y)
             self.ml_output.append(f"Model trained on {len(df)} samples.")
+            self.status_bar.showMessage(
+                f"Model trained on {len(df)} samples."
+            )
+            logging.info(f"Model trained on {len(df)} samples.")
         except Exception as e:
             self.ml_output.append(f"Training failed: {e}")
+            self.status_bar.showMessage("Training failed")
+            logging.error(f"Training failed: {e}")
 
 
 class SettingsDialog(QDialog):
