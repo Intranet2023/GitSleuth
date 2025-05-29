@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QCheckBox,
     QVBoxLayout,
     QHBoxLayout,
     QComboBox,
@@ -66,6 +67,7 @@ from OAuth_Manager import oauth_login, fetch_username
 from Token_Manager import load_tokens, add_token, delete_token
 
 CONFIG_FILE = 'config.json'
+HIGH_ENTROPY_THRESHOLD = 4.0
 
 # Threshold used to consider a result as high entropy
 HIGH_ENTROPY_THRESHOLD = 3.5
@@ -301,6 +303,13 @@ class GitSleuthGUI(QMainWindow):
         self.export_labels_action.triggered.connect(self.export_labels_to_csv)
         self.export_labels_action.setEnabled(False)
         toolbar.addAction(self.export_labels_action)
+
+        self.high_entropy_checkbox = QCheckBox("Show High Entropy Only", self)
+        self.high_entropy_checkbox.setToolTip(
+            "Hide low entropy results and disable ML features"
+        )
+        self.high_entropy_checkbox.stateChanged.connect(self.apply_entropy_filter)
+        toolbar.addWidget(self.high_entropy_checkbox)
 
         # Add search input widgets to the toolbar
         self.setupSearchInputArea(toolbar)
@@ -583,6 +592,21 @@ class GitSleuthGUI(QMainWindow):
         self.status_bar.showMessage("Search stopped.")
         self.check_enable_export()
         QApplication.processEvents()  # Ensure UI updates after stopping
+
+    def apply_entropy_filter(self):
+        """Hide low entropy rows and toggle ML features."""
+        checked = self.high_entropy_checkbox.isChecked()
+        self.train_button.setEnabled(not checked)
+        self.tab_widget.setTabEnabled(self.ml_tab_index, not checked)
+        for row in range(self.results_table.rowCount()):
+            entropy_item = self.results_table.item(row, 5)
+            text = entropy_item.text() if entropy_item else ""
+            try:
+                score = float(text)
+            except ValueError:
+                score = None
+            hide = checked and (score is None or score < HIGH_ENTROPY_THRESHOLD)
+            self.results_table.setRowHidden(row, hide)
     def export_results_to_csv(self):
         """
         Exports the search results displayed in the table to a CSV file.
@@ -907,6 +931,10 @@ class GitSleuthGUI(QMainWindow):
         for snippet, score in zip(snippets, scores):
             if not self.search_active:
                 break
+            if self.high_entropy_checkbox.isChecked() and (
+                score is None or score < HIGH_ENTROPY_THRESHOLD
+            ):
+                continue
             row_position = self.results_table.rowCount()
             self.results_table.insertRow(row_position)
 
@@ -951,6 +979,7 @@ class GitSleuthGUI(QMainWindow):
                 "Classify the result as a true or false positive"
             )
             label_box.addItems(["", "True Positive", "False Positive"])
+
             if score is None or score <= HIGH_ENTROPY_THRESHOLD:
 
                 label_box.setCurrentText("False Positive")
