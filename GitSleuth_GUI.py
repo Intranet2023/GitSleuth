@@ -33,6 +33,7 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QToolBar,
     QStyle,
+    QCheckBox,
 )
 from PyQt5.QtCore import QUrl, Qt, QTimer
 from PyQt5.QtGui import QDesktopServices, QPalette, QColor
@@ -65,6 +66,9 @@ from OAuth_Manager import oauth_login, fetch_username
 from Token_Manager import load_tokens, add_token, delete_token
 
 CONFIG_FILE = 'config.json'
+
+# Threshold used to consider a result as high entropy
+HIGH_ENTROPY_THRESHOLD = 3.5
 
 
 def apply_dark_palette(app):
@@ -307,15 +311,15 @@ class GitSleuthGUI(QMainWindow):
         main_layout = QVBoxLayout(main_widget)
 
         # Tab widget setup
-        tab_widget = QTabWidget(self)
+        self.tab_widget = QTabWidget(self)
         search_results_tab = QWidget()
         ml_tab = QWidget()
         log_tab = QWidget()
-        tab_widget.addTab(search_results_tab, "Search Results")
-        tab_widget.addTab(ml_tab, "ML")
-        tab_widget.addTab(log_tab, "Log")
+        self.tab_widget.addTab(search_results_tab, "Search Results")
+        self.ml_tab_index = self.tab_widget.addTab(ml_tab, "ML")
+        self.tab_widget.addTab(log_tab, "Log")
 
-        main_layout.addWidget(tab_widget)
+        main_layout.addWidget(self.tab_widget)
 
         # Setup for the search results tab
         search_results_layout = QVBoxLayout(search_results_tab)
@@ -437,6 +441,13 @@ class GitSleuthGUI(QMainWindow):
         self.quit_button.setToolTip("Exit the application")
         self.quit_button.clicked.connect(self.force_quit)
         add(self.quit_button)
+
+        self.high_entropy_checkbox = QCheckBox("Show High Entropy Only", self)
+        self.high_entropy_checkbox.setToolTip(
+            "Hide results with entropy 3.5 or lower and disable ML features"
+        )
+        self.high_entropy_checkbox.stateChanged.connect(self.apply_entropy_filter)
+        add(self.high_entropy_checkbox)
 
 
 
@@ -940,11 +951,17 @@ class GitSleuthGUI(QMainWindow):
                 "Classify the result as a true or false positive"
             )
             label_box.addItems(["", "True Positive", "False Positive"])
-            if score is None:
+            if score is None or score <= HIGH_ENTROPY_THRESHOLD:
                 label_box.setCurrentText("False Positive")
-            elif score > 3.5:
+            elif score > HIGH_ENTROPY_THRESHOLD:
                 label_box.setCurrentText("True Positive")
             self.results_table.setCellWidget(row_position, 6, label_box)
+
+            if (
+                self.high_entropy_checkbox.isChecked()
+                and (score is None or score <= HIGH_ENTROPY_THRESHOLD)
+            ):
+                self.results_table.hideRow(row_position)
         # Enable export buttons if there are results
         if self.results_table.rowCount() > 0:
             self.export_action.setEnabled(True)
@@ -952,6 +969,25 @@ class GitSleuthGUI(QMainWindow):
             self.clear_results_action.setEnabled(True)  # Enable the clear results button
             self.status_bar.showMessage("Results found.")
             logging.info("Results found.")
+
+    def apply_entropy_filter(self, state):
+        """Show only rows above the entropy threshold and toggle ML access."""
+        checked = state == Qt.Checked
+        if hasattr(self, "tab_widget"):
+            self.tab_widget.setTabEnabled(self.ml_tab_index, not checked)
+        self.train_button.setEnabled(not checked)
+
+        for row in range(self.results_table.rowCount()):
+            item = self.results_table.item(row, 5)
+            text = item.text() if item else ""
+            try:
+                value = float(text)
+            except ValueError:
+                value = 0.0
+            if checked and value <= HIGH_ENTROPY_THRESHOLD:
+                self.results_table.hideRow(row)
+            else:
+                self.results_table.showRow(row)
 
 
     def closeEvent(self, event):
