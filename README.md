@@ -117,6 +117,11 @@ of the branch you want to merge:
 It fetches the branch from `origin`, merges it with the `theirs` strategy,
 and verifies that no conflict markers remain.
 
+If you regularly pull from the remote repository, use `./auto_pull.sh`
+instead of running `git pull` directly. This wrapper invokes the
+conflict resolution script automatically whenever a merge conflict
+occurs, so the incoming version is always kept.
+
 
 ## Checks
 Before committing, ensure the main modules compile:
