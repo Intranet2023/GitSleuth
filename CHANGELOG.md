@@ -6,9 +6,8 @@ All notable changes to this project are documented in this file.
 ### Added
 - Labels export now appends to existing training_labels.csv without duplicates
 - ML button renamed to "Perform Machine Learning" and automatically saves labels before training
-- Training no longer prompts for a filename; labels are saved to `training_labels.csv` automatically before each run
-- Modern API token searches for Vercel, Hugging Face, Supabase, Sentry, Rollbar,
-  GitLab, Cloudflare, Vault and Pinecone
+- ML tab refreshes when exporting labels
+- ML and Log tabs swapped for easier access
 - Generalized `.gitignore` to ignore Python bytecode
 - Consolidated duplicate token management functions
 - Allowlist patterns for ignoring dummy secrets with `ALLOWLIST_PATTERNS` in configuration
@@ -47,6 +46,7 @@ All notable changes to this project are documented in this file.
 - Added tooltips for dropdown selections
 - Fixed OAuth token retrieval to prefer the active login token
 - Search controls moved to the toolbar next to export actions
+- Labels default to "False Positive" for low entropy and "True Positive" for scores above 3.5
 
 
 ## 2025-05-23
