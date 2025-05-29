@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 - Documented release date for prior changes in this file
+- Results label defaults to "False Positive" for LOW entropy or scores ≤ 3.5
+- "Show High Entropy Only" filter hides low-entropy rows and disables ML tab
 
 ## 2025-05-29
 ### Added
