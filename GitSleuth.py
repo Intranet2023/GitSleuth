@@ -553,6 +553,20 @@ ALLOWLIST_PRAGMA_RE = re.compile(r"#\s*pragma:\s*allowlist secret", re.I)
 
 ENV_ASSIGN_RE = re.compile(r"\b([A-Z0-9_]+)=\s*(\S*)")
 
+# Keywords that typically precede secrets in assignments
+PRECEDING_KEYWORDS = [
+    "password",
+    "pass",
+    "pwd",
+    "key",
+    "secret",
+    "token",
+    "apikey",
+    "api_key",
+    "smtp_password",
+    "auth",
+]
+
 # Common patterns used to reference environment variables in code.
 ENV_REF_RE = re.compile(
     r"(?i)(?:os\.environ|os\.getenv|process\.env|\benv\(|\bgetenv\(|\bENV\[|\bENV\.|System\.getenv|std::env)"
@@ -610,6 +624,17 @@ def _has_allowlist_comment(content: str, start: int, end: int) -> bool:
 def _path_is_ignored(file_path: str, patterns: list[str]) -> bool:
     """Return True if file_path matches any ignore pattern."""
     return any(re.search(p, file_path) for p in patterns)
+
+
+def extract_secrets(snippet: str, keywords: list[str] | None = None) -> list[str]:
+    """Return all secrets appearing after keywords in the snippet."""
+    if keywords is None:
+        keywords = PRECEDING_KEYWORDS
+    pattern = re.compile(
+        r"(?:" + "|".join(re.escape(k) for k in keywords) + r")\s*[=:]\s*[\'\"]?([^\'\"\s,;]+)[\'\"]?",
+        re.IGNORECASE,
+    )
+    return pattern.findall(snippet)
 
 
 def _is_placeholder_snippet(snippet, query_terms=None, entropy_threshold=DEFAULT_ENTROPY_THRESHOLD):
@@ -698,6 +723,15 @@ def get_secret_entropy(snippet: str, query_terms=None) -> Optional[float]:
             or _matches_known_format(clean)
             or _looks_like_word(clean)
         ):
+            continue
+        entropies.append(_shannon_entropy(clean))
+
+    # Also look for secrets using common keywords
+    for secret in extract_secrets(snippet):
+        clean = secret.strip('"\'').strip().strip('*_`')
+        if not clean:
+            continue
+        if _matches_known_format(clean) or _looks_like_word(clean) or clean.isupper():
             continue
         entropies.append(_shannon_entropy(clean))
 
