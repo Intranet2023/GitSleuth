@@ -940,7 +940,7 @@ class GitSleuthGUI(QMainWindow):
                 "Classify the result as a true or false positive"
             )
             label_box.addItems(["", "True Positive", "False Positive"])
-            if score is None:
+            if score is None or score <= 3.5:
                 label_box.setCurrentText("False Positive")
             elif score > 3.5:
                 label_box.setCurrentText("True Positive")
