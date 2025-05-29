@@ -15,6 +15,8 @@ All notable changes to this project are documented in this file.
 - Status bar and log window now provide detailed messages on search progress,
   exports, and training
 
+- `setup.sh` now warns if the Ollama CLI is missing so users can install it for machine learning tasks
+
 - GUI results table centered for improved readability
 - GUI secrets now display the secret text in red and preceding search terms in blue
 
