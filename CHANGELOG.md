@@ -11,7 +11,9 @@ All notable changes to this project are documented in this file.
 - Introduced `auto_pull.sh` wrapper to run `git pull` with automatic conflict
   resolution and updated AGENTS.md accordingly
 - Console table output centered for improved readability
+
 - GUI results table centered for improved readability
+
 
 
 ## 2025-05-29
