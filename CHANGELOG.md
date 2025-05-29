@@ -5,7 +5,9 @@ All notable changes to this project are documented in this file.
 ## [Unreleased]
 - Documented release date for prior changes in this file
 - Results label defaults to "False Positive" for LOW entropy or scores ≤ 3.5
-- "Show High Entropy Only" filter hides low-entropy rows and disables ML tab
+- Added "Show High Entropy Only" checkbox to hide low-entropy results and disable ML features
+- Cleaned AGENTS.md to remove merge conflict markers and clarify instructions
+
 
 ## 2025-05-29
 ### Added
