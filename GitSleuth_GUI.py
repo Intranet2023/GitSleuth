@@ -481,6 +481,7 @@ class GitSleuthGUI(QMainWindow):
             "Entropy",
             "Label",
         ])
+        self.results_table.horizontalHeader().setDefaultAlignment(Qt.AlignCenter)
         layout.addWidget(self.results_table)
         self.results_table.setColumnWidth(0, 180)
         self.results_table.setColumnWidth(1, 220)
@@ -960,18 +961,24 @@ class GitSleuthGUI(QMainWindow):
             filtered_search_term = search_term.replace(PLACEHOLDERS, "").strip()
 
             # Search term column
-            self.results_table.setItem(row_position, 0, QTableWidgetItem(filtered_search_term))
+            search_item = QTableWidgetItem(filtered_search_term)
+            search_item.setTextAlignment(Qt.AlignCenter)
+            self.results_table.setItem(row_position, 0, search_item)
             # Description column
-            self.results_table.setItem(row_position, 1, QTableWidgetItem(description))
+            description_item = QTableWidgetItem(description)
+            description_item.setTextAlignment(Qt.AlignCenter)
+            self.results_table.setItem(row_position, 1, description_item)
 
             # Repository column with clickable link
             repo_url = f"{github_base_url}{repo_name}"
             repo_link_label = self.create_clickable_link(repo_name, repo_url)
+            repo_link_label.setAlignment(Qt.AlignCenter)
             self.results_table.setCellWidget(row_position, 2, repo_link_label)
 
             # File path column with clickable link
             file_url = f"{repo_url}/blob/main/{file_path}"
             file_link_label = self.create_clickable_link(file_path, file_url)
+            file_link_label.setAlignment(Qt.AlignCenter)
             self.results_table.setCellWidget(row_position, 3, file_link_label)
 
             # Snippets column with highlighted search terms
@@ -981,6 +988,7 @@ class GitSleuthGUI(QMainWindow):
             snippet_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
             snippet_label.setWordWrap(True)
             snippet_label.setText(highlighted)
+            snippet_label.setAlignment(Qt.AlignCenter)
             self.results_table.setCellWidget(row_position, 4, snippet_label)
             self.results_table.resizeRowToContents(row_position)
 
@@ -989,6 +997,7 @@ class GitSleuthGUI(QMainWindow):
                 entropy_item = QTableWidgetItem("LOW")
             else:
                 entropy_item = QTableWidgetItem(f"{score:.2f}")
+            entropy_item.setTextAlignment(Qt.AlignCenter)
             self.results_table.setItem(row_position, 5, entropy_item)
 
             # Label column with dropdown
@@ -997,6 +1006,7 @@ class GitSleuthGUI(QMainWindow):
                 "Classify the result as a true or false positive"
             )
             label_box.addItems(["", "True Positive", "False Positive"])
+            label_box.setStyleSheet("QComboBox { text-align: center; }")
 
             if score is None or score <= HIGH_ENTROPY_THRESHOLD:
 
