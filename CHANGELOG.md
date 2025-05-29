@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - Generalized `.gitignore` to ignore Python bytecode
 - Consolidated duplicate token management functions
 - Allowlist patterns for ignoring dummy secrets with `ALLOWLIST_PATTERNS` in configuration
+- Removed custom search preset functionality and related configuration
 - Optional integration with Yelp's `detect-secrets` for improved secret detection
 - Added detection utilities for environment variable names and token strings
 - Expanded snippet and window sizes for better context

@@ -225,7 +225,6 @@ class GitSleuthGUI(QMainWindow):
         self.search_active = False
         self.session_keep_alive = config.get("SESSION_KEEP_ALIVE_MINUTES", 0)
         self.filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
-        self.presets = config.get("SEARCH_PRESETS", {})
         self.exit_timer: Optional[QTimer] = None
         self.initUI()
         self.restore_oauth_session()
@@ -266,7 +265,7 @@ class GitSleuthGUI(QMainWindow):
         toolbar.addAction(self.clear_log_action)
 
         self.export_action = QAction(
-            self.style().standardIcon(QStyle.SP_DialogSaveButton),
+            self.style().standardIcon(QStyle.SP_FileIcon),
             "Export to CSV",
             self,
         )
@@ -332,7 +331,7 @@ class GitSleuthGUI(QMainWindow):
         self.ml_output.setReadOnly(True)
         ml_tab_layout.addWidget(self.ml_output)
 
-        self.train_button = QPushButton("Train Model", self)
+        self.train_button = QPushButton("ML", self)
         self.train_button.setToolTip("Train the machine learning model")
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
@@ -365,7 +364,7 @@ class GitSleuthGUI(QMainWindow):
         self.search_group_dropdown.setToolTip(
             "Choose the category of secrets to search for"
         )
-        layout.addWidget(self.search_group_dropdown)
+        button_layout.addWidget(self.search_group_dropdown)
         self.search_group_dropdown.addItems([
             "Cloud Credentials (AWS, Azure, GCP)",
             "Third-Party API Keys and Tokens",
@@ -383,40 +382,20 @@ class GitSleuthGUI(QMainWindow):
             "Search All",
         ])
 
-        self.preset_dropdown = QComboBox(self)
-        self.preset_dropdown.setToolTip(
-            "Select a saved search preset"
-        )
-        self.preset_dropdown.addItem("None")
-        self.preset_dropdown.activated.connect(self.apply_selected_preset)
-        layout.addWidget(self.preset_dropdown)
-        self.update_preset_dropdown()
-
-        self.save_preset_btn = QPushButton("Save Preset", self)
-        self.save_preset_btn.setFixedWidth(110)
-        self.save_preset_btn.setToolTip("Save the current search as a preset")
-        self.save_preset_btn.clicked.connect(self.save_current_preset)
-        layout.addWidget(self.save_preset_btn)
-
-        self.delete_preset_btn = QPushButton("Delete", self)
-        self.delete_preset_btn.setFixedWidth(80)
-        self.delete_preset_btn.setToolTip("Delete the selected preset")
-        self.delete_preset_btn.clicked.connect(self.delete_current_preset)
-        layout.addWidget(self.delete_preset_btn)
 
         self.search_button = QPushButton("Search", self)
         # Slightly wider buttons for clarity
         self.search_button.setFixedWidth(110)
         self.search_button.setToolTip("Start the search")
         self.search_button.clicked.connect(self.on_search)
-        layout.addWidget(self.search_button)
+        button_layout.addWidget(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.setFixedWidth(110)
         self.stop_button.setToolTip("Stop the ongoing search")
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
-        layout.addWidget(self.stop_button)
+        button_layout.addWidget(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
         
@@ -552,47 +531,6 @@ class GitSleuthGUI(QMainWindow):
                 save_config(config)
         return False
 
-    def update_preset_dropdown(self) -> None:
-        """Populate the preset dropdown from stored presets."""
-        self.preset_dropdown.blockSignals(True)
-        self.preset_dropdown.clear()
-        self.preset_dropdown.addItem("None")
-        for name in sorted(self.presets.keys()):
-            self.preset_dropdown.addItem(name)
-        self.preset_dropdown.blockSignals(False)
-
-    def save_current_preset(self) -> None:
-        """Save the current keywords and search group as a preset."""
-        name, ok = QInputDialog.getText(self, "Save Preset", "Preset name:")
-        if ok and name:
-            self.presets[name] = {
-                "keywords": self.keyword_input.text().strip(),
-                "group": self.search_group_dropdown.currentText(),
-            }
-            config["SEARCH_PRESETS"] = self.presets
-            save_config(config)
-            self.update_preset_dropdown()
-            self.preset_dropdown.setCurrentText(name)
-
-    def delete_current_preset(self) -> None:
-        """Delete the currently selected preset."""
-        name = self.preset_dropdown.currentText()
-        if name and name != "None" and name in self.presets:
-            del self.presets[name]
-            config["SEARCH_PRESETS"] = self.presets
-            save_config(config)
-            self.update_preset_dropdown()
-
-    def apply_selected_preset(self) -> None:
-        """Fill input fields from the selected preset."""
-        name = self.preset_dropdown.currentText()
-        if name and name in self.presets:
-            data = self.presets[name]
-            self.keyword_input.setText(data.get("keywords", ""))
-            group = data.get("group", "")
-            idx = self.search_group_dropdown.findText(group)
-            if idx >= 0:
-                self.search_group_dropdown.setCurrentIndex(idx)
 
     
     def clear_results(self):
