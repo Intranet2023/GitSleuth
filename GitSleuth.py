@@ -308,7 +308,7 @@ def process_and_display_data(data, search_term, description=""):
     """
     table = PrettyTable()
     table.field_names = [Fore.BLUE + "Attribute" + Style.RESET_ALL, Fore.BLUE + "Value" + Style.RESET_ALL]
-    table.align = "l"
+    table.align = "c"
     if description:
         table.add_row(["description", description])
 
