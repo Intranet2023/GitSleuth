@@ -284,6 +284,9 @@ class GitSleuthGUI(QMainWindow):
         self.export_labels_action.setEnabled(False)
         toolbar.addAction(self.export_labels_action)
 
+        # Add search input widgets to the toolbar
+        self.setupSearchInputArea(toolbar)
+
         # Main widget and layout
         main_widget = QWidget(self)
         self.setCentralWidget(main_widget)
@@ -302,9 +305,6 @@ class GitSleuthGUI(QMainWindow):
 
         # Setup for the search results tab
         search_results_layout = QVBoxLayout(search_results_tab)
-        input_layout = QHBoxLayout()
-        self.setupSearchInputArea(input_layout)
-        search_results_layout.addLayout(input_layout)
         self.setupResultsTable(search_results_layout)
 
         # Status bar and progress bar setup
@@ -345,26 +345,37 @@ class GitSleuthGUI(QMainWindow):
     def setupSearchInputArea(self, layout):
         """Build the search input widgets and action buttons."""
 
+        # Determine whether adding to a toolbar or a layout
+        is_toolbar = isinstance(layout, QToolBar)
+        def add(item):
+            if is_toolbar:
+                layout.addWidget(item)
+            else:
+                layout.addWidget(item)
 
-        form_layout = QHBoxLayout()
-        form_layout.addWidget(QLabel("Keywords:"))
+        if is_toolbar:
+            add(QLabel("Keywords:"))
+        else:
+            form_layout = QHBoxLayout()
+            form_layout.addWidget(QLabel("Keywords:"))
+            layout.addLayout(form_layout)
+            add = form_layout.addWidget
+
         self.keyword_input = QLineEdit(self)
         self.keyword_input.setPlaceholderText("Enter keywords or domain")
-        # Give the keyword field a minimum width so longer terms are visible
         self.keyword_input.setMinimumWidth(250)
-        form_layout.addWidget(self.keyword_input)
+        add(self.keyword_input)
 
-        # Add the form layout to the provided layout
-        layout.addLayout(form_layout)
-
-        button_layout = QHBoxLayout()
-
+        if not is_toolbar:
+            button_layout = QHBoxLayout()
+            layout.addLayout(button_layout)
+            add = button_layout.addWidget
 
         self.search_group_dropdown = QComboBox(self)
         self.search_group_dropdown.setToolTip(
             "Choose the category of secrets to search for"
         )
-        button_layout.addWidget(self.search_group_dropdown)
+        add(self.search_group_dropdown)
         self.search_group_dropdown.addItems([
             "Cloud Credentials (AWS, Azure, GCP)",
             "Third-Party API Keys and Tokens",
@@ -382,44 +393,36 @@ class GitSleuthGUI(QMainWindow):
             "Search All",
         ])
 
-
         self.search_button = QPushButton("Search", self)
-        # Slightly wider buttons for clarity
         self.search_button.setFixedWidth(110)
         self.search_button.setToolTip("Start the search")
         self.search_button.clicked.connect(self.on_search)
-        button_layout.addWidget(self.search_button)
+        add(self.search_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.setFixedWidth(110)
         self.stop_button.setToolTip("Stop the ongoing search")
         self.stop_button.clicked.connect(self.stop_search)
         self.stop_button.setEnabled(False)
-        button_layout.addWidget(self.stop_button)
+        add(self.stop_button)
 
         self.oauth_button = QPushButton("OAuth Login", self)
-        
-        # Allow room for "Logged in as" text after authentication
         self.oauth_button.setFixedWidth(180)
         self.oauth_button.setToolTip("Authenticate using OAuth")
         self.oauth_button.clicked.connect(self.start_oauth)
-        button_layout.addWidget(self.oauth_button)
-
+        add(self.oauth_button)
 
         self.logout_button = QPushButton("Logout", self)
         self.logout_button.setFixedWidth(120)
         self.logout_button.setToolTip("Clear OAuth credentials")
         self.logout_button.clicked.connect(self.logout_user)
-        button_layout.addWidget(self.logout_button)
-
+        add(self.logout_button)
 
         self.quit_button = QPushButton("Quit", self)
         self.quit_button.setFixedWidth(100)
         self.quit_button.setToolTip("Exit the application")
         self.quit_button.clicked.connect(self.force_quit)
-        button_layout.addWidget(self.quit_button)
-
-        layout.addLayout(button_layout)
+        add(self.quit_button)
 
 
 
