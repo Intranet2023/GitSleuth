@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 ## [Unreleased]
 - Documented release date for prior changes in this file
 - Results label defaults to "False Positive" for LOW entropy or scores ≤ 3.5
+
 - Added checkbox to filter for high entropy results and disable ML features
 
 ## 2025-05-29
