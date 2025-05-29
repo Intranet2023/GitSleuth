@@ -345,7 +345,7 @@ class GitSleuthGUI(QMainWindow):
         self.ml_output.setReadOnly(True)
         ml_tab_layout.addWidget(self.ml_output)
 
-        self.train_button = QPushButton("ML", self)
+        self.train_button = QPushButton("Perform Machine Learning", self)
         self.train_button.setToolTip("Train the machine learning model")
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
@@ -985,6 +985,8 @@ class GitSleuthGUI(QMainWindow):
 
     def train_model(self):
         """Train a simple text model on labeled data."""
+        # Persist any currently labeled rows before training
+        self.write_labels_to_csv("training_labels.csv")
         if not os.path.exists("training_labels.csv"):
             self.ml_output.append("No labeled data to train on.")
             return
