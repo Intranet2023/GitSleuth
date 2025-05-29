@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file.
   resolution and updated AGENTS.md accordingly
 - Console table output centered for improved readability
 
+- GUI results table centered for improved readability
+
+
 
 ## 2025-05-29
 ### Added
