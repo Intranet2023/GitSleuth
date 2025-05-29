@@ -43,6 +43,7 @@ All notable changes to this project are documented in this file.
 - Added tooltips for all buttons
 - Added tooltips for dropdown selections
 - Fixed OAuth token retrieval to prefer the active login token
+- Search controls moved to the toolbar next to export actions
 
 
 ## 2025-05-23
