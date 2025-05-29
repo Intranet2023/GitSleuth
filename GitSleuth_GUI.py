@@ -677,43 +677,64 @@ class GitSleuthGUI(QMainWindow):
 
     def write_labels_to_csv(self, filename):
         try:
-            with open(filename, "w", newline="") as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow([
-                    "Search Term",
-                    "Description",
-                    "Repository",
-                    "File Path",
-                    "Snippet",
-                    "Entropy",
-                    "Label",
+            new_rows = []
+            for row in range(self.results_table.rowCount()):
+                label_widget = self.results_table.cellWidget(row, 6)
+                label_text = label_widget.currentText() if label_widget else ""
+                if not label_text:
+                    continue
+                search_term = self.results_table.item(row, 0).text()
+                description = self.results_table.item(row, 1).text()
+                repo_widget = self.results_table.cellWidget(row, 2)
+                repo_text = repo_widget.text() if repo_widget else ""
+                file_widget = self.results_table.cellWidget(row, 3)
+                file_text = file_widget.text() if file_widget else ""
+                snippet_item = self.results_table.item(row, 4)
+                snippet_text = (
+                    snippet_item.text().replace("\n", " ") if snippet_item else ""
+                )
+                entropy_item = self.results_table.item(row, 5)
+                entropy_text = entropy_item.text() if entropy_item else ""
+                new_rows.append([
+                    search_term,
+                    description,
+                    repo_text,
+                    file_text,
+                    snippet_text,
+                    entropy_text,
+                    label_text,
                 ])
-                for row in range(self.results_table.rowCount()):
-                    label_widget = self.results_table.cellWidget(row, 6)
-                    label_text = label_widget.currentText() if label_widget else ""
-                    if not label_text:
-                        continue
-                    search_term = self.results_table.item(row, 0).text()
-                    description = self.results_table.item(row, 1).text()
-                    repo_widget = self.results_table.cellWidget(row, 2)
-                    repo_text = repo_widget.text() if repo_widget else ""
-                    file_widget = self.results_table.cellWidget(row, 3)
-                    file_text = file_widget.text() if file_widget else ""
-                    snippet_item = self.results_table.item(row, 4)
-                    snippet_text = (
-                        snippet_item.text().replace("\n", " ") if snippet_item else ""
+
+            existing_rows = set()
+            file_exists = os.path.exists(filename)
+            if file_exists:
+                with open(filename, newline="") as csvfile:
+                    reader = csv.reader(csvfile)
+                    next(reader, None)  # skip header
+                    for existing in reader:
+                        existing_rows.add(tuple(existing))
+
+            mode = "a" if file_exists else "w"
+            with open(filename, mode, newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                if not file_exists:
+                    writer.writerow(
+                        [
+                            "Search Term",
+                            "Description",
+                            "Repository",
+                            "File Path",
+                            "Snippet",
+                            "Entropy",
+                            "Label",
+                        ]
                     )
-                    entropy_item = self.results_table.item(row, 5)
-                    entropy_text = entropy_item.text() if entropy_item else ""
-                    writer.writerow([
-                        search_term,
-                        description,
-                        repo_text,
-                        file_text,
-                        snippet_text,
-                        entropy_text,
-                        label_text,
-                    ])
+                for row in new_rows:
+                    row_tuple = tuple(row)
+                    if row_tuple not in existing_rows:
+                        writer.writerow(row)
+                        existing_rows.add(row_tuple)
+
             self.status_bar.showMessage("Labels exported successfully to " + filename)
         except Exception as e:
             logging.error(f"Error exporting labels: {e}")
