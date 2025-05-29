@@ -13,6 +13,7 @@ All notable changes to this project are documented in this file.
 - Console table output centered for improved readability
 
 - GUI results table centered for improved readability
+- GUI secrets now display the secret text in red and preceding search terms in blue
 
 
 
@@ -52,7 +53,7 @@ All notable changes to this project are documented in this file.
 - GUI results table now highlights matched terms in red
 - Entropy scores computed for assigned values with placeholder filtering
 - Entropy detection now matches query terms within variable names, preventing "N/A" scores
-- Extracts secret values after common keywords with blue highlighting and entropy displayed as 'LOW' when unknown
+- Extracts secret values after common keywords with red highlighting and entropy displayed as 'LOW' when unknown
 
 ### Fixed
 - Fixed invisible tooltips for toolbar actions and differentiated clear icons

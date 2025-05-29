@@ -180,11 +180,11 @@ def compute_features(text: str, file_path: str = "") -> list[float]:
 
 
 def highlight_terms_html(text: str, query: str) -> str:
-    """Return HTML text with search terms highlighted in red and secrets in blue."""
+    """Return HTML text with search terms highlighted in blue and secrets in red."""
     # Highlight secrets first
     def _highlight_secret(match: re.Match) -> str:
         secret = match.group(1)
-        highlighted = f'<b><span style="color:blue">{secret}</span></b>'
+        highlighted = f'<b><span style="color:red">{secret}</span></b>'
         return match.group(0).replace(secret, highlighted)
 
     secret_pattern = re.compile(
@@ -198,7 +198,7 @@ def highlight_terms_html(text: str, query: str) -> str:
     for term in terms:
         pattern = re.compile(re.escape(term), re.IGNORECASE)
         text = pattern.sub(
-            lambda m: f'<span style="color:red">{m.group(0)}</span>',
+            lambda m: f'<span style="color:blue">{m.group(0)}</span>',
             text,
         )
     return text
