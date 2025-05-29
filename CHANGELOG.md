@@ -4,7 +4,6 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 - Documented release date for prior changes in this file
-- Documented automatic changelog update instructions in `AGENTS.md`
 
 ## 2025-05-29
 ### Added
