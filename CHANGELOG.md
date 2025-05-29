@@ -46,6 +46,7 @@ All notable changes to this project are documented in this file.
 - Added tooltips for dropdown selections
 - Fixed OAuth token retrieval to prefer the active login token
 - Search controls moved to the toolbar next to export actions
+- Labels default to "False Positive" for low entropy and "True Positive" for scores above 3.5
 
 
 ## 2025-05-23

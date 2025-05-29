@@ -939,6 +939,10 @@ class GitSleuthGUI(QMainWindow):
                 "Classify the result as a true or false positive"
             )
             label_box.addItems(["", "True Positive", "False Positive"])
+            if score is None:
+                label_box.setCurrentText("False Positive")
+            elif score > 3.5:
+                label_box.setCurrentText("True Positive")
             self.results_table.setCellWidget(row_position, 6, label_box)
         # Enable export buttons if there are results
         if self.results_table.rowCount() > 0:
