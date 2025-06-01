@@ -72,11 +72,12 @@ also encode the file type (config, source, log, other) and simple structural
 context such as assignments or secret-setting function calls.
 
 #### Testing the Model
+
 Open the **ML** tab and click **Train Example Model** to build a simple
 classifier from `training_data.csv`. The tab shows the model's accuracy.
 Enter any phrase in the provided field and click **Analyze Phrase** to
 highlight detected secrets, the preceding indicator, entropy score and
-whether the model believes the secret is real or a placeholder.
+
 
 #### ML Workflow
 1. After running a search, mark each result row as **True Positive** or **False Positive** using the **Label** column.

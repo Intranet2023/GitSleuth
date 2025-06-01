@@ -19,8 +19,10 @@ All notable changes to this project are documented in this file.
 - GUI secrets now display the secret text in red and preceding search terms in blue
 - Added `ML_Tester.py` to train on `training_data.csv`, report accuracy, and
   analyze user-provided phrases for secrets
+
 - Added "Train Example Model" and "Analyze Phrase" features in the ML tab for
   accuracy testing and secret detection
+
 
 
 
