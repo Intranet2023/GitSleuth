@@ -72,12 +72,12 @@ also encode the file type (config, source, log, other) and simple structural
 context such as assignments or secret-setting function calls.
 
 #### Testing the Model
-Run `python ML_Tester.py` to train on `training_data.csv` and report the
-classifier's accuracy. After training you can enter any phrase and the
-tool will highlight detected secrets, the preceding indicator (or **N/A** if
-none is found), entropy score and whether the model believes the secret is
-real or a placeholder. If no keyword pattern is detected, the entire phrase
-is evaluated as a potential secret.
+
+Open the **ML** tab and click **Train Example Model** to build a simple
+classifier from `training_data.csv`. The tab shows the model's accuracy.
+Enter any phrase in the provided field and click **Analyze Phrase** to
+highlight detected secrets, the preceding indicator, entropy score and
+
 
 #### ML Workflow
 1. After running a search, mark each result row as **True Positive** or **False Positive** using the **Label** column.

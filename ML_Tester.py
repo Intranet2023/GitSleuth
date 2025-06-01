@@ -60,6 +60,7 @@ def analyze_phrase(model: LogisticRegression, phrase: str) -> None:
     """Analyze *phrase* for secrets using the trained model."""
     matches = list(SECRET_RE.finditer(phrase))
 
+
     if not matches:
         candidate = phrase.strip()
         if not candidate:
@@ -74,6 +75,7 @@ def analyze_phrase(model: LogisticRegression, phrase: str) -> None:
         )
         return
 
+
     for m in matches:
         secret = m.group(1)
         indicator_match = re.search(r"|".join(PRECEDING_KEYWORDS), m.group(0), re.IGNORECASE)
@@ -82,9 +84,11 @@ def analyze_phrase(model: LogisticRegression, phrase: str) -> None:
         pred = model.predict([features])[0]
         entropy = _shannon_entropy(secret)
         label = "Real Secret" if pred == 1 else "Placeholder"
+
         print(
             f"Indicator: {indicator}\nSecret: {secret}\nEntropy: {entropy:.2f}\nPrediction: {label}\n"
         )
+
 
 
 def main() -> None:
