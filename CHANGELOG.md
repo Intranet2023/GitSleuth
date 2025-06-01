@@ -17,6 +17,10 @@ All notable changes to this project are documented in this file.
 
 - GUI results table centered for improved readability
 - GUI secrets now display the secret text in red and preceding search terms in blue
+- Added `ML_Tester.py` to train on `training_data.csv`, report accuracy, and
+  analyze user-provided phrases for secrets
+- `ML_Tester.py` now evaluates the entire phrase when no keyword is present,
+  printing **N/A** for the indicator
 
 
 

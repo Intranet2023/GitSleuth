@@ -71,6 +71,14 @@ checks to help distinguish real secrets from placeholders. Additional features
 also encode the file type (config, source, log, other) and simple structural
 context such as assignments or secret-setting function calls.
 
+#### Testing the Model
+Run `python ML_Tester.py` to train on `training_data.csv` and report the
+classifier's accuracy. After training you can enter any phrase and the
+tool will highlight detected secrets, the preceding indicator (or **N/A** if
+none is found), entropy score and whether the model believes the secret is
+real or a placeholder. If no keyword pattern is detected, the entire phrase
+is evaluated as a potential secret.
+
 #### ML Workflow
 1. After running a search, mark each result row as **True Positive** or **False Positive** using the **Label** column.
 2. Click **Export Labels** to save the selections. This writes them to `training_labels.csv` so the ML tab can load them.
