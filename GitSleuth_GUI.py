@@ -42,6 +42,8 @@ from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
 
@@ -68,6 +70,25 @@ from Token_Manager import load_tokens, add_token, delete_token
 
 CONFIG_FILE = 'config.json'
 HIGH_ENTROPY_THRESHOLD = 4.0
+
+SIMPLE_SECRET_RE = re.compile(
+    r'(?:' + '|'.join(re.escape(k) for k in PRECEDING_KEYWORDS) + r')\s*[=:]\s*[\'"\"]?([^\'"\"\s,;]+)[\'"\"]?',
+    re.IGNORECASE,
+)
+
+
+def _basic_features(text: str) -> list[float]:
+    """Return basic entropy and composition features for *text*."""
+    if not isinstance(text, str):
+        text = "" if text is None else str(text)
+    length = len(text)
+    if length == 0:
+        return [0.0, 0.0, 0.0, 0.0, 0.0]
+    numeric = sum(ch.isdigit() for ch in text)
+    alpha = sum(ch.isalpha() for ch in text)
+    special = length - numeric - alpha
+    entropy = _shannon_entropy(text)
+    return [entropy, float(length), numeric / length, alpha / length, special / length]
 
 
 
@@ -244,6 +265,7 @@ class GitSleuthGUI(QMainWindow):
         self.session_keep_alive = config.get("SESSION_KEEP_ALIVE_MINUTES", 0)
         self.filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
         self.exit_timer: Optional[QTimer] = None
+        self.simple_model: Optional[LogisticRegression] = None
         self.initUI()
         self.restore_oauth_session()
 
@@ -364,6 +386,22 @@ class GitSleuthGUI(QMainWindow):
         self.train_button.setToolTip("Train the machine learning model")
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
+
+        self.sample_train_button = QPushButton("Train Example Model", self)
+        self.sample_train_button.setToolTip(
+            "Train simple classifier on training_data.csv"
+        )
+        self.sample_train_button.clicked.connect(self.train_sample_model)
+        ml_tab_layout.addWidget(self.sample_train_button)
+
+        self.phrase_input = QLineEdit(self)
+        self.phrase_input.setPlaceholderText("Enter phrase to analyze")
+        ml_tab_layout.addWidget(self.phrase_input)
+
+        self.analyze_button = QPushButton("Analyze Phrase", self)
+        self.analyze_button.setToolTip("Detect secrets in the phrase")
+        self.analyze_button.clicked.connect(self.analyze_phrase)
+        ml_tab_layout.addWidget(self.analyze_button)
 
         self.load_labeled_data()
 
@@ -1156,6 +1194,72 @@ class GitSleuthGUI(QMainWindow):
             self.ml_output.append(f"Training failed: {e}")
             self.status_bar.showMessage("Training failed")
             logging.error(f"Training failed: {e}")
+
+    def load_basic_training(self) -> tuple[list[list[float]], list[int]]:
+        """Load passwords and placeholders from ``training_data.csv``."""
+        df = pd.read_csv("training_data.csv")
+        X: list[list[float]] = []
+        y: list[int] = []
+        for pwd in df.get("RealPassword", []):
+            if isinstance(pwd, str) and pwd:
+                X.append(_basic_features(pwd))
+                y.append(1)
+        for pwd in df.get("Placeholder", []):
+            if isinstance(pwd, str) and pwd:
+                X.append(_basic_features(pwd))
+                y.append(0)
+        return X, y
+
+    def train_sample_model(self) -> None:
+        """Train example model and display accuracy."""
+        try:
+            X, y = self.load_basic_training()
+        except Exception as e:
+            self.ml_output.append(f"Error loading training data: {e}")
+            return
+        if not X:
+            self.ml_output.append("No training data available.")
+            return
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        model = LogisticRegression(max_iter=1000)
+        model.fit(X_train, y_train)
+        preds = model.predict(X_test)
+        acc = accuracy_score(y_test, preds)
+        self.simple_model = model
+        self.ml_output.append(
+            f"Sample model accuracy: {acc * 100:.2f}% on held-out data."
+        )
+        self.status_bar.showMessage("Sample model trained")
+
+    def analyze_phrase(self) -> None:
+        """Analyze the text entered by the user for secrets."""
+        phrase = self.phrase_input.text().strip()
+        if not phrase:
+            return
+        if not self.simple_model:
+            self.train_sample_model()
+            if not self.simple_model:
+                return
+        matches = list(SIMPLE_SECRET_RE.finditer(phrase))
+        if not matches:
+            self.ml_output.append("No secret patterns found.")
+            return
+        for m in matches:
+            secret = m.group(1)
+            indicator_match = re.search(
+                r"|".join(PRECEDING_KEYWORDS), m.group(0), re.IGNORECASE
+            )
+            indicator = indicator_match.group(0) if indicator_match else ""
+            features = _basic_features(secret)
+            pred = self.simple_model.predict([features])[0]
+            entropy = _shannon_entropy(secret)
+            label = "Real Secret" if pred == 1 else "Placeholder"
+            self.ml_output.append(
+                f"Indicator: {indicator}\nSecret: {secret}\nEntropy: {entropy:.2f}\nPrediction: {label}\n"
+            )
+        self.status_bar.showMessage("Phrase analyzed")
 
 
 class SettingsDialog(QDialog):
