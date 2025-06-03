@@ -21,6 +21,9 @@ All notable changes to this project are documented in this file.
   analyze user-provided phrases for secrets
 - ML password tester now flags all-caps words and phrases as placeholders and
   treats entropy scores above 4.0 as likely real passwords
+- Added `testing_data.csv` with labeled phrases for evaluating secret detection
+- Introduced `Secret_Trainer.py` CLI skeleton for model training
+- Added `joblib` and `numpy` to requirements
 
 - `ML_Tester.py` now falls back to a built-in logistic regression when
   pandas or scikit-learn are unavailable.
