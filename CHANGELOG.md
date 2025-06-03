@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 - Documented release date for prior changes in this file
-- Results label defaults to "False Positive" for LOW entropy or scores ≤ 3.5
+- Results label defaults to "False Positive" for LOW entropy or scores ≤ 4.0
 - Added "Show High Entropy Only" checkbox to hide low-entropy results and disable ML features
 - Button label changed from "Show High Entropy Only" to "Hide Low Entropy Results"
 - Cleaned AGENTS.md to remove merge conflict markers and clarify instructions
@@ -19,6 +19,8 @@ All notable changes to this project are documented in this file.
 - GUI secrets now display the secret text in red and preceding search terms in blue
 - Added `ML_Tester.py` to train on `training_data.csv`, report accuracy, and
   analyze user-provided phrases for secrets
+- ML password tester now flags all-caps words and phrases as placeholders and
+  treats entropy scores above 4.0 as likely real passwords
 
 - `ML_Tester.py` now falls back to a built-in logistic regression when
   pandas or scikit-learn are unavailable.
@@ -74,7 +76,7 @@ All notable changes to this project are documented in this file.
 - Added tooltips for dropdown selections
 - Fixed OAuth token retrieval to prefer the active login token
 - Search controls moved to the toolbar next to export actions
-- Labels default to "False Positive" for low entropy and "True Positive" for scores above 3.5
+- Labels default to "False Positive" for low entropy and "True Positive" for scores above 4.0
 
 
 ## 2025-05-23

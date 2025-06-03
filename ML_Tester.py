@@ -21,7 +21,9 @@ except Exception:  # pragma: no cover - scikit-learn optional
 import csv
 import math
 import random
-from GitSleuth import _shannon_entropy, PRECEDING_KEYWORDS
+from GitSleuth import _shannon_entropy, PRECEDING_KEYWORDS, _looks_like_word
+
+HIGH_ENTROPY_THRESHOLD = 4.0
 
 
 class SimpleLogisticRegression:
@@ -82,17 +84,29 @@ def _accuracy_score(y_true: list[int], y_pred: list[int]) -> float:
 
 
 def _compute_features(text: str) -> list[float]:
-    """Return basic entropy and composition features for *text*."""
+    """Return entropy, composition and casing features for *text*."""
     if not isinstance(text, str):
         text = "" if text is None else str(text)
     length = len(text)
     if length == 0:
-        return [0.0, 0.0, 0.0, 0.0, 0.0]
+        return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     numeric = sum(ch.isdigit() for ch in text)
     alpha = sum(ch.isalpha() for ch in text)
     special = length - numeric - alpha
     entropy = _shannon_entropy(text)
-    return [entropy, float(length), numeric / length, alpha / length, special / length]
+    is_upper = float(text.isupper())
+    has_space = float(" " in text)
+    looks_word = float(_looks_like_word(text))
+    return [
+        entropy,
+        float(length),
+        numeric / length,
+        alpha / length,
+        special / length,
+        is_upper,
+        has_space,
+        looks_word,
+    ]
 
 
 def load_training() -> tuple[list[list[float]], list[int]]:
@@ -169,9 +183,14 @@ def analyze_phrase(model: Any, phrase: str) -> None:
             print("No secret patterns found.")
             return
         features = _compute_features(candidate)
-        pred = model.predict([features])[0]
         entropy = _shannon_entropy(candidate)
-        label = "Real Secret" if pred == 1 else "Placeholder"
+        if candidate.isupper() or " " in candidate or _looks_like_word(candidate):
+            label = "Placeholder"
+        elif entropy > HIGH_ENTROPY_THRESHOLD:
+            label = "Real Secret"
+        else:
+            pred = model.predict([features])[0]
+            label = "Real Secret" if pred == 1 else "Placeholder"
         print(
             "Indicator: N/A\n" f"Secret: {candidate}\n" f"Entropy: {entropy:.2f}\n" f"Prediction: {label}\n"
         )
@@ -183,9 +202,14 @@ def analyze_phrase(model: Any, phrase: str) -> None:
         indicator_match = re.search(r"|".join(PRECEDING_KEYWORDS), m.group(0), re.IGNORECASE)
         indicator = indicator_match.group(0) if indicator_match else ""
         features = _compute_features(secret)
-        pred = model.predict([features])[0]
         entropy = _shannon_entropy(secret)
-        label = "Real Secret" if pred == 1 else "Placeholder"
+        if secret.isupper() or " " in secret or _looks_like_word(secret):
+            label = "Placeholder"
+        elif entropy > HIGH_ENTROPY_THRESHOLD:
+            label = "Real Secret"
+        else:
+            pred = model.predict([features])[0]
+            label = "Real Secret" if pred == 1 else "Placeholder"
 
         print(
             f"Indicator: {indicator}\nSecret: {secret}\nEntropy: {entropy:.2f}\nPrediction: {label}\n"

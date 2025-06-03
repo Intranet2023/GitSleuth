@@ -62,6 +62,7 @@ from GitSleuth import (
     extract_search_terms,
     get_secret_entropy,
     PRECEDING_KEYWORDS,
+    _looks_like_word,
 )
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
@@ -78,17 +79,29 @@ SIMPLE_SECRET_RE = re.compile(
 
 
 def _basic_features(text: str) -> list[float]:
-    """Return basic entropy and composition features for *text*."""
+    """Return entropy, composition and casing features for *text*."""
     if not isinstance(text, str):
         text = "" if text is None else str(text)
     length = len(text)
     if length == 0:
-        return [0.0, 0.0, 0.0, 0.0, 0.0]
+        return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     numeric = sum(ch.isdigit() for ch in text)
     alpha = sum(ch.isalpha() for ch in text)
     special = length - numeric - alpha
     entropy = _shannon_entropy(text)
-    return [entropy, float(length), numeric / length, alpha / length, special / length]
+    is_upper = float(text.isupper())
+    has_space = float(" " in text)
+    looks_word = float(_looks_like_word(text))
+    return [
+        entropy,
+        float(length),
+        numeric / length,
+        alpha / length,
+        special / length,
+        is_upper,
+        has_space,
+        looks_word,
+    ]
 
 
 
@@ -493,7 +506,7 @@ class GitSleuthGUI(QMainWindow):
 
         self.high_entropy_checkbox = QCheckBox("Hide Low Entropy Results", self)
         self.high_entropy_checkbox.setToolTip(
-            "Hide results with entropy 3.5 or lower and disable ML features"
+            "Hide results with entropy 4.0 or lower and disable ML features"
         )
         self.high_entropy_checkbox.stateChanged.connect(self.apply_entropy_filter)
         add(self.high_entropy_checkbox)
@@ -1253,9 +1266,14 @@ class GitSleuthGUI(QMainWindow):
             )
             indicator = indicator_match.group(0) if indicator_match else ""
             features = _basic_features(secret)
-            pred = self.simple_model.predict([features])[0]
             entropy = _shannon_entropy(secret)
-            label = "Real Secret" if pred == 1 else "Placeholder"
+            if secret.isupper() or " " in secret or _looks_like_word(secret):
+                label = "Placeholder"
+            elif entropy > HIGH_ENTROPY_THRESHOLD:
+                label = "Real Secret"
+            else:
+                pred = self.simple_model.predict([features])[0]
+                label = "Real Secret" if pred == 1 else "Placeholder"
             self.ml_output.append(
                 f"Indicator: {indicator}\nSecret: {secret}\nEntropy: {entropy:.2f}\nPrediction: {label}\n"
             )
