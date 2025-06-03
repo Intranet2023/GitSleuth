@@ -23,6 +23,8 @@
     ],
     "USE_DETECT_SECRETS": false,
     "DETECT_SECRETS_BASELINE": "",
+    "USE_GITLEAKS": false,
+    "GITLEAKS_CONFIG": "",
     "ENTROPY_THRESHOLD": 4.0
 
 }
