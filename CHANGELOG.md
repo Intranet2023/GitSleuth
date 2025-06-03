@@ -30,6 +30,8 @@ All notable changes to this project are documented in this file.
 
 - Added "Train Example Model" and "Analyze Phrase" features in the ML tab for
   accuracy testing and secret detection
+- Added "Test Example Model" button to evaluate the sample model on
+  `testing_data.csv`
 
 
 

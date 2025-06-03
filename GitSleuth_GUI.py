@@ -407,6 +407,13 @@ class GitSleuthGUI(QMainWindow):
         self.sample_train_button.clicked.connect(self.train_sample_model)
         ml_tab_layout.addWidget(self.sample_train_button)
 
+        self.test_button = QPushButton("Test Example Model", self)
+        self.test_button.setToolTip(
+            "Evaluate simple model on testing_data.csv"
+        )
+        self.test_button.clicked.connect(self.evaluate_sample_model)
+        ml_tab_layout.addWidget(self.test_button)
+
         self.phrase_input = QLineEdit(self)
         self.phrase_input.setPlaceholderText("Enter phrase to analyze")
         ml_tab_layout.addWidget(self.phrase_input)
@@ -1278,6 +1285,29 @@ class GitSleuthGUI(QMainWindow):
                 f"Indicator: {indicator}\nSecret: {secret}\nEntropy: {entropy:.2f}\nPrediction: {label}\n"
             )
         self.status_bar.showMessage("Phrase analyzed")
+
+    def evaluate_sample_model(self) -> None:
+        """Evaluate the example model on ``testing_data.csv``."""
+        if not self.simple_model:
+            self.train_sample_model()
+            if not self.simple_model:
+                return
+        try:
+            df = pd.read_csv("testing_data.csv")
+            phrases = df["Phrase"].astype(str).tolist()
+            labels = df["Label"].astype(int).tolist()
+        except Exception as e:
+            self.ml_output.append(f"Error loading test data: {e}")
+            self.status_bar.showMessage("Error loading test data")
+            return
+        X = [_basic_features(p) for p in phrases]
+        preds = self.simple_model.predict(X)
+        correct = sum(int(p == y) for p, y in zip(preds, labels))
+        acc = correct / len(labels) * 100
+        self.ml_output.append(
+            f"Test accuracy on testing_data.csv: {acc:.2f}% ({correct}/{len(labels)})"
+        )
+        self.status_bar.showMessage("Example model tested")
 
 
 class SettingsDialog(QDialog):
