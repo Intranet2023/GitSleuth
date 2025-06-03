@@ -407,6 +407,13 @@ class GitSleuthGUI(QMainWindow):
         self.sample_train_button.clicked.connect(self.train_sample_model)
         ml_tab_layout.addWidget(self.sample_train_button)
 
+        self.sample_test_button = QPushButton("Test Example Model", self)
+        self.sample_test_button.setToolTip(
+            "Evaluate sample classifier on testing_data.csv"
+        )
+        self.sample_test_button.clicked.connect(self.evaluate_sample_model)
+        ml_tab_layout.addWidget(self.sample_test_button)
+
         self.phrase_input = QLineEdit(self)
         self.phrase_input.setPlaceholderText("Enter phrase to analyze")
         ml_tab_layout.addWidget(self.phrase_input)
@@ -1245,6 +1252,30 @@ class GitSleuthGUI(QMainWindow):
             f"Sample model accuracy: {acc * 100:.2f}% on held-out data."
         )
         self.status_bar.showMessage("Sample model trained")
+
+    def evaluate_sample_model(self) -> None:
+        """Test the sample model on ``testing_data.csv`` and show accuracy."""
+        if not self.simple_model:
+            self.train_sample_model()
+            if not self.simple_model:
+                return
+        try:
+            df = pd.read_csv("testing_data.csv")
+            phrases = df.get("Phrase", []).astype(str)
+            labels = df.get("Label", []).astype(int)
+            if phrases.empty:
+                self.ml_output.append("No testing data available.")
+                return
+            X_test = [_basic_features(p) for p in phrases]
+            preds = self.simple_model.predict(X_test)
+            acc = accuracy_score(labels, preds)
+            self.ml_output.append(
+                f"Sample model test accuracy: {acc * 100:.2f}% on testing data."
+            )
+            self.status_bar.showMessage("Sample model evaluated")
+        except Exception as e:
+            self.ml_output.append(f"Error during evaluation: {e}")
+            self.status_bar.showMessage("Evaluation failed")
 
     def analyze_phrase(self) -> None:
         """Analyze the text entered by the user for secrets."""
