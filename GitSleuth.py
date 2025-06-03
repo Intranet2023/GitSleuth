@@ -546,7 +546,7 @@ PLACEHOLDER_VALUES = {
 
 # Default entropy threshold to determine whether a value looks random enough
 # to be considered a real secret.
-DEFAULT_ENTROPY_THRESHOLD = 3.5
+DEFAULT_ENTROPY_THRESHOLD = 4.0
 
 # Inline pragma used by detect-secrets to suppress findings
 ALLOWLIST_PRAGMA_RE = re.compile(r"#\s*pragma:\s*allowlist secret", re.I)
