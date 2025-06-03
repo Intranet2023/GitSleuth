@@ -20,6 +20,9 @@ All notable changes to this project are documented in this file.
 - Added `ML_Tester.py` to train on `training_data.csv`, report accuracy, and
   analyze user-provided phrases for secrets
 
+- `ML_Tester.py` now falls back to a built-in logistic regression when
+  pandas or scikit-learn are unavailable.
+
 - Added "Train Example Model" and "Analyze Phrase" features in the ML tab for
   accuracy testing and secret detection
 
