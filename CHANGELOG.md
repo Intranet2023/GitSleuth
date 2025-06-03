@@ -34,6 +34,8 @@ All notable changes to this project are documented in this file.
   accuracy testing and secret detection
 - Added "Test Example Model" button to evaluate the sample classifier on
   `testing_data.csv` directly from the GUI
+- Removed "Train Example Model" button; testing and phrase analysis now
+  train the sample classifier automatically
 
 
 

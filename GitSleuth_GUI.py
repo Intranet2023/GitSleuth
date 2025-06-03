@@ -400,13 +400,6 @@ class GitSleuthGUI(QMainWindow):
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
 
-        self.sample_train_button = QPushButton("Train Example Model", self)
-        self.sample_train_button.setToolTip(
-            "Train simple classifier on training_data.csv"
-        )
-        self.sample_train_button.clicked.connect(self.train_sample_model)
-        ml_tab_layout.addWidget(self.sample_train_button)
-
         self.sample_test_button = QPushButton("Test Example Model", self)
         self.sample_test_button.setToolTip(
             "Evaluate sample classifier on testing_data.csv"
