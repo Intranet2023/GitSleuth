@@ -25,7 +25,7 @@ from colorama import init, Fore, Style
 init(autoreset=True)
 from GitSleuth_API import RateLimitException
 from Token_Manager import load_tokens, switch_token as rotate_token
-from Secret_Scanner import snippet_has_secret
+from Secret_Scanner import snippet_has_secret, gitleaks_has_secret
 from Pattern_Detector import is_env_var_name, is_token
 import math
 from typing import Optional
@@ -759,6 +759,8 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
     config = load_config()
     use_scanner = config.get("USE_DETECT_SECRETS", False)
     baseline = config.get("DETECT_SECRETS_BASELINE") or None
+    use_gitleaks = config.get("USE_GITLEAKS", False)
+    gitleaks_cfg = config.get("GITLEAKS_CONFIG") or None
     entropy_threshold = config.get("ENTROPY_THRESHOLD", DEFAULT_ENTROPY_THRESHOLD)
 
     for term in query_terms:
@@ -778,7 +780,13 @@ def extract_snippets(content, query, filter_placeholders=True, allowlist_pattern
                 continue
             if use_scanner and not snippet_has_secret(snippet, baseline_file=baseline):
                 continue
-            if not filter_placeholders or not _is_placeholder_snippet(snippet, query_terms=query_terms, entropy_threshold=entropy_threshold):
+            if use_gitleaks and not gitleaks_has_secret(snippet, config_file=gitleaks_cfg):
+                continue
+            if not filter_placeholders or not _is_placeholder_snippet(
+                snippet,
+                query_terms=query_terms,
+                entropy_threshold=entropy_threshold,
+            ):
                 verified.append(snippet)
 
     return verified

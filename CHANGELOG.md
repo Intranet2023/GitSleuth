@@ -12,6 +12,8 @@ All notable changes to this project are documented in this file.
   resolution and updated AGENTS.md accordingly
 - Console table output centered for improved readability
 
+- Added optional gitleaks scanning with `USE_GITLEAKS` and `GITLEAKS_CONFIG`
+
 - Status bar and log window now provide detailed messages on search progress,
   exports, and training
 
