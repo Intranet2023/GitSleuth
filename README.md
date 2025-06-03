@@ -73,12 +73,10 @@ context such as assignments or secret-setting function calls.
 
 #### Testing the Model
 
-Open the **ML** tab and click **Train Example Model** to build a simple
-classifier from `training_data.csv`. The tab shows the model's accuracy.
-Click **Test Example Model** to evaluate this classifier on
-`testing_data.csv` and display the accuracy in the output area.
-Enter any phrase in the provided field and click **Analyze Phrase** to
-highlight detected secrets, the preceding indicator, entropy score and
+Open the **ML** tab and click **Test Example Model** to evaluate a simple
+classifier on `testing_data.csv` and display the accuracy in the output
+area. Enter any phrase in the provided field and click **Analyze Phrase**
+to highlight detected secrets, the preceding indicator, entropy score and
 
 
 #### ML Workflow
