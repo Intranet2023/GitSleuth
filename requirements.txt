@@ -9,5 +9,5 @@ prettytable==3.9.0
 pyperclip==1.8.2
 PyQt5==5.15.10
 PyQt5_sip==12.13.0
-requests==2.32.2
+requests==2.32.4
 scikit-learn==1.5.1
