@@ -1,5 +1,5 @@
 colorama==0.4.5
-cryptography==44.0.1
+cryptography==46.0.5
 detect-secrets==1.4.0
 joblib==1.4.2
 numpy==1.26.4
