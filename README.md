@@ -1,5 +1,6 @@
-# GitSleuth
+THIS APPLICATION IS RETIRED
 
+# GitSleuth
 
 GitSleuth searches GitHub repositories for sensitive data. It provides both a command-line interface and a PyQt5 GUI with a dark theme.
 
