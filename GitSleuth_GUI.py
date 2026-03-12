@@ -42,8 +42,6 @@ from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
 
@@ -400,21 +398,6 @@ class GitSleuthGUI(QMainWindow):
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
 
-        self.sample_test_button = QPushButton("Test Example Model", self)
-        self.sample_test_button.setToolTip(
-            "Evaluate sample classifier on testing_data.csv"
-        )
-        self.sample_test_button.clicked.connect(self.evaluate_sample_model)
-        ml_tab_layout.addWidget(self.sample_test_button)
-
-        self.phrase_input = QLineEdit(self)
-        self.phrase_input.setPlaceholderText("Enter phrase to analyze")
-        ml_tab_layout.addWidget(self.phrase_input)
-
-        self.analyze_button = QPushButton("Analyze Phrase", self)
-        self.analyze_button.setToolTip("Detect secrets in the phrase")
-        self.analyze_button.clicked.connect(self.analyze_phrase)
-        ml_tab_layout.addWidget(self.analyze_button)
 
         self.load_labeled_data()
 
@@ -1208,100 +1191,6 @@ class GitSleuthGUI(QMainWindow):
             self.status_bar.showMessage("Training failed")
             logging.error(f"Training failed: {e}")
 
-    def load_basic_training(self) -> tuple[list[list[float]], list[int]]:
-        """Load passwords and placeholders from ``training_data.csv``."""
-        df = pd.read_csv("training_data.csv")
-        X: list[list[float]] = []
-        y: list[int] = []
-        for pwd in df.get("RealPassword", []):
-            if isinstance(pwd, str) and pwd:
-                X.append(_basic_features(pwd))
-                y.append(1)
-        for pwd in df.get("Placeholder", []):
-            if isinstance(pwd, str) and pwd:
-                X.append(_basic_features(pwd))
-                y.append(0)
-        return X, y
-
-    def train_sample_model(self) -> None:
-        """Train example model and display accuracy."""
-        try:
-            X, y = self.load_basic_training()
-        except Exception as e:
-            self.ml_output.append(f"Error loading training data: {e}")
-            return
-        if not X:
-            self.ml_output.append("No training data available.")
-            return
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-        model = LogisticRegression(max_iter=1000)
-        model.fit(X_train, y_train)
-        preds = model.predict(X_test)
-        acc = accuracy_score(y_test, preds)
-        self.simple_model = model
-        self.ml_output.append(
-            f"Sample model accuracy: {acc * 100:.2f}% on held-out data."
-        )
-        self.status_bar.showMessage("Sample model trained")
-
-    def evaluate_sample_model(self) -> None:
-        """Test the sample model on ``testing_data.csv`` and show accuracy."""
-        if not self.simple_model:
-            self.train_sample_model()
-            if not self.simple_model:
-                return
-        try:
-            df = pd.read_csv("testing_data.csv")
-            phrases = df.get("Phrase", []).astype(str)
-            labels = df.get("Label", []).astype(int)
-            if phrases.empty:
-                self.ml_output.append("No testing data available.")
-                return
-            X_test = [_basic_features(p) for p in phrases]
-            preds = self.simple_model.predict(X_test)
-            acc = accuracy_score(labels, preds)
-            self.ml_output.append(
-                f"Sample model test accuracy: {acc * 100:.2f}% on testing data."
-            )
-            self.status_bar.showMessage("Sample model evaluated")
-        except Exception as e:
-            self.ml_output.append(f"Error during evaluation: {e}")
-            self.status_bar.showMessage("Evaluation failed")
-
-    def analyze_phrase(self) -> None:
-        """Analyze the text entered by the user for secrets."""
-        phrase = self.phrase_input.text().strip()
-        if not phrase:
-            return
-        if not self.simple_model:
-            self.train_sample_model()
-            if not self.simple_model:
-                return
-        matches = list(SIMPLE_SECRET_RE.finditer(phrase))
-        if not matches:
-            self.ml_output.append("No secret patterns found.")
-            return
-        for m in matches:
-            secret = m.group(1)
-            indicator_match = re.search(
-                r"|".join(PRECEDING_KEYWORDS), m.group(0), re.IGNORECASE
-            )
-            indicator = indicator_match.group(0) if indicator_match else ""
-            features = _basic_features(secret)
-            entropy = _shannon_entropy(secret)
-            if secret.isupper() or " " in secret or _looks_like_word(secret):
-                label = "Placeholder"
-            elif entropy > HIGH_ENTROPY_THRESHOLD:
-                label = "Real Secret"
-            else:
-                pred = self.simple_model.predict([features])[0]
-                label = "Real Secret" if pred == 1 else "Placeholder"
-            self.ml_output.append(
-                f"Indicator: {indicator}\nSecret: {secret}\nEntropy: {entropy:.2f}\nPrediction: {label}\n"
-            )
-        self.status_bar.showMessage("Phrase analyzed")
 
 
 class SettingsDialog(QDialog):

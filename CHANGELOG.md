@@ -19,25 +19,7 @@ All notable changes to this project are documented in this file.
 
 - GUI results table centered for improved readability
 - GUI secrets now display the secret text in red and preceding search terms in blue
-- Added `ML_Tester.py` to train on `training_data.csv`, report accuracy, and
-  analyze user-provided phrases for secrets
-- ML password tester now flags all-caps words and phrases as placeholders and
-  treats entropy scores above 4.0 as likely real passwords
-- Added `testing_data.csv` with labeled phrases for evaluating secret detection
-- Introduced `Secret_Trainer.py` CLI skeleton for model training
-- Added `joblib` and `numpy` to requirements
-
-- `ML_Tester.py` now falls back to a built-in logistic regression when
-  pandas or scikit-learn are unavailable.
-
-- Added "Train Example Model" and "Analyze Phrase" features in the ML tab for
-  accuracy testing and secret detection
-- Added "Test Example Model" button to evaluate the sample classifier on
-  `testing_data.csv` directly from the GUI
-- Removed "Train Example Model" button; testing and phrase analysis now
-  train the sample classifier automatically
-
-
+<
 
 
 ## 2025-05-29
