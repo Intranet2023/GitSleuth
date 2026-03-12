@@ -15,7 +15,7 @@ GitSleuth searches GitHub repositories for sensitive data. It provides both a co
 - Status bar shows rate limit pauses and tokens rotate automatically
 - Export results to Excel or CSV
 - Machine learning tab to label results and train a classifier using entropy and context features
-- Optional integration with Yelp's `detect-secrets` for advanced scanning
+- Optional integration with Yelp's `detect-secrets` or `gitleaks` for advanced scanning
 - Results table includes rule descriptions
 - Dictionary and format heuristics filter out common words, UUIDs or dates
 - Pattern detection identifies environment variable names and token strings
@@ -73,6 +73,14 @@ checks to help distinguish real secrets from placeholders. Additional features
 also encode the file type (config, source, log, other) and simple structural
 context such as assignments or secret-setting function calls.
 
+#### Testing the Model
+
+Open the **ML** tab and click **Test Example Model** to evaluate a simple
+classifier on `testing_data.csv` and display the accuracy in the output
+area. Enter any phrase in the provided field and click **Analyze Phrase**
+to highlight detected secrets, the preceding indicator, entropy score and
+
+
 #### ML Workflow
 1. After running a search, mark each result row as **True Positive** or **False Positive** using the **Label** column.
 2. Click **Export Labels** to save the selections. This writes them to `training_labels.csv` so the ML tab can load them.
@@ -99,7 +107,9 @@ You can also define `ALLOWLIST_PATTERNS` with regex strings for
 known dummy secrets so matching snippets are ignored.
 Enable `USE_DETECT_SECRETS` to scan snippets with the `detect-secrets`
 tool and set `DETECT_SECRETS_BASELINE` to a baseline file for allowlisted
-secrets.
+secrets. Enable `USE_GITLEAKS` to perform an additional scan with
+`gitleaks` and optionally provide `GITLEAKS_CONFIG` to specify a custom
+configuration file.
 Set `ENTROPY_THRESHOLD` (bits/char) to skip low-entropy values that
 look like placeholders.
 The application ships with a default GitHub OAuth client ID so it works out of

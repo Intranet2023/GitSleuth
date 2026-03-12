@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 - Documented release date for prior changes in this file
-- Results label defaults to "False Positive" for LOW entropy or scores ≤ 3.5
+- Results label defaults to "False Positive" for LOW entropy or scores ≤ 4.0
 - Added "Show High Entropy Only" checkbox to hide low-entropy results and disable ML features
 - Button label changed from "Show High Entropy Only" to "Hide Low Entropy Results"
 - Cleaned AGENTS.md to remove merge conflict markers and clarify instructions
@@ -12,13 +12,14 @@ All notable changes to this project are documented in this file.
   resolution and updated AGENTS.md accordingly
 - Console table output centered for improved readability
 
+- Added optional gitleaks scanning with `USE_GITLEAKS` and `GITLEAKS_CONFIG`
+
 - Status bar and log window now provide detailed messages on search progress,
   exports, and training
 
 - GUI results table centered for improved readability
 - GUI secrets now display the secret text in red and preceding search terms in blue
-- Added "Evaluate Model" button to test ML accuracy with cross-validation
-
+<
 
 
 ## 2025-05-29
@@ -66,7 +67,7 @@ All notable changes to this project are documented in this file.
 - Added tooltips for dropdown selections
 - Fixed OAuth token retrieval to prefer the active login token
 - Search controls moved to the toolbar next to export actions
-- Labels default to "False Positive" for low entropy and "True Positive" for scores above 3.5
+- Labels default to "False Positive" for low entropy and "True Positive" for scores above 4.0
 
 
 ## 2025-05-23

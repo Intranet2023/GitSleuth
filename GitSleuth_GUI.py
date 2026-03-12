@@ -42,7 +42,6 @@ from PyQt5.QtGui import QDesktopServices, QPalette, QColor
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
 
@@ -61,6 +60,7 @@ from GitSleuth import (
     extract_search_terms,
     get_secret_entropy,
     PRECEDING_KEYWORDS,
+    _looks_like_word,
 )
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
@@ -69,6 +69,37 @@ from Token_Manager import load_tokens, add_token, delete_token
 
 CONFIG_FILE = 'config.json'
 HIGH_ENTROPY_THRESHOLD = 4.0
+
+SIMPLE_SECRET_RE = re.compile(
+    r'(?:' + '|'.join(re.escape(k) for k in PRECEDING_KEYWORDS) + r')\s*[=:]\s*[\'"\"]?([^\'"\"\s,;]+)[\'"\"]?',
+    re.IGNORECASE,
+)
+
+
+def _basic_features(text: str) -> list[float]:
+    """Return entropy, composition and casing features for *text*."""
+    if not isinstance(text, str):
+        text = "" if text is None else str(text)
+    length = len(text)
+    if length == 0:
+        return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    numeric = sum(ch.isdigit() for ch in text)
+    alpha = sum(ch.isalpha() for ch in text)
+    special = length - numeric - alpha
+    entropy = _shannon_entropy(text)
+    is_upper = float(text.isupper())
+    has_space = float(" " in text)
+    looks_word = float(_looks_like_word(text))
+    return [
+        entropy,
+        float(length),
+        numeric / length,
+        alpha / length,
+        special / length,
+        is_upper,
+        has_space,
+        looks_word,
+    ]
 
 
 
@@ -245,6 +276,7 @@ class GitSleuthGUI(QMainWindow):
         self.session_keep_alive = config.get("SESSION_KEEP_ALIVE_MINUTES", 0)
         self.filter_placeholders = config.get("FILTER_PLACEHOLDERS", True)
         self.exit_timer: Optional[QTimer] = None
+        self.simple_model: Optional[LogisticRegression] = None
         self.initUI()
         self.restore_oauth_session()
 
@@ -366,10 +398,6 @@ class GitSleuthGUI(QMainWindow):
         self.train_button.clicked.connect(self.train_model)
         ml_tab_layout.addWidget(self.train_button)
 
-        self.test_button = QPushButton("Evaluate Model", self)
-        self.test_button.setToolTip("Run cross-validated accuracy test")
-        self.test_button.clicked.connect(self.evaluate_model)
-        ml_tab_layout.addWidget(self.test_button)
 
         self.load_labeled_data()
 
@@ -461,7 +489,7 @@ class GitSleuthGUI(QMainWindow):
 
         self.high_entropy_checkbox = QCheckBox("Hide Low Entropy Results", self)
         self.high_entropy_checkbox.setToolTip(
-            "Hide results with entropy 3.5 or lower and disable ML features"
+            "Hide results with entropy 4.0 or lower and disable ML features"
         )
         self.high_entropy_checkbox.stateChanged.connect(self.apply_entropy_filter)
         add(self.high_entropy_checkbox)
@@ -1163,40 +1191,6 @@ class GitSleuthGUI(QMainWindow):
             self.status_bar.showMessage("Training failed")
             logging.error(f"Training failed: {e}")
 
-    def evaluate_model(self):
-        """Evaluate the model using 5-fold cross-validation."""
-        if not os.path.exists("training_labels.csv"):
-            self.ml_output.append("No labeled data to evaluate.")
-            self.status_bar.showMessage("No labeled data to evaluate.")
-            return
-        try:
-            df = pd.read_csv("training_labels.csv")
-            if df.empty:
-                self.ml_output.append("No labeled data to evaluate.")
-                self.status_bar.showMessage("No labeled data to evaluate.")
-                return
-            df["Snippet"] = df["Snippet"].astype(str).fillna("")
-            vectorizer = TfidfVectorizer()
-            text_features = vectorizer.fit_transform(df["Snippet"])
-            paths = df.get("File Path", ["" for _ in range(len(df))])
-            extra = np.array([
-                compute_features(snippet, path) for snippet, path in zip(df["Snippet"], paths)
-            ])
-            X = hstack([text_features, csr_matrix(extra)])
-            y = df["Label"].apply(lambda x: 1 if x == "True Positive" else 0)
-            if y.nunique() < 2:
-                self.ml_output.append("Evaluation requires at least two label classes.")
-                self.status_bar.showMessage("Evaluation requires at least two label classes.")
-                return
-            model = LogisticRegression(max_iter=1000)
-            scores = cross_val_score(model, X, y, cv=5)
-            accuracy = scores.mean()
-            self.ml_output.append(f"Cross-validated accuracy: {accuracy:.2f}")
-            self.status_bar.showMessage(f"Accuracy: {accuracy:.2f}")
-        except Exception as e:
-            self.ml_output.append(f"Evaluation failed: {e}")
-            self.status_bar.showMessage("Evaluation failed")
-            logging.error(f"Evaluation failed: {e}")
 
 
 class SettingsDialog(QDialog):
