@@ -3,6 +3,7 @@
 All notable changes to this project are documented in this file.
 
 ## [Unreleased]
+- Warned users that exported findings contain untrusted sensitive data
 - Neutralized spreadsheet formula-leading values in Excel and CSV exports,
   including high-entropy snippets
 - Hardened `auto_pull.sh` to execute a trusted resolver snapshot from local

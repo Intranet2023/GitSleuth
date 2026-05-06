@@ -713,7 +713,11 @@ class GitSleuthGUI(QMainWindow):
                         sanitize_spreadsheet_cell(entropy_text),
                     ])
 
-            self.status_bar.showMessage("Results exported successfully to " + filename)
+            self.status_bar.showMessage(
+                "Results exported successfully to "
+                + filename
+                + ". Treat exported findings as untrusted sensitive data."
+            )
             logging.info(
                 f"Exported {self.results_table.rowCount()} results to {filename}"
             )
@@ -785,7 +789,11 @@ class GitSleuthGUI(QMainWindow):
                     if row_tuple not in existing_rows:
                         writer.writerow(row)
                         existing_rows.add(row_tuple)
-            self.status_bar.showMessage("Labels exported successfully to " + filename)
+            self.status_bar.showMessage(
+                "Labels exported successfully to "
+                + filename
+                + ". Treat exported findings as untrusted sensitive data."
+            )
             logging.info(
                 f"Exported {len(new_rows)} labeled rows to {filename}"
             )

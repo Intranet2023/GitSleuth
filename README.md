@@ -56,6 +56,9 @@ Each result row also displays the description of the rule that matched.
 
 #### Labeling Results
 Use the **Label** column to mark each result as a **True Positive** or **False Positive**. Click **Export Labels** to save the selections to `training_labels.csv` for machine-learning.
+Exported CSV and Excel files can contain untrusted sensitive findings from
+GitHub repositories. GitSleuth neutralizes spreadsheet formula-leading values
+on export, but exported files should still be handled as sensitive data.
 
 #### Training
 Open the **ML** tab and click **Perform Machine Learning** to train a simple text classifier on the saved labels. Any newly labeled rows are automatically appended to `training_labels.csv` before training begins to ensure no data is lost. Training progress is shown in the tab's output area.
