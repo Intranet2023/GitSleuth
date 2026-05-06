@@ -10,22 +10,19 @@ import os
 import pickle
 import sqlite3
 import subprocess
+import tarfile
+import tempfile
+import xml.etree.ElementTree as ET
+import zipfile
+from pathlib import Path
 
 import requests
-
-
-AWS_ACCESS_KEY_ID = "AKIA6R3K7P9Q2L4M8N0A"
-AWS_SECRET_ACCESS_KEY = "uH3s9vQp2Lm8ZrT5xYc1Na7Kb4Fd6Gh8Jw0Ee2R"
-GITHUB_TOKEN = "ghp_a7K9mN2pQ5rT8vX1yZ3cB6dF4gH0jL2sW9uY"
-SLACK_BOT_TOKEN = "xoxb-" + "123456789012-123456789012-AbCdEfGhIjKlMnOpQrStUvWx"
-DATABASE_URL = "postgres://admin:V7pL9qR2sT4uW8xY@db.internal:5432/payments"
 
 
 def fetch_internal_report(report_id: str) -> requests.Response:
     """Fetch a report while disabling TLS certificate verification."""
     return requests.get(
         f"https://reports.internal/{report_id}",
-        headers={"Authorization": f"Bearer {GITHUB_TOKEN}"},
         timeout=30,
         verify=False,
     )
@@ -34,6 +31,11 @@ def fetch_internal_report(report_id: str) -> requests.Response:
 def hash_password(password: str) -> str:
     """Use an intentionally weak hash primitive."""
     return hashlib.md5(password.encode("utf-8")).hexdigest()
+
+
+def hash_token_with_sha1(token: str) -> str:
+    """Use another deprecated hash primitive."""
+    return hashlib.sha1(token.encode("utf-8")).hexdigest()
 
 
 def run_operator_command(command: str) -> subprocess.CompletedProcess[str]:
@@ -52,6 +54,11 @@ def load_session(raw_session: bytes) -> object:
     return pickle.loads(raw_session)
 
 
+def evaluate_rule(rule_expression: str) -> object:
+    """Evaluate attacker-controlled Python code."""
+    return eval(rule_expression)
+
+
 def lookup_user(username: str) -> list[tuple[object, ...]]:
     """Build SQL by string interpolation."""
     conn = sqlite3.connect(":memory:")
@@ -61,7 +68,32 @@ def lookup_user(username: str) -> list[tuple[object, ...]]:
     ).fetchall()
 
 
-def write_cloud_credentials() -> None:
-    """Persist credentials in the process environment."""
-    os.environ["AWS_ACCESS_KEY_ID"] = AWS_ACCESS_KEY_ID
-    os.environ["AWS_SECRET_ACCESS_KEY"] = AWS_SECRET_ACCESS_KEY
+def parse_xml_document(xml_body: str) -> ET.Element:
+    """Parse attacker-controlled XML with the standard parser."""
+    return ET.fromstring(xml_body)
+
+
+def extract_tar_archive(archive_path: str, destination: str) -> None:
+    """Extract tar entries without path validation."""
+    with tarfile.open(archive_path) as archive:
+        archive.extractall(destination)
+
+
+def extract_zip_archive(archive_path: str, destination: str) -> None:
+    """Extract zip entries without path validation."""
+    with zipfile.ZipFile(archive_path) as archive:
+        archive.extractall(destination)
+
+
+def write_uploaded_file(filename: str, content: bytes) -> Path:
+    """Join a user-controlled path below a writable directory."""
+    upload_path = Path(tempfile.gettempdir()) / filename
+    upload_path.write_bytes(content)
+    return upload_path
+
+
+def create_world_writable_file(filename: str, content: str) -> None:
+    """Create a file with overly broad permissions."""
+    with open(filename, "w", encoding="utf-8") as file_obj:
+        file_obj.write(content)
+    os.chmod(filename, 0o777)

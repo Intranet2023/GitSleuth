@@ -3,8 +3,8 @@
 All notable changes to this project are documented in this file.
 
 ## [Unreleased]
-- Added security scanner canary cases for hardcoded secrets and unsafe code
-  patterns
+- Refocused security scanner canary cases on vulnerability patterns instead of
+  hardcoded secrets
 - Documented release date for prior changes in this file
 - Results label defaults to "False Positive" for LOW entropy or scores ≤ 4.0
 - Added "Show High Entropy Only" checkbox to hide low-entropy results and disable ML features
