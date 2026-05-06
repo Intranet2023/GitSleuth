@@ -129,9 +129,9 @@ It fetches the branch from `origin`, merges it with the `theirs` strategy,
 and verifies that no conflict markers remain.
 
 If you regularly pull from the remote repository, use `./auto_pull.sh`
-instead of running `git pull` directly. This wrapper invokes the
-conflict resolution script automatically whenever a merge conflict
-occurs, so the incoming version is always kept.
+instead of running `git pull` directly. This wrapper snapshots the
+local `auto_resolve_conflicts.sh` from `HEAD` before pulling and uses
+that trusted snapshot if conflict resolution is required.
 
 
 ## Checks

@@ -3,7 +3,7 @@
 ## Environment Preparation
 - Ensure the working directory is clean with `git status`.
 - Pull the latest changes using `./auto_pull.sh` instead of plain `git pull`.
-  This wrapper automatically executes `auto_resolve_conflicts.sh` when conflicts are detected so the incoming branch wins with no manual steps.
+  This wrapper snapshots `auto_resolve_conflicts.sh` from local `HEAD` before pulling, then uses that trusted snapshot if conflicts are detected.
 
 ## Resolution Policy
 Always keep the incoming branch’s code and discard conflicting local code. This applies to all conflicts, including whitespace, trivial blocks, concurrent additions, deletions vs. modifications, and binary files. No manual review or alternate strategy is used.

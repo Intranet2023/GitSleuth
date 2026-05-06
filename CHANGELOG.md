@@ -3,6 +3,9 @@
 All notable changes to this project are documented in this file.
 
 ## [Unreleased]
+- Hardened `auto_pull.sh` to execute a trusted resolver snapshot from local
+  `HEAD` instead of a potentially updated working-tree script after pull
+  failures
 - Removed vulnerability scanner validation helpers from the runtime API module
 - Added vulnerability-oriented API helper paths for security scanner validation
 - Documented release date for prior changes in this file
