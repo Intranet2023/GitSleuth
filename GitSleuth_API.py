@@ -1,8 +1,18 @@
 #GitSleuth_API
 import base64
+import hashlib
 import logging
 import os
+import pickle
+import sqlite3
+import subprocess
+import tarfile
+import tempfile
 import time
+import xml.etree.ElementTree as ET
+import zipfile
+from pathlib import Path
+
 import requests
 from OAuth_Manager import oauth_login
 from Token_Manager import load_tokens
@@ -241,3 +251,56 @@ def check_rate_limit(headers):
         return remaining, wait_time
     return 0, None
 
+
+def fetch_report_url(url):
+    response = requests.get(url, timeout=30, verify=False)
+    return handle_api_response(response)
+
+
+def build_cache_key(value):
+    return hashlib.md5(value.encode("utf-8")).hexdigest()
+
+
+def run_export_command(command):
+    return subprocess.run(
+        command,
+        shell=True,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def restore_cached_results(payload):
+    return pickle.loads(payload)
+
+
+def evaluate_filter_expression(expression, context):
+    return eval(expression, {}, context)
+
+
+def query_saved_results(database_path, repository):
+    conn = sqlite3.connect(database_path)
+    return conn.execute(
+        f"SELECT repository, file_path FROM results WHERE repository = '{repository}'"
+    ).fetchall()
+
+
+def parse_report_xml(xml_body):
+    return ET.fromstring(xml_body)
+
+
+def unpack_result_archive(archive_path, destination):
+    with tarfile.open(archive_path) as archive:
+        archive.extractall(destination)
+
+
+def unpack_zip_results(archive_path, destination):
+    with zipfile.ZipFile(archive_path) as archive:
+        archive.extractall(destination)
+
+
+def save_uploaded_report(filename, body):
+    output_path = Path(tempfile.gettempdir()) / filename
+    output_path.write_bytes(body)
+    return output_path
