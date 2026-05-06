@@ -63,6 +63,7 @@ from GitSleuth import (
     get_secret_entropy,
     PRECEDING_KEYWORDS,
     _looks_like_word,
+    sanitize_spreadsheet_cell,
 )
 from GitSleuth_API import RateLimitException, get_headers, check_rate_limit
 from OAuth_Manager import oauth_login, fetch_username
@@ -704,12 +705,12 @@ class GitSleuthGUI(QMainWindow):
                     entropy_item = self.results_table.item(row, 5)
                     entropy_text = entropy_item.text() if entropy_item else ""
                     writer.writerow([
-                        search_term,
-                        description,
-                        repo_text,
-                        file_text,
-                        snippet_text,
-                        entropy_text,
+                        sanitize_spreadsheet_cell(search_term),
+                        sanitize_spreadsheet_cell(description),
+                        sanitize_spreadsheet_cell(repo_text),
+                        sanitize_spreadsheet_cell(file_text),
+                        sanitize_spreadsheet_cell(snippet_text),
+                        sanitize_spreadsheet_cell(entropy_text),
                     ])
 
             self.status_bar.showMessage("Results exported successfully to " + filename)
@@ -746,13 +747,13 @@ class GitSleuthGUI(QMainWindow):
                 entropy_item = self.results_table.item(row, 5)
                 entropy_text = entropy_item.text() if entropy_item else ""
                 new_rows.append([
-                    search_term,
-                    description,
-                    repo_text,
-                    file_text,
-                    snippet_text,
-                    entropy_text,
-                    label_text,
+                    sanitize_spreadsheet_cell(search_term),
+                    sanitize_spreadsheet_cell(description),
+                    sanitize_spreadsheet_cell(repo_text),
+                    sanitize_spreadsheet_cell(file_text),
+                    sanitize_spreadsheet_cell(snippet_text),
+                    sanitize_spreadsheet_cell(entropy_text),
+                    sanitize_spreadsheet_cell(label_text),
                 ])
 
             existing_rows = set()

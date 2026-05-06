@@ -3,6 +3,8 @@
 All notable changes to this project are documented in this file.
 
 ## [Unreleased]
+- Neutralized spreadsheet formula-leading values in Excel and CSV exports,
+  including high-entropy snippets
 - Hardened `auto_pull.sh` to execute a trusted resolver snapshot from local
   `HEAD` instead of a potentially updated working-tree script after pull
   failures

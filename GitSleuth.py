@@ -553,6 +553,8 @@ ALLOWLIST_PRAGMA_RE = re.compile(r"#\s*pragma:\s*allowlist secret", re.I)
 
 ENV_ASSIGN_RE = re.compile(r"\b([A-Z0-9_]+)=\s*(\S*)")
 
+SPREADSHEET_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
 # Keywords that typically precede secrets in assignments
 PRECEDING_KEYWORDS = [
     "password",
@@ -804,6 +806,17 @@ def find_high_entropy_snippets(content, entropy_threshold=DEFAULT_ENTROPY_THRESH
                 break
     return snippets
 
+
+def sanitize_spreadsheet_cell(value):
+    """Return a value that spreadsheet apps will not interpret as a formula."""
+    if not isinstance(value, str):
+        return value
+    stripped = value.lstrip()
+    if stripped.startswith(SPREADSHEET_FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
+
 def save_data_to_excel(data_list, domain):
     """
     Saves the search results data to an Excel file with a filename that includes
@@ -829,6 +842,7 @@ def save_data_to_excel(data_list, domain):
                 f"{v:.2f}" if isinstance(v, float) else "" for v in vals
             ) if isinstance(vals, list) else vals
         )
+    df = df.apply(lambda col: col.map(sanitize_spreadsheet_cell))
     df.to_excel(filename, index=False)
     print(f"Data saved to {filename}")
 
