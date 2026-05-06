@@ -3,6 +3,7 @@
 All notable changes to this project are documented in this file.
 
 ## [Unreleased]
+- Removed vulnerability scanner validation helpers from the runtime API module
 - Added vulnerability-oriented API helper paths for security scanner validation
 - Documented release date for prior changes in this file
 - Results label defaults to "False Positive" for LOW entropy or scores ≤ 4.0
